@@ -198,16 +198,28 @@ export default {
           const keys = new Set(schema.args.map((a) => a.key));
           const renames = { anima_unsloth_offload_checkpointing: "unsloth_offload_checkpointing", anima_cache_text_encoder_outputs: "cache_text_encoder_outputs" };
           const skipped = [];
+          // Sample previews are set on the Sample images card, not copied from the file:
+          // the old prompts file belongs to the old setup (and would ignore the on/off switch).
+          const sampleKeys = ["sample_prompts", "sample_every_n_epochs", "sample_every_n_steps", "sample_at_first"];
+          const hadSamples = sampleKeys.some((k) => k in r.args);
           for (let [k, v] of Object.entries(r.args)) {
             k = renames[k] || k;
+            if (sampleKeys.includes(k)) { delete draft.args[k]; continue; }
             if (keys.has(k)) draft.args[k] = v; else skipped.push(k);
           }
+          if (hadSamples && draft.samples) {
+            if (r.args.sample_every_n_epochs) draft.samples.every_n_epochs = r.args.sample_every_n_epochs;
+            if (r.args.sample_at_first) draft.samples.at_first = true;
+          }
           if (skipped.length) toast("Some options were skipped", `${draft.script} doesn't accept: ${skipped.join(", ")}`, "", "info", 10000);
+          if (hadSamples) toast("Sample prompts not imported", "The file had sample settings. Type your prompts into Sample images and turn on “Make previews while training” if you want them.", "", "info", 10000);
         }
         if (r.dataset) draft.dataset = r.dataset;
         save();
         render();
-        toast("Imported", "", "good", "download");
+        const outName = draft.args.output_name ? `Output name: ${draft.args.output_name}` : "";
+        const folders = (draft.dataset?.subsets || []).map((s) => s.image_dir).filter(Boolean);
+        toast("Imported", [outName, folders.length ? `Dataset: ${folders.join(", ")}` : ""].filter(Boolean).join(" · ") || "", "good", "download", 10000);
       } catch (e) { toastError(e); }
     }
 
