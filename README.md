@@ -5,7 +5,7 @@
 <h1 align="center">LoRA Studio</h1>
 
 <p align="center">
-  A friendly Windows app for training LoRAs with <a href="https://github.com/kohya-ss/sd-scripts">kohya-ss/sd-scripts</a>:<br>
+  A friendly Windows & Linux app for training LoRAs with <a href="https://github.com/kohya-ss/sd-scripts">kohya-ss/sd-scripts</a>:<br>
   set up a run, watch the loss, tidy your dataset, and send the result to SwarmUI or ComfyUI, all in one place.
 </p>
 
@@ -27,7 +27,7 @@
 - **Time estimates:** see roughly how long a run will take before you start; LoRA Studio learns your GPU's speed from past runs.
 - **Best epoch:** star the epoch you like in the sample grid; it's saved as `…-best.safetensors` and can be copied to SwarmUI or ComfyUI in one click.
 - **GPU monitor:** VRAM, load, temperature and power while you train.
-- **Notifications:** a Windows notification when a run finishes or fails.
+- **Notifications:** a desktop notification when a run finishes or fails.
 
 **Dataset tools**
 - **New dataset in one click:** download with **gallery-dl** (Danbooru, Gelbooru, e621, pixiv and hundreds more), skip tiny images, number everything, turn the site's tags into captions, and check for duplicates. Site logins and API keys are stored on your PC only.
@@ -68,7 +68,7 @@
 
 ## Requirements
 
-- **Windows 10 or 11.** The app window uses Microsoft Edge WebView2, which is built in.
+- **Windows 10 or 11**, or **Linux** (see [Linux](#linux) below). On Windows the app window uses Microsoft Edge WebView2, which is built in.
 - **Python 3.10 or newer**, from [python.org](https://www.python.org/downloads/). Tick **"Add python.exe to PATH"** when installing.
 - **Git**, from [git-scm.com](https://git-scm.com/download/win).
 - **sd-scripts.** If you don't have it yet, LoRA Studio can install it for you.
@@ -76,6 +76,8 @@
 LoRA Studio itself is small. All the heavy machine-learning parts (PyTorch etc.) run inside **your sd-scripts install**, so nothing big is downloaded twice.
 
 ## Install
+
+On Linux? Skip to [Linux](#linux).
 
 1. **Download** this project: the green **Code** button → **Download ZIP**, or grab the latest from **Releases**. Unzip it somewhere permanent, e.g. `C:\AI\lora_studio`.
 2. **Double-click `Install.bat`.** It creates a private Python environment in the folder and installs two small packages (`pywebview` and `Pillow`).
@@ -89,6 +91,26 @@ Download the new version and unzip it over the old folder, keeping the `.venv` f
 - **The window is blank or won't open:** install the WebView2 "Evergreen Runtime" from [Microsoft](https://developer.microsoft.com/microsoft-edge/webview2/). You can also run it in your browser: `.venv\Scripts\python.exe main.py --browser`.
 - **Something errors:** run `LoRA Studio (debug).bat`. It keeps a console window open with the details and lets you right-click → Inspect.
 - **The auto-tagger says a package is missing:** click the **Install** button it shows. It adds `timm` to your sd-scripts environment without affecting training.
+
+### Linux
+
+LoRA Studio runs on Linux too (tested on Ubuntu-style desktops; any distro with Python 3.10+ should work). You need **Python 3.10+**, **git**, and an NVIDIA driver for training.
+
+```bash
+git clone https://github.com/cococolacake/lora-studio.git
+cd lora-studio
+./install.sh                 # one time
+./lora-studio.sh             # start it
+./create-desktop-entry.sh    # optional: adds it to your app menu
+```
+
+- **The app window** needs GTK or Qt. `install.sh` uses your system's GTK if it's there (`sudo apt install python3-gi gir1.2-webkit2-4.1` on Debian/Ubuntu); otherwise it installs Qt with pip. Pick one yourself with `./install.sh --gtk` or `./install.sh --qt`. If neither works, LoRA Studio simply opens in your web browser (`./lora-studio.sh --browser` does that on purpose).
+- **Your data** (settings, runs, presets, themes) lives in `~/.local/share/lora-studio`. If you used an older version that made `~/.lora_studio`, that folder keeps being used.
+- **Notifications** use `notify-send` (`sudo apt install libnotify-bin` if it's missing).
+- **SwarmUI** starts with its `launch-linux.sh`, and **ComfyUI** needs a git install (the Windows portable build won't run on Linux). Their output goes to `logs/` in the data folder, since there's no console window.
+- **pixiv's Get token** opens your terminal app. If none is found, LoRA Studio shows the command to run yourself.
+- **sd-scripts:** a fresh install uses `python3.10` or `python3.11` if you have one (sd-scripts recommends 3.10). On Debian/Ubuntu you may need `sudo apt install python3.10-venv`.
+- **Updating:** `git pull` in the folder (or unzip the new version over it, keeping `.venv`), then run `./install.sh` again.
 
 ---
 
@@ -118,7 +140,7 @@ Dataset → **New dataset** → **Install gallery-dl** (one time). Pick a site a
 - **pixiv:** press **Get token** and follow the window that opens.
 - **Other logged-in sites:** gallery-dl can use your browser's cookies; Firefox works best.
 
-Downloads go to `%APPDATA%\LoRA Studio\downloads` unless you pick a folder.
+Downloads go to the `downloads` folder in LoRA Studio's data folder (`%APPDATA%\LoRA Studio` on Windows, `~/.local/share/lora-studio` on Linux) unless you pick a folder.
 
 ### Backup & restore
 Settings → **Folders & backup** → **Create backup** saves your settings, presets, themes and run history in one zip. Your datasets, trained LoRAs and site logins aren't included.
@@ -142,6 +164,7 @@ The app is plain Python plus HTML/CSS/JS with no build step.
 
 ```
 main.py                 starts the window (or --browser for a normal browser tab)
+install.sh, lora-studio.sh, create-desktop-entry.sh   the Linux versions of the .bat files
 studio/                 Python backend
   api.py                every function the UI can call
   sdscripts.py          find / install / update / switch / roll back sd-scripts; read a script's options
@@ -156,7 +179,7 @@ studio/                 Python backend
   gallerydl.py          gallery-dl: install, site logins, downloads
   importer.py           downloaded folder → clean numbered, captioned dataset
   estimate.py           training-time estimates from past runs
-  gpu.py / notify.py    nvidia-smi stats / Windows notifications
+  gpu.py / notify.py    nvidia-smi stats / desktop notifications
   backup.py             backup & restore of LoRA Studio's own data
   comfy.py              ComfyUI: inside SwarmUI or a separate install
   workers/              tagger + duplicate finder; these run inside the sd-scripts venv

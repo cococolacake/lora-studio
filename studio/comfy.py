@@ -5,12 +5,13 @@ mode "standalone": your own ComfyUI (portable or git) with its own address, laun
 """
 import json
 import os
+import shutil
 import subprocess
 import urllib.error
 import urllib.request
 from pathlib import Path
 
-from . import settings, swarm
+from . import paths, settings, swarm
 
 DEFAULT_URL = "http://127.0.0.1:8188"
 
@@ -93,14 +94,20 @@ def launch():
                              creationflags=subprocess.CREATE_NEW_CONSOLE, startupinfo=si)
             return True
     # git installs: use its venv if there is one
-    py = "python"
+    py = "python" if os.name == "nt" else (shutil.which("python3") or "python")
     for cand in (root / "venv" / "Scripts" / "python.exe", root / ".venv" / "Scripts" / "python.exe",
                  root / "venv" / "bin" / "python", root / ".venv" / "bin" / "python"):
         if cand.exists():
             py = str(cand)
             break
-    kw = {"creationflags": subprocess.CREATE_NEW_CONSOLE} if os.name == "nt" else {"start_new_session": True}
+    if os.name == "nt":
+        kw = {"creationflags": subprocess.CREATE_NEW_CONSOLE}
+    else:  # no console window on Linux, so keep ComfyUI's output in a log file
+        log = open(paths.sub("logs") / "comfyui.log", "w", encoding="utf-8")
+        kw = {"start_new_session": True, "stdout": log, "stderr": subprocess.STDOUT, "stdin": subprocess.DEVNULL}
     subprocess.Popen([py, "main.py"], cwd=str(root), **kw)
+    if "stdout" in kw:
+        kw["stdout"].close()  # ComfyUI keeps its own copy of the file handle
     return True
 
 

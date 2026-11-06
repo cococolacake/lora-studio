@@ -1,7 +1,8 @@
 """Where LoRA Studio keeps its own files (settings, runs, presets, themes).
 
 Windows: %APPDATA%\\LoRA Studio
-Other:   ~/.lora_studio
+Linux:   ~/.local/share/lora-studio  (or $XDG_DATA_HOME/lora-studio)
+         An existing ~/.lora_studio folder keeps being used, so nothing gets lost.
 Override with the LORA_STUDIO_HOME environment variable (handy for testing).
 """
 import os
@@ -18,7 +19,12 @@ def data_dir() -> Path:
     elif os.name == "nt":
         base = Path(os.environ.get("APPDATA", Path.home())) / "LoRA Studio"
     else:
-        base = Path.home() / ".lora_studio"
+        legacy = Path.home() / ".lora_studio"
+        if legacy.is_dir():
+            base = legacy
+        else:
+            xdg = os.environ.get("XDG_DATA_HOME") or str(Path.home() / ".local" / "share")
+            base = Path(xdg) / "lora-studio"
     base.mkdir(parents=True, exist_ok=True)
     return base
 

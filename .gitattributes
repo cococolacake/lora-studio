@@ -1,4 +1,6 @@
 # Windows batch files must keep Windows line endings or they misbehave.
 *.bat text eol=crlf
 *.cmd text eol=crlf
+# Linux shell scripts must keep Linux line endings or they won't run.
+*.sh text eol=lf
 * text=auto

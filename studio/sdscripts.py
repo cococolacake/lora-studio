@@ -1,6 +1,7 @@
 """Find, inspect, install and update a kohya-ss/sd-scripts checkout."""
 import os
 import re
+import shutil
 import sys
 from pathlib import Path
 
@@ -247,6 +248,17 @@ def rollback(task, install_deps=True):
     task.log(f"\nRolled back to {prev['commit'][:8]} on {prev['branch']}.")
 
 
+def _default_python():
+    """Python to build sd-scripts' venv with: 3.10 (recommended) or 3.11 if installed."""
+    if os.name == "nt":
+        return ["py", "-3.10"]
+    for name in ("python3.10", "python3.11"):
+        exe = shutil.which(name)
+        if exe:
+            return [exe]
+    return [sys.executable]
+
+
 def install(task, dest, branch="main", python_cmd="", torch_index=""):
     """Clone sd-scripts and build its venv (torch + requirements + accelerate)."""
     dest = Path(dest)
@@ -263,10 +275,12 @@ def install(task, dest, branch="main", python_cmd="", torch_index=""):
             task.finish(False)
             return
     if not venv_python(dest):
-        py = python_cmd.split() if python_cmd else (["py", "-3.10"] if os.name == "nt" else [sys.executable])
+        py = python_cmd.split() if python_cmd else _default_python()
         task.log("\nCreating venv...")
         if task.stream([*py, "-m", "venv", "venv"], cwd=dest) != 0:
             task.log("Could not create the venv. Install Python 3.10 (sd-scripts' recommended version) and retry.")
+            if os.name != "nt":
+                task.log("On Debian/Ubuntu you may also need the venv package, e.g.  sudo apt install python3.10-venv")
             task.finish(False)
             return
     vpy = venv_python(dest)

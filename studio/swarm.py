@@ -12,7 +12,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from . import settings, trainer
+from . import paths, settings, trainer
 from .util import Task, read_json, safe_name, write_json
 
 DEFAULT_URL = "http://127.0.0.1:7801"
@@ -112,8 +112,14 @@ def launch():
         subprocess.Popen(["cmd", "/c", str(bat), "--launch_mode", "none"], cwd=str(d),
                          creationflags=subprocess.CREATE_NEW_CONSOLE, startupinfo=si)
     else:
-        subprocess.Popen(["bash", str(d / "launch-linux.sh"), "--launch_mode", "none"], cwd=str(d),
-                         start_new_session=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        script = d / "launch-linux.sh"
+        if not script.exists():
+            raise RuntimeError("launch-linux.sh wasn't found in your SwarmUI folder.")
+        # No console window on Linux, so SwarmUI's output goes to a log file you can open if it won't start.
+        log = open(paths.sub("logs") / "swarmui.log", "w", encoding="utf-8")
+        subprocess.Popen(["bash", str(script), "--launch_mode", "none"], cwd=str(d),
+                         start_new_session=True, stdout=log, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL)
+        log.close()  # SwarmUI keeps its own copy of the file handle
     return True
 
 
