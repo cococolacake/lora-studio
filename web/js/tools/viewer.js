@@ -104,7 +104,7 @@ export function viewer(ctx, params, root) {
       view === "dataset" && deleted ? btn(`Deleted (${deleted})`, { icon: "trash", size: "sm", kind: "ghost", onclick: () => { view = "_deleted"; load(); } }) : null,
       view === "_deleted" && data.images.length ? btn("Restore all", { icon: "rollback", size: "sm", onclick: async () => {
         await api.ds_restore(data.images.map((i) => i.path)); toast("Restored", `${data.images.length} images`, "good", "rollback"); view = "dataset"; load();
-      } }) : nul,
+      } }) : null,
       view === "_deleted" && data.images.length ? btn("Delete permanently", { icon: "trash", size: "sm", kind: "danger", onclick: async () => {
         if (!(await confirmBox(`Delete ${data.images.length} images for good?`, "This empties the _deleted folder, captions included. It can't be undone.", "Delete permanently", true))) return;
         const r = await api.ds_empty_bin(folder, "_deleted"); toast("Deleted", `${r.deleted} images removed for good`, "good", "trash"); view = "dataset"; load();
