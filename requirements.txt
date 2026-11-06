@@ -1,0 +1,5 @@
+# LoRA Studio's own (small) dependencies.
+# Training itself runs inside your sd-scripts venv, so torch etc. are NOT needed here.
+pywebview>=5.0
+Pillow>=10.0
+tomli>=2.0; python_version < "3.11"

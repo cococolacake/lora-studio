@@ -1,0 +1,93 @@
+/* ============================================================
+   Theme tokens. A theme = a base (light/dark) + an accent.
+   To make your own accent, copy one [data-accent] block below.
+   ============================================================ */
+
+:root {
+  --font: "Segoe UI Variable Text", "Segoe UI", "Inter", system-ui, -apple-system, sans-serif;
+  --font-display: "Segoe UI Variable Display", "Segoe UI", "Inter Display", "Inter", system-ui, sans-serif;
+  --mono: "Cascadia Code", "Cascadia Mono", Consolas, "DejaVu Sans Mono", monospace;
+
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 20px;
+  --r-xl: 26px;
+  --pill: 999px;
+
+  --rail-w: 76px;
+  --side-w: 248px;
+}
+
+/* ---------- light base: true neutral white / grey ---------- */
+:root, [data-base="light"] {
+  --bg: #F2F2F3;
+  --surface: #FFFFFF;
+  --surface-2: #F6F6F7;
+  --surface-3: #ECECEE;
+  --side: #FAFAFA;
+  --line: rgba(17, 17, 20, 0.07);
+  --line-strong: rgba(17, 17, 20, 0.12);
+  --text: #17171A;
+  --text-2: #55555D;
+  --text-3: #9C9CA5;
+  --rail: #111113;
+  --rail-2: #26262A;
+  --rail-icon: #8E8E96;
+  --log-bg: #FAFAFA;
+  --shadow-sm: 0 1px 2px rgba(15, 15, 20, 0.04), 0 2px 6px rgba(15, 15, 20, 0.04);
+  --shadow-md: 0 1px 2px rgba(15, 15, 20, 0.04), 0 6px 20px rgba(15, 15, 20, 0.06);
+  --shadow-lg: 0 2px 6px rgba(15, 15, 20, 0.06), 0 18px 48px rgba(15, 15, 20, 0.12);
+  --highlight: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --good: #4FB477; --good-soft: #E6F5EC;
+  --warn: #E9A23B; --warn-soft: #FCF1DF;
+  --bad: #E5626A;  --bad-soft: #FCE7E8;
+  --info: #6C8DF5; --info-soft: #E8EDFD;
+  color-scheme: light;
+}
+
+/* ---------- dark base: dark grey / black ---------- */
+[data-base="dark"] {
+  --bg: #0F0F11;
+  --surface: #19191C;
+  --surface-2: #212125;
+  --surface-3: #2A2A2F;
+  --side: #141417;
+  --line: rgba(255, 255, 255, 0.06);
+  --line-strong: rgba(255, 255, 255, 0.11);
+  --text: #F2F2F4;
+  --text-2: #A4A4AD;
+  --text-3: #66666F;
+  --rail: #08080A;
+  --rail-2: #232327;
+  --rail-icon: #77777F;
+  --log-bg: #131316;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.4), 0 24px 60px rgba(0, 0, 0, 0.5);
+  --highlight: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --good: #6CCB8F; --good-soft: rgba(108, 203, 143, 0.14);
+  --warn: #F0B860; --warn-soft: rgba(240, 184, 96, 0.14);
+  --bad: #F07C83;  --bad-soft: rgba(240, 124, 131, 0.14);
+  --info: #8BA6FA; --info-soft: rgba(139, 166, 250, 0.14);
+  color-scheme: dark;
+}
+
+/* ---------- accents: pastels sharing one brightness ----------
+   --accent       the colour itself
+   --accent-ink   text/icons placed ON the accent
+   --accent-soft  a whisper of it for backgrounds
+   --accent-text  readable accent-coloured text on the page   */
+[data-accent="periwinkle"] { --accent: #9381FF; --accent-ink: #FFFFFF; --accent-soft: #EEEBFF; --accent-text: #6A55F0; }
+[data-accent="cobalt"]     { --accent: #2F6BFF; --accent-ink: #FFFFFF; --accent-soft: #E4ECFF; --accent-text: #2459E0; }
+[data-accent="sky"]        { --accent: #7DB7FF; --accent-ink: #0E2C55; --accent-soft: #E7F1FF; --accent-text: #2E78D6; }
+[data-accent="mint"]       { --accent: #75C97F; --accent-ink: #103817; --accent-soft: #E6F6E8; --accent-text: #2F9440; }
+[data-accent="sage"]       { --accent: #A3B59F; --accent-ink: #1F2C1C; --accent-soft: #EEF2ED; --accent-text: #5E7759; }
+[data-accent="peach"]      { --accent: #FFB48A; --accent-ink: #55260B; --accent-soft: #FFF0E7; --accent-text: #D9692B; }
+[data-accent="rose"]       { --accent: #FF94BE; --accent-ink: #571233; --accent-soft: #FFEAF2; --accent-text: #D6457F; }
+[data-accent="butter"]     { --accent: #F2D46B; --accent-ink: #463500; --accent-soft: #FBF5DC; --accent-text: #A88500; }
+[data-accent="lilac"]      { --accent: #C9A4FF; --accent-ink: #36145F; --accent-soft: #F4ECFF; --accent-text: #8A4FE0; }
+[data-accent="mono"]       { --accent: #17171A; --accent-ink: #FFFFFF; --accent-soft: #EDEDEF; --accent-text: #17171A; }
+
+/* in dark mode the soft tint becomes a translucent glow */
+[data-base="dark"] { --accent-soft: color-mix(in srgb, var(--accent) 15%, transparent); --accent-text: var(--accent); }
+[data-base="dark"][data-accent="mono"] { --accent: #F2F2F4; --accent-ink: #111113; }

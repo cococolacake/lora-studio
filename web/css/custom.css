@@ -1,0 +1,16 @@
+/* ============================================================
+   Your playground. Anything here overrides the built-in styles.
+
+   Examples (remove the comment markers to try them):
+
+   Rounder cards:
+     .card { border-radius: 28px; }
+
+   A brand-new accent, then pick it by setting "accent": "matcha"
+   in a theme file (Settings → Appearance → Save as theme):
+     [data-accent="matcha"] { --accent: #9CC98A; --accent-ink: #1E3313;
+                              --accent-soft: #EEF6EA; --accent-text: #5E8F4B; }
+
+   Warmer light background:
+     [data-base="light"] { --bg: #F5F3F0; }
+   ============================================================ */
