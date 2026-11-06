@@ -1,6 +1,8 @@
 """Everything the web UI can call. Exposed to JavaScript as window.pywebview.api.<method>
 (and over HTTP by devserver.py when running in a normal browser)."""
 import base64
+import os
+import sys
 import mimetypes
 from pathlib import Path
 
@@ -26,6 +28,7 @@ class Api:
     def bootstrap(self):
         return {
             "version": __version__,
+            "platform": "windows" if os.name == "nt" else ("mac" if sys.platform == "darwin" else "linux"),
             "settings": settings.load(),
             "themes": settings.list_themes(),
             "sd": sdscripts.status(),
@@ -391,7 +394,7 @@ class Api:
     def test_notification(self):
         ok = notify.toast("LoRA Studio", "Notifications are working (•ᴗ-)")
         if not ok:
-            raise RuntimeError("Notifications only work in the Windows app (and when turned on).")
+            raise RuntimeError(notify.unavailable_reason())
         return True
 
     # ---- dataset bins ---------------------------------------------------------------

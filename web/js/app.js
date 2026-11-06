@@ -68,6 +68,7 @@ const ctx = {
 
   async refreshBoot() {
     ctx.boot = await api.bootstrap();
+    document.documentElement.dataset.platform = ctx.boot.platform || "windows";
     setNative(ctx.boot.native);
     setMedia(ctx.boot.media);
     applyTheme(ctx.boot.settings.theme);

@@ -147,7 +147,7 @@ function setup(ctx, root) {
       h("div.field", h("label", "Install into (an empty folder)"), pathInput("", (v) => { inst.dest = v; }, { folder: true, placeholder: "C:/AI/sd-scripts" })),
       h("div.grid.c2",
         h("div.field", h("label", "Branch"), h("input.input", { value: "main", onchange: (e) => { inst.branch = e.target.value.trim() || "main"; } })),
-        h("div.field", h("label", "Python to use"), h("input.input.mono", { placeholder: "py -3.10", onchange: (e) => { inst.python = e.target.value.trim(); } }))),
+        h("div.field", h("label", "Python to use"), h("input.input.mono", { placeholder: ctx.boot.platform === "windows" ? "py -3.10" : "python3.10", onchange: (e) => { inst.python = e.target.value.trim(); } }))),
       h("div.field", h("label", "PyTorch download index"), h("input.input.mono", { value: inst.torch, onchange: (e) => { inst.torch = e.target.value.trim(); } }),
         h("div.help", "cu128 suits RTX 20/30/40/50-series cards. Use cu126 or cu124 for older drivers.")),
       h("div", btn("Install", { icon: "download", onclick: async (e) => {

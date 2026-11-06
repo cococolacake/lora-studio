@@ -16,6 +16,7 @@ from studio.api import Api
 
 
 ICON = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web", "assets", "icon.ico")
+ICON_PNG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web", "assets", "icon-512.png")
 
 
 def _windows_icon(title):
@@ -61,15 +62,7 @@ def main():
     if args.browser:
         from studio.devserver import serve
         server, url = serve(api, args.port, background=True)
-        print(f"LoRA Studio: {url}  (Ctrl+C to quit)")
-        webbrowser.open(url)
-        try:
-            import threading
-            threading.Event().wait()   # the server already runs in the background
-        except KeyboardInterrupt:
-            pass
-        finally:
-            api._trainer.stop_current()
+        _browser_mode(api, url)
         return
 
     # Serve the UI ourselves (no caching, so updates always show up) on a fixed port,
@@ -85,11 +78,49 @@ def main():
         width=1400, height=900, min_size=(1100, 700), background_color="#F4F4F5",
     )
     api._attach_window(window)
+    start = {"debug": args.debug, "private_mode": False}
+    shown = []
+    window.events.shown += lambda: shown.append(True)
     if os.name == "nt":
         window.events.shown += lambda: _windows_icon("LoRA Studio")
-    webview.start(debug=args.debug, private_mode=False)
+    else:
+        start["icon"] = ICON_PNG   # Linux window/taskbar icon (GTK and Qt)
+        # Window class "lora-studio", so the taskbar matches the app-menu entry (create-desktop-entry.sh).
+        sys.argv[0] = "lora-studio"
+        try:
+            from gi.repository import GLib
+            GLib.set_prgname("lora-studio")
+        except Exception:
+            pass
+    try:
+        try:
+            webview.start(**start)
+        except TypeError:          # older pywebview without icon=
+            start.pop("icon", None)
+            webview.start(**start)
+    except Exception as e:         # e.g. Linux without GTK or Qt installed
+        if shown:                  # the window did open, so this is a real error
+            raise
+        print(f"Couldn't open the app window ({e}).\n"
+              "On Linux this usually means GTK or Qt isn't installed; see the README.\n"
+              "Opening in your browser instead.")
+        api._window = None         # browser mode: no native file dialogs
+        _browser_mode(api, url)
+        return
     # Window closed: don't leave a training process running in the background.
     api._trainer.stop_current()
+
+
+def _browser_mode(api, url):
+    print(f"LoRA Studio: {url}  (Ctrl+C to quit)")
+    webbrowser.open(url)
+    try:
+        import threading
+        threading.Event().wait()   # the server already runs in the background
+    except KeyboardInterrupt:
+        pass
+    finally:
+        api._trainer.stop_current()
 
 
 if __name__ == "__main__":
