@@ -5,7 +5,7 @@ from pathlib import Path
 
 from . import paths
 
-SKIP = {"cache", "backups", "downloads"}
+SKIP = {"cache", "backups", "downloads", "logs"}
 SECRETS = {"gallery-dl.json"}   # site logins stay on this PC
 
 

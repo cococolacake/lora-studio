@@ -142,8 +142,10 @@ function training(ctx, root) {
         h("div.field", h("label", "accelerate arguments"), h("input.input.mono", { value: s.accelerate_args, onchange: (e) => saveKey("accelerate_args")(e.target.value) }),
           h("div.help", "Inserted between “accelerate launch” and the script. --num_cpu_threads_per_process 4 is a good default.")))),
       card({ title: "Notifications" }, h("div.row",
-        h("div", { style: { flex: 1 } }, switchEl(s.notify_on_finish !== false, saveKey("notify_on_finish"), "Windows notification when a training finishes or fails"),
-          h("div.help", { style: { marginTop: "6px" } }, "Shows up in the corner of your screen (sent by “Windows PowerShell”, which is how Windows lets small apps do this).")),
+        h("div", { style: { flex: 1 } }, switchEl(s.notify_on_finish !== false, saveKey("notify_on_finish"), "Notification when a training finishes or fails"),
+          h("p.small.muted", { style: { margin: "6px 0 0" } }, ctx.boot.platform === "windows"
+            ? "Shows up in the corner of your screen (sent by “Windows PowerShell”, which is how Windows lets small apps do this)."
+            : "Shows up as a desktop notification (uses notify-send, which most Linux desktops have).")),
         btn("Send a test", { icon: "bell", onclick: () => api.test_notification().then(() => toast("Sent", "Check the corner of your screen.", "", "bell")).catch(toastError) }))),
       card({ title: "Installs" }, h("div.field", h("label", "PyTorch download index (for fresh installs)"),
         h("input.input.mono", { value: s.torch_index_url, onchange: (e) => saveKey("torch_index_url")(e.target.value) })))));
@@ -164,7 +166,7 @@ function backupCard(ctx) {
   let restorePath = "";
   const last = h("div");
   return card({ title: "Backup & restore" }, h("div.stack",
-    h("p.small.muted", { style: { margin: 0 } }, "Your settings, presets, themes and run history in one .zip, handy before reinstalling Windows or moving to a new PC. Your datasets and trained LoRAs aren't included (they're your own files), and neither are site logins."),
+    h("p.small.muted", { style: { margin: 0 } }, "Your settings, presets, themes and run history in one .zip, handy before reinstalling your system or moving to a new PC. Your datasets and trained LoRAs aren't included (they're your own files), and neither are site logins."),
     h("div.row",
       btn("Create backup", { icon: "save", kind: "primary", onclick: async () => {
         try {

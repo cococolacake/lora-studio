@@ -41,8 +41,14 @@ export function rangeEl(value, min, max, step, oninput) {
   return r;
 }
 
+// Example paths are written Windows-style; show Linux-style ones on Linux.
+export function examplePath(p) {
+  if (document.documentElement.dataset.platform === "windows" || !p.startsWith("C:/")) return p;
+  return p.replace(/^C:\/Users\/you\//, "/home/you/").replace(/^C:\/(AI|datasets)\//, "/home/you/$1/").replace(/^C:\//, "/home/you/");
+}
+
 export function pathInput(value, onchange, { folder = false, kind = "any", placeholder = "" } = {}) {
-  const inp = h("input.input.mono", { value: value ?? "", placeholder: placeholder || (folder ? "C:/path/to/folder" : "C:/path/to/file"),
+  const inp = h("input.input.mono", { value: value ?? "", placeholder: examplePath(placeholder || (folder ? "C:/path/to/folder" : "C:/path/to/file")),
     onchange: (e) => onchange(e.target.value.trim()) });
   const browse = btn("", { icon: "folder", title: "Browse", onclick: async () => {
     try {

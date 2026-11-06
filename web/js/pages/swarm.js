@@ -5,6 +5,8 @@ import { icon } from "../icons.js";
 import { seg, pathInput } from "../components.js";
 import { metaModal } from "../runextras.js";
 
+const isWin = (ctx) => ctx.boot.platform === "windows";
+
 export default {
   id: "swarm", label: "SwarmUI & ComfyUI", icon: "hive",
 
@@ -134,7 +136,7 @@ function swarmTab(ctx, body) {
       h("p.small.muted", { style: { margin: 0 } }, "The tag editor suggests tags from a CSV list, the same files SwarmUI uses for its autocomplete."),
       ac.found.length ? h("select.select", { onchange: (e) => save({ autocomplete_csv: e.target.value }) },
         ac.found.map((f) => h("option", { value: f, selected: f === ac.current }, f.split("/").pop()))) : null,
-      pathInput(ctx.boot.settings.autocomplete_csv || "", (v) => save({ autocomplete_csv: v }), { kind: "any", placeholder: ac.current || "C:/path/to/tags.csv" }),
+      pathInput(ctx.boot.settings.autocomplete_csv || "", (v) => save({ autocomplete_csv: v }), { kind: "any", placeholder: ac.current || (isWin(ctx) ? "C:/path/to/tags.csv" : "/home/you/path/to/tags.csv") }),
       h("div.small.faint", ac.current ? `Using ${ac.current.split("/").pop()}` : "No list found yet. Set your SwarmUI folder, or pick a CSV.")));
     return st;
   }
@@ -145,8 +147,8 @@ function swarmTab(ctx, body) {
     embed.el,
     libraryCard(ctx, () => api.swarm_library(), "SwarmUI"),
     card({ title: "Setup" }, h("div.stack",
-      h("div.field", h("label", "SwarmUI folder"), pathInput(s.swarm_dir, (v) => save({ swarm_dir: v }), { folder: true, placeholder: "C:/Users/you/Desktop/Work/SwarmUI" }),
-        h("div.help", "The folder with launch-windows.bat in it.")),
+      h("div.field", h("label", "SwarmUI folder"), pathInput(s.swarm_dir, (v) => save({ swarm_dir: v }), { folder: true, placeholder: isWin(ctx) ? "C:/Users/you/Desktop/Work/SwarmUI" : "/home/you/SwarmUI" }),
+        h("div.help", isWin(ctx) ? "The folder with launch-windows.bat in it." : "The folder with launch-linux.sh in it. Its output is saved to logs/swarmui.log in LoRA Studio's data folder.")),
       h("div.grid.c2",
         h("div.field", h("label", "Address"), h("input.input.mono", { value: s.swarm_url || "http://127.0.0.1:7801", onchange: (e) => save({ swarm_url: e.target.value.trim() }) }),
           h("div.help", "7801 is SwarmUI's default port.")),
@@ -187,8 +189,8 @@ function comfyTab(ctx, body) {
       mode === "swarm"
         ? h("p.small.muted", { style: { margin: 0 } }, "SwarmUI runs ComfyUI behind the scenes. This shows that same ComfyUI, so it shares SwarmUI's models and LoRA folder, and starting SwarmUI starts it too.")
         : [
-          h("div.field", h("label", "ComfyUI folder"), pathInput(s.comfy_dir, (v) => save({ comfy_dir: v }), { folder: true, placeholder: "C:/AI/ComfyUI_windows_portable" }),
-            h("div.help", "The portable folder (with run_nvidia_gpu.bat) or a git install (with main.py).")),
+          h("div.field", h("label", "ComfyUI folder"), pathInput(s.comfy_dir, (v) => save({ comfy_dir: v }), { folder: true, placeholder: isWin(ctx) ? "C:/AI/ComfyUI_windows_portable" : "/home/you/ComfyUI" }),
+            h("div.help", isWin(ctx) ? "The portable folder (with run_nvidia_gpu.bat) or a git install (with main.py)." : "Your ComfyUI git install (the folder with main.py). Its output is saved to logs/comfyui.log in LoRA Studio's data folder.")),
           h("div.grid.c2",
             h("div.field", h("label", "Address"), h("input.input.mono", { value: s.comfy_url || "http://127.0.0.1:8188", onchange: (e) => save({ comfy_url: e.target.value.trim() }) }),
               h("div.help", "8188 is ComfyUI's default port.")),

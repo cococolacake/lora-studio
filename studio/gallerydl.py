@@ -4,6 +4,8 @@ gallery-dl is installed into LoRA Studio's own environment (not sd-scripts'). Si
 <data folder>/gallery-dl.json, which is passed with --config; your own gallery-dl config still applies too.
 """
 import re
+import shlex
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -101,9 +103,36 @@ def pixiv_token_window():
     cmd = [_py(), "-m", "gallery_dl", "oauth:pixiv"]
     if sys.platform == "win32":
         subprocess.Popen(["cmd", "/k", *cmd], creationflags=subprocess.CREATE_NEW_CONSOLE)
-    else:
-        subprocess.Popen(cmd)
+        return True
+    term = open_terminal(cmd)
+    if not term:
+        raise RuntimeError("Couldn't find a terminal app to open. Run this in a terminal instead, "
+                           "then paste the token here:  " + " ".join(shlex.quote(c) for c in cmd))
     return True
+
+
+# Terminal apps to try on Linux, with how each wants the command passed.
+TERMINALS = [
+    ("x-terminal-emulator", ["-e"]),
+    ("gnome-terminal", ["--"]),
+    ("konsole", ["-e"]),
+    ("xfce4-terminal", ["-x"]),
+    ("kitty", []),
+    ("alacritty", ["-e"]),
+    ("xterm", ["-e"]),
+]
+
+
+def open_terminal(cmd):
+    """Run cmd in a new terminal window, keeping it open afterwards so the output can be read."""
+    keep_open = ["bash", "-c", " ".join(shlex.quote(c) for c in cmd) + "; echo; read -p 'Press Enter to close.'"]
+    for name, flag in TERMINALS:
+        exe = shutil.which(name)
+        if exe:
+            subprocess.Popen([exe, *flag, *keep_open], start_new_session=True,
+                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            return name
+    return None
 
 
 def build_url(site, tags):
