@@ -36,6 +36,10 @@ def _clock_to_s(text):
     return s
 
 
+
+# sd-scripts options that turn on or schedule sample images.
+SAMPLE_KEYS = ("sample_prompts", "sample_every_n_epochs", "sample_every_n_steps", "sample_at_first", "sample_sampler")
+
 class LogParser:
     """Turns sd-scripts output into structured progress."""
 
@@ -191,6 +195,12 @@ class Trainer:
         sample_prompts = None
         scfg = job.get("samples") or {}
         accepts = {a["key"] for a in job.get("schema_args") or []}
+        # The "Make previews while training" switch decides about samples. Drop any sample settings
+        # that came in some other way (e.g. an imported .toml or "All options"), so that "off" means off
+        # and "on" uses exactly what the Sample images card says.
+        for k in SAMPLE_KEYS:
+            if k != "sample_sampler" or not scfg.get("enabled"):
+                cfg.pop(k, None)
         if scfg.get("enabled") and (not accepts or "sample_prompts" in accepts):
             trig = job.get("trigger") or (job.get("lora_info") or {}).get("trigger") or ""
             lines = samples.prompt_lines(scfg, trig, flow_shift=not accepts or "discrete_flow_shift" in accepts)
