@@ -256,3 +256,25 @@ def test_git_update_pulls_and_respects_local_changes(tmp_path, monkeypatch):
     (app / "main.py").write_text("my local edit")
     with pytest.raises(RuntimeError, match="changes of its own"):
         selfupdate.update(Task("u"))
+
+
+# ---- every run gets its own output folder --------------------------------------------------------
+
+def test_each_run_gets_its_own_folder(tmp_path, monkeypatch):
+    from studio import settings, trainer
+    monkeypatch.setattr(settings, "get", lambda k, *a: True if k == "run_folders" else None)
+    t = trainer.Trainer.__new__(trainer.Trainer)
+    out = tmp_path / "model"
+    def start(cfg):
+        run = {"id": "x", "config": dict(cfg)}
+        d = tmp_path / "rundir"; d.mkdir(exist_ok=True)
+        monkeypatch.setattr(trainer, "save_run", lambda r: None)
+        t._own_folder(run, d)
+        Path(run["config"]["output_dir"], "lora.safetensors").write_text("x")   # pretend it trained
+        return run["config"]["output_dir"]
+    a = start({"output_dir": str(out), "output_name": "shion_v1"})
+    b = start({"output_dir": str(out), "output_name": "shion_v1"})          # same name, queued after
+    c = start({"output_dir": b, "output_name": "shion_v1"})                 # re-run of the second one
+    d = start({"output_dir": str(out), "output_name": "bad:name"})
+    assert [Path(x).name for x in (a, b, c, d)] == ["shion_v1", "shion_v1 (2)", "shion_v1 (3)", "bad_name"]
+    assert all(Path(x).parent == out for x in (a, b, c, d))

@@ -65,6 +65,14 @@ def check(job):
         if not parent.exists():
             err(f"The output folder {out_dir} can't be created (its drive or parent folder doesn't exist).")
 
+    # Without per-run folders, an existing LoRA with the same name would be overwritten.
+    from . import settings
+    if out_dir and name and not settings.get("run_folders"):
+        folder = Path(str(out_dir)).expanduser()
+        if folder.is_dir() and any(folder.glob(f"{name}*.safetensors")):
+            warn(f"{out_dir} already has “{name}” LoRA files; this run would overwrite them. "
+                 "Change the output name, or turn on “Give each run its own folder” in Settings → Training.")
+
     subsets = (job.get("dataset") or {}).get("subsets") or []
     folders = [s for s in subsets if str(s.get("image_dir") or "").strip()]
     if not folders:
