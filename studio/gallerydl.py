@@ -163,6 +163,7 @@ def download(task, url, dest, limit=None, images_only=True):
     cmd.append(url)
     total = int(limit) if limit else None
     count = {"n": 0}
+    files = []                          # every image gallery-dl saved (or already had) for this link
     file_re = re.compile(r"\.(jpe?g|png|webp|bmp|gif)\s*$", re.I)
 
     def on_line(line):
@@ -170,6 +171,7 @@ def download(task, url, dest, limit=None, images_only=True):
         if s.startswith("#"):          # already downloaded before
             s = s[1:].strip()
         if file_re.search(s) and ("/" in s or "\\" in s):
+            files.append(s)
             count["n"] += 1
             task.progress = {"n": count["n"], "total": total or count["n"], "msg": f"Downloaded {count['n']}{f' of {total}' if total else ''}"}
             return True
@@ -186,7 +188,7 @@ def download(task, url, dest, limit=None, images_only=True):
     moved = tidy_metadata(dest)
     if moved:
         task.log(f"Moved {moved} metadata files (tags used for captions) into the {METADATA} folder.")
-    return {"downloaded": count["n"], "dest": str(dest).replace("\\", "/")}
+    return {"downloaded": count["n"], "dest": str(dest).replace("\\", "/"), "files": files}
 
 
 def tidy_metadata(folder):
@@ -207,7 +209,19 @@ def tidy_metadata(folder):
     return n
 
 
+def name_from_url(url):
+    """A readable folder name for a link, e.g. pixiv.net/en/users/123/artworks -> "pixiv users 123"."""
+    from urllib.parse import urlparse
+    u = urlparse(url.strip())
+    site = (u.hostname or "download").replace("www.", "").split(".")[0]
+    skip = {"en", "ja", "artworks", "illustrations", "posts", "index.php", "page"}
+    parts = [x for x in u.path.split("/") if x and x not in skip][:3]
+    return " ".join([site] + parts) or "download"
+
+
 def default_download_dir(name):
+    if "://" in name:
+        name = name_from_url(name)
     safe = re.sub(r"[^\w\- ]+", "_", name).strip() or "download"
     return str(paths.sub("downloads") / safe).replace("\\", "/")
 
