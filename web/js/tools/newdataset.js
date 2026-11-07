@@ -98,7 +98,7 @@ export function newDataset(ctx, params, root) {
       if (download) {
         url = o.site === "url" ? o.url.trim() : await api.gdl_build_url(o.site, o.tags);
         if (!url) return toast("Enter tags or a link first", "", "", "info");
-        downloadDir ||= await api.gdl_default_dir(o.site === "url" ? "download" : `${o.site} ${o.tags}`);
+        downloadDir ||= await api.gdl_default_dir(o.site === "url" ? url : `${o.site} ${o.tags}`);
       } else if (!o.folder) return toast("Choose the folder to import", "", "", "folder");
     } catch (e) { return toastError(e); }
     go.disabled = true;
@@ -110,6 +110,8 @@ export function newDataset(ctx, params, root) {
       if (t?.status !== "done") { clear(resultSlot, card({ title: "That didn't work" }, h("pre.code", (t?.lines || []).slice(-14).join("\n")))); go.disabled = false; return; }
       const r = t.result;
       setFolder(r.dest);
+      o.folder = ""; o.dest = "";        // start the next dataset with fresh folders, so downloads never mix
+      drawSource(); drawDataset();
       if (o.useForTrain && ctx.draft?.dataset) {
         ctx.draft.dataset.subsets = [{ image_dir: r.dest, num_repeats: ctx.draft.dataset.subsets?.[0]?.num_repeats || 2 }];
         if (o.trigger) ctx.draft.lora_info = { ...(ctx.draft.lora_info || {}), trigger: o.trigger };

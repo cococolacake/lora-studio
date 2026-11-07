@@ -55,10 +55,12 @@ def run(task, p):
         raise RuntimeError("The destination already has images in it. Pick a new or empty folder, "
                            "or the same folder the images are in to build the dataset right there.")
     dest.mkdir(parents=True, exist_ok=True)
-    images = []
-    for f in sorted(src.rglob("*") if p.get("recursive", True) else src.iterdir(), key=lambda f: natural_key(str(f))):
-        if f.is_file() and is_image(f.name) and not (set(f.relative_to(src).parts[:-1]) & SPECIAL_DIRS):
-            images.append(f)
+    images = _only(p, [])
+    if images is None:
+        images = []
+        for f in sorted(src.rglob("*") if p.get("recursive", True) else src.iterdir(), key=lambda f: natural_key(str(f))):
+            if f.is_file() and is_image(f.name) and not (set(f.relative_to(src).parts[:-1]) & SPECIAL_DIRS):
+                images.append(f)
     min_side = int(p.get("min_side") or 0)
     prefix = p.get("prefix", "DATA_")
     trigger = (p.get("trigger") or "").strip()
@@ -98,6 +100,20 @@ def run(task, p):
     return {**stats, "dest": str(dest).replace("\\", "/")}
 
 
+def _only(p, _):
+    """The exact files a download just saved (or already had), if known; else None (= the whole folder)."""
+    files = p.get("files")
+    if files is None:
+        return None
+    out, seen = [], set()
+    for x in files:
+        f = Path(x)
+        if f.is_file() and is_image(f.name) and f.resolve() not in seen:
+            seen.add(f.resolve())
+            out.append(f)
+    return sorted(out, key=lambda f: natural_key(f.name))
+
+
 def _caption_for(f, p):
     """Caption tags for one image, read before it's renamed (metadata is keyed by the original name)."""
     use_meta = p.get("captions", "metadata") == "metadata"
@@ -116,7 +132,17 @@ def _in_place(task, folder, p):
     """Build the dataset inside the folder the images are already in: rename to DATA_1, DATA_2…,
     write captions, and move too-small or broken images into the _deleted bin (nothing is thrown away)."""
     from .dataset_tools import DELETED, unique_dest
-    images = sorted([f for f in folder.iterdir() if f.is_file() and is_image(f.name)], key=lambda f: natural_key(f.name))
+    everything = sorted([f for f in folder.iterdir() if f.is_file() and is_image(f.name)], key=lambda f: natural_key(f.name))
+    images = _only(p, everything)
+    if images is None:
+        images = everything
+    else:
+        others = [f for f in everything if f not in set(images)]
+        if others:   # other downloads live here too: don't mix them into this dataset
+            raise RuntimeError(
+                f"This folder also has {len(others)} images from another download, so the dataset can't be built "
+                "here without mixing them in. Your download is saved; choose a new, empty folder under "
+                "'Save the dataset in' and use 'A folder on this PC' to build it from the download folder.")
     min_side = int(p.get("min_side") or 0)
     prefix = p.get("prefix", "DATA_")
     stats = {"found": len(images), "copied": 0, "too_small": 0, "unreadable": 0, "captioned": 0, "uncaptioned": 0}
@@ -170,13 +196,19 @@ def make_dataset(task, p):
     """The one-button flow: (optionally) download with gallery-dl, then import into a clean dataset."""
     from . import gallerydl
     src = p.get("source")
+    files = None
     if p.get("url"):
+        dl, dest = Path(p["download_dir"]), Path(p["dest"])
+        if dl.exists() and dest.exists() and dl.resolve() == dest.resolve():
+            if any(f.is_file() and is_image(f.name) and f.stem.startswith(p.get("prefix", "DATA_")) for f in dl.iterdir()):
+                raise RuntimeError("That folder already has a finished dataset in it. Choose a new, empty folder "
+                                   "for this download so the two don't get mixed.")
         task.log(f"Downloading {p['url']}")
         res = gallerydl.download(task, p["url"], p["download_dir"], p.get("limit"))
-        src = res["dest"]
+        src, files = res["dest"], res["files"]
     if not src:
         raise RuntimeError("Choose a folder to import, or something to download.")
     task.log("\nBuilding the dataset…")
-    out = run(task, {**p, "source": src})
+    out = run(task, {**p, "source": src, "files": files})
     out["source"] = src
     return out
