@@ -6,6 +6,21 @@ import { argField, datasetEditor, seg, switchEl, checkEl, pathInput } from "../c
 
 const schemaCache = {};
 
+// A new session from a preset: keep every training setting, but start the things that belong
+// to one character (image folders, output name, run name, LoRA title/trigger, resume files) empty.
+function freshFrom(preset, mode) {
+  const p = structuredClone(preset);
+  delete p.schema_args; delete p.preset_name;
+  const args = { ...(p.args || {}) };
+  for (const k of ["output_name", "resume", "network_weights"]) delete args[k];
+  const dataset = p.dataset ? { ...p.dataset } : undefined;
+  if (dataset?.subsets?.length) dataset.subsets = [{ ...dataset.subsets[0], image_dir: "" }];
+  return {
+    ...p, mode: mode || p.mode || "simple", name: "", args: p.args ? args : null, dataset,
+    trigger: "", lora_info: p.lora_info ? { ...p.lora_info, title: "", trigger: "" } : undefined,
+  };
+}
+
 export default {
   id: "train", label: "Train", icon: "wand",
 
@@ -17,6 +32,10 @@ export default {
       return;
     }
     let draft = ctx.draft || {};
+    if (!ctx.draft && !params.job) {
+      const d = await api.preset_default().catch(() => null);
+      if (d) draft = freshFrom(d, "simple");
+    }
     if (params.job) draft = { ...draft, ...params.job, mode: draft.mode || "simple" };
     if (!scripts.some((s) => s.file === draft.script)) {
       draft.script = (scripts.find((s) => s.family === "Anima" && s.kind.startsWith("LoRA")) || scripts.find((s) => s.kind.startsWith("LoRA")) || scripts[0]).file;
@@ -39,9 +58,12 @@ export default {
         ]),
         h("div.sep"),
         h("div.group-label", "Presets"),
+        h("button.side-item", { onclick: newSession, title: "Start a fresh form from your default preset" }, icon("sparkle"),
+          h("span.grow", h("span", "New session"), h("span.sub", presets.find((p) => p.default)?.name ? `from ${presets.find((p) => p.default).name}` : "from blank settings"))),
         presets.map((p) => h("button.side-item", { onclick: () => loadPreset(p.name) }, icon("save"),
-          h("span.grow", h("span", p.name), h("span.sub", p.script || "")))),
+          h("span.grow", h("span", p.name, p.default ? h("span.default-star", { title: "Default preset" }, " ★") : null), h("span.sub", p.script || "")))),
         h("button.side-item.muted", { onclick: savePreset }, icon("plus"), h("span", "Save as preset")),
+        h("button.side-item.muted", { onclick: chooseDefault }, icon("check"), h("span", "Default preset…")),
         h("button.side-item.muted", { onclick: importToml }, icon("download"), h("span", "Import .toml files")));
     };
 
@@ -182,6 +204,46 @@ export default {
       save();
       await load();
       toast("Preset loaded", name, "", "save");
+    }
+
+    async function newSession() {
+      const ok = await modal("Start a new session?", h("p.small.muted", { style: { margin: 0 } },
+        presets.find((p) => p.default)
+          ? `The form is reset to your default preset (${presets.find((p) => p.default).name}). Image folders, the output name, run name, LoRA title and trigger word start empty.`
+          : "The form is reset to the script's own defaults. Tip: pick a default preset under “Default preset…” to start from your favourite settings instead."),
+        [{ label: "Cancel", kind: "ghost", value: false }, { label: "Start new", kind: "primary", value: true }]);
+      if (!ok) return;
+      const d = await api.preset_default().catch(() => null);
+      draft = d ? freshFrom(d, draft.mode) : { mode: draft.mode, script: draft.script, args: null, extra_args: "" };
+      save();
+      await load();
+      toast("New session", d ? `Started from ${d.preset_name || "your default"}` : "Started from blank settings", "good", "sparkle");
+    }
+
+    async function chooseDefault() {
+      let pick = presets.find((p) => p.default)?.name || "";
+      const sel = h("select.select", { onchange: (e) => { pick = e.target.value; } },
+        h("option", { value: "", selected: !pick }, "None (the script's own defaults)"),
+        presets.map((p) => h("option", { value: p.name, selected: p.name === pick }, p.name)));
+      const choice = await modal("Default preset", h("div.stack.sm",
+        h("p.small.muted", { style: { margin: 0 } }, "New sessions start from this preset: all its training settings, with empty image folders, output name, LoRA title and trigger word."),
+        h("div.field", h("label", "Start new sessions from"), sel)),
+        [{ label: "Cancel", kind: "ghost", value: false },
+         { label: "Save current as default…", kind: "ghost", value: "current" },
+         { label: "Use this one", kind: "primary", value: "pick" }]);
+      if (!choice) return;
+      try {
+        if (choice === "current") {
+          if (!schema) return;
+          const name = await promptBox("Save current settings as default", "Preset name", "Default");
+          if (!name) return;
+          await api.preset_save(name, { ...job(), mode: draft.mode, name: "" });
+          pick = name;
+        }
+        presets = await api.preset_set_default(pick);
+        side();
+        toast(pick ? "Default preset set" : "No default preset", pick || "New sessions use the script's own defaults", "good", "check");
+      } catch (e) { toastError(e); }
     }
 
     async function importToml() {

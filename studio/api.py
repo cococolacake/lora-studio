@@ -203,11 +203,13 @@ class Api:
 
     def presets(self):
         out = []
+        default = settings.get("default_preset") or ""
         for f in sorted(paths.presets_dir().glob("*.json")):
             p = read_json(f)
             if p:
-                out.append({"name": p.get("preset_name") or f.stem, "script": p.get("script"),
-                            "family": p.get("family")})
+                name = p.get("preset_name") or f.stem
+                out.append({"name": name, "script": p.get("script"),
+                            "family": p.get("family"), "default": bool(default) and safe_name(name) == safe_name(default)})
         return out
 
     def preset_save(self, name, job):
@@ -221,7 +223,21 @@ class Api:
 
     def preset_delete(self, name):
         (paths.presets_dir() / f"{safe_name(name)}.json").unlink(missing_ok=True)
+        if safe_name(settings.get("default_preset") or "") == safe_name(name):
+            settings.save({"default_preset": ""})
         return self.presets()
+
+    def preset_set_default(self, name=""):
+        """Choose the preset new training sessions start from ("" = start from the script's own defaults)."""
+        if name and not (paths.presets_dir() / f"{safe_name(name)}.json").exists():
+            raise RuntimeError(f"There's no preset called {name}.")
+        settings.save({"default_preset": name or ""})
+        return self.presets()
+
+    def preset_default(self):
+        """The default preset's settings, or None."""
+        name = settings.get("default_preset") or ""
+        return read_json(paths.presets_dir() / f"{safe_name(name)}.json") if name else None
 
     def import_toml(self, training_path="", dataset_path=""):
         """Read existing training.toml / dataset_config.toml files (e.g. from an older setup)."""
