@@ -1,6 +1,6 @@
 // App shell: rail navigation, side panel, header banner, routing, background polling.
 import { api } from "./api.js";
-import { h, clear, toast, toastError, store, btn } from "./dom.js";
+import { h, clear, toast, toastError, store, btn, modal } from "./dom.js";
 import { icon, logo } from "./icons.js";
 import { applyTheme, paintBanner } from "./theme.js";
 import { setNative } from "./components.js";
@@ -97,6 +97,8 @@ function renderRail() {
     h("div.logo", { title: "LoRA Studio" }, logo()),
     h("div.nav", PAGES.map(item)),
     h("div.bottom",
+      ctx.update?.newer ? h("button.rail-btn.update-btn", { onclick: showUpdate },
+        icon("download"), h("span.badge-dot"), h("span.tip", `Update available: ${ctx.update.latest.tag}`)) : null,
       h("button.rail-btn", {
         onclick: async () => {
           const t = { ...ctx.boot.settings.theme, base: base === "dark" ? "light" : "dark" };
@@ -105,6 +107,32 @@ function renderRail() {
         },
       }, icon(base === "dark" ? "sun" : "moon"), h("span.tip", base === "dark" ? "Light mode" : "Dark mode")),
       item(settingsPage)));
+}
+
+// A newer LoRA Studio on GitHub? Shown as a small download button in the rail.
+async function checkUpdate() {
+  try {
+    ctx.update = await api.app_update();
+    renderRail();
+    const tag = ctx.update?.newer && ctx.update.latest.tag;
+    if (tag && store.get("updateToast") !== tag) {
+      store.set("updateToast", tag);
+      toast("A new LoRA Studio is out", `${tag} is ready to download.`, "good", "download", 9000);
+    }
+  } catch { /* offline: no notice */ }
+}
+
+async function showUpdate() {
+  const u = ctx.update?.latest;
+  if (!u) return;
+  const win = ctx.boot.platform === "windows";
+  const go = await modal(`LoRA Studio ${u.tag} is available`, h("div.stack.sm",
+    h("p", { style: { margin: 0 } }, `You have ${ctx.update.current}. The new version is ${u.tag}${u.prerelease ? " (pre-release)" : ""}.`),
+    h("p.small.muted", { style: { margin: 0 } }, win
+      ? "To update: download the zip from the release page and unzip it over your LoRA Studio folder (keep the .venv folder), or Pull in GitHub Desktop if you use it."
+      : "To update: run git pull in the LoRA Studio folder (or unzip the new version over it), then ./install.sh again.")),
+    [{ label: "Later", kind: "ghost", value: false }, { label: "See what's new", kind: "primary", value: true }]);
+  if (go) api.open_url(u.url).catch(toastError);
 }
 
 let lastEventT = Date.now() / 1000;
@@ -142,6 +170,7 @@ async function start() {
   const first = !ctx.boot.sd.configured || !ctx.boot.sd.valid ? "sdscripts" : (store.get("page") || "home");
   ctx.go(first);
   poll();
+  setTimeout(checkUpdate, 4000);   // after the app has settled; quietly does nothing offline
 }
 
 start();

@@ -15,3 +15,7 @@ desktop.ini
 *.safetensors
 *.ckpt
 *.pt
+
+# test tools (installed by the checks)
+node_modules/
+.pytest_cache/

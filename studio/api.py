@@ -8,7 +8,7 @@ from pathlib import Path
 
 import secrets
 
-from . import (__version__, backup, comfy, dataset_tools, estimate, gallerydl, gpu, importer, notify, families, health, metadata, paths, runs, sdscripts, settings, swarm,
+from . import (__version__, appupdate, backup, comfy, diagnostics, preflight, dataset_tools, estimate, gallerydl, gpu, importer, notify, families, health, metadata, paths, runs, sdscripts, settings, swarm,
                tomlio, trainer, worker_run)
 from .util import Task, open_in_explorer, read_json, safe_name, write_json
 
@@ -84,6 +84,25 @@ class Api:
     def open_folder(self, path):
         open_in_explorer(path)
         return True
+
+    def open_url(self, url):
+        """Open a LoRA Studio page (release notes, issues) in the browser. Only GitHub links."""
+        if not str(url).startswith("https://github.com/"):
+            raise RuntimeError("Only GitHub links can be opened from here.")
+        import webbrowser
+        webbrowser.open(url)
+        return True
+
+    def diagnostics(self):
+        return diagnostics.report(native=bool(getattr(self, "_window", None)))
+
+    def preflight(self, job):
+        return preflight.check(job)
+
+    def app_update(self, force=False):
+        if not force and not settings.get("check_app_updates"):
+            return {"current": __version__, "latest": None, "newer": False, "off": True}
+        return appupdate.check(force)
 
     def image_data_url(self, path):
         p = Path(path)

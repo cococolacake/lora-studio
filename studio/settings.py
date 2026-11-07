@@ -50,7 +50,8 @@ DEFAULTS = {
     "notify_on_finish": True,
     "theme": DEFAULT_THEME,
     "onboarded": False,
-    "default_preset": "",        # preset that new training sessions start from ("" = none)
+    "default_preset": "",
+    "check_app_updates": True,   # look for a newer LoRA Studio on GitHub (a few times a day at most)        # preset that new training sessions start from ("" = none)
 }
 
 _lock = threading.Lock()

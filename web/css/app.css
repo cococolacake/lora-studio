@@ -549,3 +549,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px;
 .steps-flow .stepc { background: var(--surface-2); border-radius: var(--r-md); padding: 10px 12px; font-size: 12.5px; color: var(--text-2); }
 .steps-flow .stepc b { display: block; color: var(--text); font-size: 13px; margin-bottom: 2px; }
 .default-star { color: var(--accent); font-weight: 700; }
+
+/* "Update available" button in the rail */
+.rail-btn.update-btn { color: var(--accent); position: relative; }
+.rail-btn.update-btn .badge-dot { position: absolute; top: 9px; right: 9px; }
