@@ -12,7 +12,8 @@ from pathlib import Path
 from urllib.parse import quote_plus
 
 from . import paths
-from .util import Task, read_json, run, write_json
+from .dataset_tools import METADATA
+from .util import Task, is_image, read_json, run, write_json
 
 SITES = {
     "danbooru": {"label": "Danbooru", "fields": [("username", "Username"), ("password", "API key")],
@@ -182,7 +183,28 @@ def download(task, url, dest, limit=None, images_only=True):
     if code != 0:
         task.log(f"gallery-dl finished with warnings (exit code {code}); keeping what was downloaded.")
     task.log(f"Downloaded {count['n']} files into {dest}.")
+    moved = tidy_metadata(dest)
+    if moved:
+        task.log(f"Moved {moved} metadata files (tags used for captions) into the {METADATA} folder.")
     return {"downloaded": count["n"], "dest": str(dest).replace("\\", "/")}
+
+
+def tidy_metadata(folder):
+    """Move gallery-dl's image.jpg.json files out of the way, into <folder>/_metadata.
+    They hold each image's tags, which the New dataset step turns into captions."""
+    folder = Path(folder)
+    meta = folder / METADATA
+    n = 0
+    for f in list(folder.glob("*.json")):
+        if not is_image(f.stem):         # only "<image name>.json", never other files
+            continue
+        meta.mkdir(exist_ok=True)
+        target = meta / f.name
+        if target.exists():
+            target.unlink()
+        shutil.move(str(f), str(target))
+        n += 1
+    return n
 
 
 def default_download_dir(name):

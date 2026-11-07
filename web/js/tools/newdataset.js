@@ -76,7 +76,7 @@ export function newDataset(ctx, params, root) {
   function drawDataset() {
     clear(dsSlot, h("div.stack",
       h("div.grid.c3",
-        h("div.field.span2", h("label", "Save the dataset in (a new folder)"), pathInput(o.dest, (v) => { o.dest = v; }, { folder: true, placeholder: "C:/datasets/my_character" })),
+        h("div.field.span2", h("label", "Save the dataset in"), pathInput(o.dest, (v) => { o.dest = v; }, { folder: true, placeholder: "C:/datasets/my_character" })),
         h("div.field", h("label", "Trigger word"), h("input.input", { value: o.trigger, placeholder: "optional", oninput: (e) => { o.trigger = e.target.value; save(); } }))),
       h("div.row", { style: { gap: "26px", alignItems: "flex-end" } },
         h("div.field", h("label", "Captions"), seg([["metadata", "From the site's tags"], ["none", "None (auto-tag later)"]], o.captions, (v) => { o.captions = v; save(); drawDataset(); })),
