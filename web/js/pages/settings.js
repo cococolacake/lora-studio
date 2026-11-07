@@ -142,6 +142,10 @@ function training(ctx, root) {
           h("div.help", "accelerate is what sd-scripts recommends. Plain python is handy if accelerate gives you trouble on a single GPU.")),
         h("div.field", h("label", "accelerate arguments"), h("input.input.mono", { value: s.accelerate_args, onchange: (e) => saveKey("accelerate_args")(e.target.value) }),
           h("div.help", "Inserted between “accelerate launch” and the script. --num_cpu_threads_per_process 4 is a good default.")))),
+      card({ title: "Output folders" },
+        switchEl(s.run_folders !== false, saveKey("run_folders"), "Give each run its own folder"),
+        h("p.small.muted", { style: { margin: "6px 0 0" } },
+          "Each training saves into a folder named after it inside your output folder, e.g. …/model/shion_anima_v1. If that folder already has files from an earlier run, the new one becomes “shion_anima_v1 (2)”, so nothing is ever overwritten.")),
       card({ title: "Notifications" }, h("div.row",
         h("div", { style: { flex: 1 } }, switchEl(s.notify_on_finish !== false, saveKey("notify_on_finish"), "Notification when a training finishes or fails"),
           h("p.small.muted", { style: { margin: "6px 0 0" } }, ctx.boot.platform === "windows"

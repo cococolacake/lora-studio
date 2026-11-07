@@ -37,6 +37,12 @@ def _clock_to_s(text):
 
 
 
+def safe_folder_name(name):
+    """A folder name Windows and Linux both accept."""
+    out = re.sub(r'[<>:"/\\|?*\x00-\x1f]+', "_", str(name)).strip(" .")
+    return out or "run"
+
+
 # sd-scripts options that turn on or schedule sample images.
 SAMPLE_KEYS = ("sample_prompts", "sample_every_n_epochs", "sample_every_n_steps", "sample_at_first", "sample_sampler")
 
@@ -307,6 +313,34 @@ class Trainer:
                 from . import power
                 power.queue_finished()
 
+    def _own_folder(self, run, d):
+        """Give this run its own output folder, chosen as it starts (so two queued runs with the same
+        name can't take the same one): <output_dir>/<output_name>, or "<name> (2)", "(3)"… if that
+        folder already has files. Nothing from an earlier run is ever overwritten."""
+        cfg = run.get("config") or {}
+        if not settings.get("run_folders") or run.get("own_folder"):
+            return
+        out, name = cfg.get("output_dir"), str(cfg.get("output_name") or "").strip()
+        if not out or not name:
+            return
+        base = Path(str(out)).expanduser()
+        folder_name = safe_folder_name(name)
+        # A re-run/resume copies the old run's config, whose output_dir is already a run folder:
+        # put the new folder next to it instead of inside it.
+        if re.fullmatch(re.escape(folder_name) + r"( \(\d+\))?", base.name):
+            base = base.parent
+        target = base / folder_name
+        n = 2
+        while target.exists() and any(target.iterdir()):
+            target = base / f"{folder_name} ({n})"
+            n += 1
+        target.mkdir(parents=True, exist_ok=True)
+        cfg["output_dir"] = str(target).replace("\\", "/")
+        run["config"] = cfg
+        run["own_folder"] = cfg["output_dir"]
+        (d / "training.toml").write_text(tomlio.dumps(cfg), encoding="utf-8")
+        save_run(run)
+
     def _command(self, run):
         repo = sdscripts.root()
         if not repo or not sdscripts.is_sd_scripts(repo):
@@ -334,6 +368,7 @@ class Trainer:
 
     def _execute(self, run):
         d = run_dir(run["id"])
+        self._own_folder(run, d)
         with self.lock:
             self.current = run
             self.parser = LogParser()

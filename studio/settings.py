@@ -48,6 +48,7 @@ DEFAULTS = {
     "comfy_url": "http://127.0.0.1:8188",
     "comfy_lora_dir": "",
     "notify_on_finish": True,
+    "run_folders": True,          # each run saves into its own folder: <output dir>/<output name>[ (2)]
     "theme": DEFAULT_THEME,
     "onboarded": False,
     "default_preset": "",
