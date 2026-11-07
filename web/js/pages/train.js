@@ -6,6 +6,9 @@ import { argField, datasetEditor, seg, switchEl, checkEl, pathInput } from "../c
 
 const schemaCache = {};
 
+// Settings that point at files/folders on this PC (kept when loading a shared preset).
+const PATH_KEYS = /(_dir$|_path$|^vae$|^ae$|clip_l|clip_g|t5xxl|qwen3|gemma2|_weights$|^resume$|_file$|^text_encoder$|^pretrained_model_name_or_path$|^dit$|^llm$)/;
+
 // A new session from a preset: keep every training setting, but start the things that belong
 // to one character (image folders, output name, run name, LoRA title/trigger, resume files) empty.
 function freshFrom(preset, mode) {
@@ -64,6 +67,7 @@ export default {
           h("span.grow", h("span", p.name, p.default ? h("span.default-star", { title: "Default preset" }, " ★") : null), h("span.sub", p.script || "")))),
         h("button.side-item.muted", { onclick: savePreset }, icon("plus"), h("span", "Save as preset")),
         h("button.side-item.muted", { onclick: chooseDefault }, icon("check"), h("span", "Default preset…")),
+        h("button.side-item.muted", { onclick: sharePresets }, icon("share"), h("span", "Share presets…")),
         h("button.side-item.muted", { onclick: importToml }, icon("download"), h("span", "Import .toml files")));
     };
 
@@ -214,7 +218,13 @@ export default {
     async function loadPreset(name) {
       const p = await api.preset_load(name);
       if (!p) return;
+      // A shared preset has no paths (models, folders): keep the ones you already have.
+      const keep = {};
+      for (const [k, v] of Object.entries(draft.args || {})) if (PATH_KEYS.test(k) && !(k in (p.args || {}))) keep[k] = v;
+      const keepDirs = !(p.dataset?.subsets || []).some((x) => x.image_dir) ? draft.dataset?.subsets : null;
       draft = { ...draft, ...p, mode: draft.mode };
+      if (draft.args) Object.assign(draft.args, keep);
+      if (keepDirs && draft.dataset) draft.dataset = { ...draft.dataset, subsets: keepDirs };
       delete draft.schema_args;
       save();
       await load();
@@ -258,6 +268,41 @@ export default {
         presets = await api.preset_set_default(pick);
         side();
         toast(pick ? "Default preset set" : "No default preset", pick || "New sessions use the script's own defaults", "good", "check");
+      } catch (e) { toastError(e); }
+    }
+
+    async function sharePresets() {
+      let pick = presets[0]?.name || "", folder = "", file = "";
+      const choice = await modal("Share presets", h("div.stack",
+        h("p.small.muted", { style: { margin: 0 } }, "Share your training settings as a small file, e.g. with friends or on Civitai. Paths that only exist on your PC (models, VAE, output and image folders) and the output name, title and trigger word are left out; whoever loads it keeps their own."),
+        h("div.stack.sm",
+          h("h4", { style: { margin: 0 } }, "Export"),
+          presets.length
+            ? h("div.grid.c2",
+                h("div.field", h("label", "Preset"), h("select.select", { onchange: (e) => { pick = e.target.value; } },
+                  presets.map((p) => h("option", { value: p.name }, p.name)))),
+                h("div.field", h("label", "Save the file in"), pathInput("", (v) => { folder = v; }, { folder: true })))
+            : h("div.small.muted", "Save a preset first (“Save as preset”).")),
+        h("div.sep"),
+        h("div.stack.sm",
+          h("h4", { style: { margin: 0 } }, "Import"),
+          h("div.field", h("label", "Preset file (.lorastudio.json)"), pathInput("", (v) => { file = v; }, { kind: "preset" })))),
+        [{ label: "Close", kind: "ghost", value: false },
+         { label: "Import", value: "import" },
+         ...(presets.length ? [{ label: "Export", kind: "primary", value: "export" }] : [])]);
+      try {
+        if (choice === "export") {
+          if (!folder) return toast("Choose a folder to save it in", "", "", "folder");
+          const out = await api.preset_export(pick, folder);
+          toast("Preset exported", out.split("/").pop(), "good", "share", 8000);
+          api.open_folder(folder).catch(() => {});
+        } else if (choice === "import") {
+          if (!file) return toast("Choose a preset file", "", "", "folder");
+          const r = await api.preset_import(file);
+          presets = r.presets;
+          side();
+          toast("Preset imported", `Added as “${r.name}”. Click it to load it.`, "good", "download", 8000);
+        }
       } catch (e) { toastError(e); }
     }
 

@@ -76,3 +76,38 @@ def find(run):
                       "mtime": f.stat().st_mtime})
     columns = sorted(cols, key=lambda c: cols[c])
     return {"prompts": run.get("sample_prompts") or [], "columns": columns, "cells": cells}
+
+
+
+def make_gif(run, row, ms=700, size=768):
+    """An animated GIF of one prompt's samples, epoch by epoch, saved next to the samples."""
+    from PIL import Image, ImageDraw, ImageFont
+    grid = find(run)
+    by_col = {c["col"]: c for c in grid["cells"] if c["row"] == int(row)}   # newest file per column wins
+    cols = [c for c in grid["columns"] if c in by_col]
+    if len(cols) < 2:
+        raise RuntimeError("This prompt needs samples from at least two epochs for an animation.")
+    frames = []
+    for col in cols:
+        with Image.open(by_col[col]["path"]) as im:
+            im = im.convert("RGB")
+            im.thumbnail((size, size))
+            d = ImageDraw.Draw(im)
+            try:
+                font = ImageFont.load_default(size=max(14, im.width // 28))
+            except TypeError:                      # older Pillow
+                font = ImageFont.load_default()
+            x0, y0, x1, y1 = d.textbbox((0, 0), col, font=font)
+            pad, m = max(6, im.width // 90), max(8, im.width // 60)
+            box = (m, im.height - m - (y1 - y0) - 2 * pad, m + (x1 - x0) + 2 * pad, im.height - m)
+            d.rounded_rectangle(box, radius=pad * 2, fill=(255, 255, 255))
+            d.text((box[0] + pad - x0, box[1] + pad - y0), col, fill=(40, 30, 50), font=font)
+            frames.append(im)
+    w = min(f.width for f in frames); h = min(f.height for f in frames)
+    frames = [f if f.size == (w, h) else f.resize((w, h)) for f in frames]
+    first = Path(by_col[cols[0]]["path"])
+    name = (run.get("config") or {}).get("output_name") or "samples"
+    out = first.parent / f"{name}_prompt{int(row) + 1}_epochs.gif"
+    durations = [ms] * (len(frames) - 1) + [ms * 3]          # linger on the last epoch
+    frames[0].save(out, save_all=True, append_images=frames[1:], duration=durations, loop=0, optimize=True)
+    return str(out).replace("\\", "/")

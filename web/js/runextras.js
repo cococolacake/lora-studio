@@ -2,7 +2,7 @@
 import { api } from "./api.js";
 import { h, btn, card, chip, kv, modal, toast, toastError, clear, store } from "./dom.js";
 import { icon } from "./icons.js";
-import { thumbUrl, lightbox } from "./media.js";
+import { thumbUrl, fileUrl, lightbox } from "./media.js";
 import { taskProgress, watchTask } from "./tools/common.js";
 
 // ---- sd-scripts sample previews: prompts × epochs -------------------------------
@@ -41,14 +41,77 @@ export function samplesCard(r, onChange) {
   const grid = h("div.sgrid", { style: { gridTemplateColumns: `minmax(160px, 220px) repeat(${cols.length}, minmax(96px, 180px))` } },
     h("div"), cols.map((c) => { const f = fileForColumn(r, c); return h("div.sh", c, f ? starButton(r, f, onChange) : null); }),
     Array.from({ length: rows }, (_, ri) => [
-      h("div.sp", { title: g.prompts[ri] || "" }, g.prompts[ri] || `Prompt ${ri + 1}`),
+      h("div.sp", { title: g.prompts[ri] || "" }, h("span.sp-text", g.prompts[ri] || `Prompt ${ri + 1}`),
+        cols.filter((col) => at[`${ri}|${col}`]).length > 1
+          ? h("button.chip-btn", { title: "Animate this prompt's samples, epoch by epoch", onclick: () => makeGif(r, ri) }, icon("play"), "GIF") : null),
       cols.map((col) => {
         const c = at[`${ri}|${col}`];
         const isBest = r.best && fileForColumn(r, col)?.name === r.best.source;
         return c ? h("button.sc", { class: isBest ? "best" : "", onclick: () => lightbox(order, order.findIndex((o) => o.path === c.path)) }, h("img", { src: thumbUrl(c.path, 320), loading: "lazy" })) : h("div");
       }),
     ]));
-  return card({ title: "Samples", actions: h("span.small.faint", `${g.cells.length} images · ☆ marks your best epoch`) }, h("div", { style: { overflowX: "auto" } }, grid));
+  return card({ title: "Samples", actions: h("div.row", { style: { gap: "10px" } },
+      h("span.small.faint", `${g.cells.length} images · ☆ marks your best epoch`),
+      order.length > 1 ? btn("Compare", { icon: "columns", size: "sm", onclick: () => compareModal(order) }) : null) },
+    h("div", { style: { overflowX: "auto" } }, grid));
+}
+
+// ---- compare two samples: a slider that wipes between them, or a fade ------------------
+export function compareModal(items) {
+  // default: the same prompt, first vs last epoch
+  const first = items[0];
+  const samePrompt = items.filter((x) => x.row === first.row);
+  let A = 0, B = items.indexOf(samePrompt[samePrompt.length - 1] || items[items.length - 1]);
+  let mode = "slider", pos = 50;
+  const imgA = h("img.cmp-a", { alt: "" }), imgB = h("img.cmp-b", { alt: "" });
+  const handle = h("div.cmp-handle", h("span", icon("columns")));
+  const tagA = h("span.cmp-tag.left"), tagB = h("span.cmp-tag.right");
+  const stage = h("div.cmp-stage", imgB, imgA, handle, tagA, tagB);
+  const range = h("input.cmp-range", { type: "range", min: 0, max: 100, value: pos, "aria-label": "Compare position",
+    oninput: (e) => { pos = Number(e.target.value); paint(); } });
+  const pick = (cur, set) => h("select.select", { onchange: (e) => { set(Number(e.target.value)); load(); } },
+    items.map((it, i) => h("option", { value: i, selected: i === cur }, it.title)));
+  const modeSeg = h("div");
+  function paint() {
+    if (mode === "slider") {
+      imgA.style.clipPath = `inset(0 ${100 - pos}% 0 0)`; imgA.style.opacity = "1";
+      handle.style.display = ""; handle.style.left = `${pos}%`;
+    } else {
+      imgA.style.clipPath = "none"; imgA.style.opacity = String(1 - pos / 100);
+      handle.style.display = "none";
+    }
+  }
+  function load() {
+    imgA.src = fileUrl(items[A].path); imgB.src = fileUrl(items[B].path);
+    tagA.textContent = items[A].title.split(" · ")[0]; tagB.textContent = items[B].title.split(" · ")[0];
+    paint();
+  }
+  function drawMode() {
+    clear(modeSeg, h("div.seg", ["slider", "fade"].map((m) => h("button", { type: "button", class: m === mode ? "on" : "",
+      onclick: () => { mode = m; drawMode(); paint(); } }, icon(m === "slider" ? "columns" : "layers"), m === "slider" ? "Slider" : "Fade"))));
+  }
+  // drag directly on the picture too
+  const dragTo = (e) => { const r = stage.getBoundingClientRect(); pos = Math.max(0, Math.min(100, ((e.clientX - r.left) / r.width) * 100)); range.value = pos; paint(); };
+  stage.addEventListener("pointerdown", (e) => { stage.setPointerCapture(e.pointerId); dragTo(e); });
+  stage.addEventListener("pointermove", (e) => { if (e.buttons) dragTo(e); });
+  drawMode(); load();
+  return modal("Compare samples", h("div.stack.sm",
+    h("div.grid.c2", h("div.field", h("label", "Left / first"), pick(A, (v) => { A = v; })), h("div.field", h("label", "Right / second"), pick(B, (v) => { B = v; }))),
+    stage,
+    h("div.row", { style: { gap: "14px" } }, modeSeg, range)),
+    [{ label: "Close", kind: "ghost" }], { wide: true });
+}
+
+async function makeGif(r, row) {
+  try {
+    toast("Making the animation…", "", "", "play", 2500);
+    const path = await api.samples_gif(r.id, row);
+    const v = await modal(`Prompt ${row + 1}, epoch by epoch`, h("div.stack.sm",
+      h("img", { src: fileUrl(path, Date.now()), alt: "Animated samples", style: { maxWidth: "100%", maxHeight: "60vh", borderRadius: "14px", display: "block", margin: "0 auto" } }),
+      h("p.small.muted", { style: { margin: 0 } }, `Saved as ${path.split("/").pop()} in the samples folder.`)),
+      [{ label: "Open folder", value: "open" }, { label: "Close", kind: "primary" }]);
+    if (v === "open") api.open_folder(path.replace(/\/[^/]*$/, ""));
+  } catch (e) { toastError(e); }
 }
 
 // ---- LoRA metadata ----------------------------------------------------------------

@@ -49,7 +49,8 @@ def make_handler(api):
             if q.get("k", [""])[0] != api._media_token:
                 return self._send(403, {"error": "bad token"})
             p = q.get("p", [""])[0]
-            if not p or not is_image(p) or not os.path.isfile(p):
+            # dataset images, plus the animated sample GIFs LoRA Studio makes
+            if not p or not (is_image(p) or p.lower().endswith(".gif")) or not os.path.isfile(p):
                 return self._send(404, {"error": "not found"})
             try:
                 if path == "/media/thumb":

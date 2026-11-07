@@ -1,6 +1,6 @@
 // Images & tags: browse a dataset, edit captions with autocomplete, auto-tag, bulk edit, crop, delete.
 import { api } from "../api.js";
-import { h, btn, card, chip, empty, toast, toastError, modal, confirmBox, clear, store } from "../dom.js";
+import { h, btn, card, chip, empty, toast, toastError, modal, confirmBox, promptBox, clear, store } from "../dom.js";
 import { icon } from "../icons.js";
 import { seg, switchEl, checkEl } from "../components.js";
 import { thumbUrl, fileUrl, bucketFor } from "../media.js";
@@ -50,7 +50,7 @@ export function viewer(ctx, params, root) {
       actions: data && view === "dataset" ? [
         btn("Auto-tag", { icon: "sparkle", kind: panel === "autotag" ? "primary" : "", onclick: () => togglePanel("autotag") }),
         btn("Bulk edit", { icon: "list", kind: panel === "bulk" ? "primary" : "", onclick: () => togglePanel("bulk") }),
-        btn("", { icon: "chart", title: "Tag stats", onclick: showStats }),
+        btn("Tags", { icon: "chart", title: "Tag overview: every tag and how often it\u2019s used", onclick: showStats }),
         btn("", { icon: "rollback", title: "Undo last bulk edit", onclick: undo }),
       ] : data ? [btn("Back to dataset", { icon: "left", onclick: () => { view = "dataset"; load(); } })] : [],
     }));
@@ -346,6 +346,8 @@ export function viewer(ctx, params, root) {
         h("span.small.faint", "Undo with the ↺ button in the header.")));
   }
 
+  // Tag overview: every tag with how many images use it. Click a tag to see those images;
+  // rename (or merge) and remove act on all captions and can be undone.
   async function showStats() {
     const counts = new Map();
     let nocap = 0;
@@ -353,22 +355,40 @@ export function viewer(ctx, params, root) {
       if (img.caption == null) { nocap++; continue; }
       for (const k of new Set(parseTags(img.caption).map(tagKey))) counts.set(k, (counts.get(k) || 0) + 1);
     }
-    const items = [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
-    let q = "";
-    const max = items[0]?.[1] || 1;
-    const list = h("div.bars", { style: { maxHeight: "52vh", overflow: "auto", paddingRight: "6px" } });
-    const draw = () => clear(list, items.filter(([t]) => t.includes(q)).slice(0, 400).map(([t, n]) =>
-      h("div.bar-row.stat-row", { style: { gridTemplateColumns: "1fr 120px 36px 64px" } },
-        h("button.linkish", { onclick: () => { filter.q = t; filter.mode = "any"; applyFilter(); close(); } }, t),
-        h("div.b", h("i", { style: { width: `${(n / max) * 100}%` } })), h("span.nums.small", String(n)),
-        h("button.linkish.danger", { onclick: async () => {
-          if (!(await confirmBox(`Remove “${t}”?`, `It's removed from ${n} captions. You can undo it.`, "Remove", true))) return;
-          await api.ds_bulk(folder, "delete", { tags: t }); close(); load(); } }, "remove"))));
-    draw();
+    const all = [...counts];
+    const total = data.images.length || 1;
+    const max = Math.max(1, ...all.map((x) => x[1]));
+    let q = "", sort = "most";
+    const sorters = {
+      most: (a, b) => b[1] - a[1] || a[0].localeCompare(b[0]),
+      rare: (a, b) => a[1] - b[1] || a[0].localeCompare(b[0]),
+      az: (a, b) => a[0].localeCompare(b[0]),
+    };
     let close;
-    const p = modal(`Tag stats · ${items.length} tags`, h("div.stack.sm",
-      h("p.small.muted", { style: { margin: 0 } }, `${data.images.length} images${nocap ? `, ${nocap} without a caption` : ""}. Click a tag to filter by it.`),
-      h("div.search", icon("search"), h("input.input", { placeholder: "Search tags", oninput: (e) => { q = e.target.value.toLowerCase(); draw(); } })), list),
+    const list = h("div.bars", { style: { maxHeight: "52vh", overflow: "auto", paddingRight: "6px" } });
+    const act = async (fn) => { try { await fn(); close(); load(); } catch (e) { if (!e.quiet) toastError(e); } };
+    const draw = () => clear(list, all.filter(([t]) => t.includes(q)).sort(sorters[sort]).slice(0, 500).map(([t, n]) =>
+      h("div.bar-row.stat-row", { style: { gridTemplateColumns: "1fr 110px 74px auto auto" } },
+        h("button.linkish", { title: "Show the images with this tag", onclick: () => { filter.q = t; filter.mode = "any"; filter.special = ""; applyFilter(); close(); } }, t),
+        h("div.b", h("i", { style: { width: `${(n / max) * 100}%` } })),
+        h("span.nums.small.muted", `${n} · ${Math.round((n / total) * 100)}%`),
+        h("button.linkish", { onclick: () => act(async () => {
+          const to = await promptBox(`Rename “${t}”`, "New tag (an existing tag merges them)", t);
+          if (!to || tagKey(to) === tagKey(t)) throw Object.assign(new Error(""), { quiet: true });
+          await api.ds_bulk(folder, "replace", { tags: t, replace_with: to });
+          toast("Tag renamed", `${t} → ${to} in ${n} captions`, "good", "check");
+        }) }, "rename"),
+        h("button.linkish.danger", { onclick: () => act(async () => {
+          if (!(await confirmBox(`Remove “${t}”?`, `It's removed from ${n} captions. You can undo it.`, "Remove", true))) throw Object.assign(new Error(""), { quiet: true });
+          await api.ds_bulk(folder, "delete", { tags: t });
+        }) }, "remove"))));
+    draw();
+    const p = modal(`Tag overview · ${all.length} tags`, h("div.stack.sm",
+      h("p.small.muted", { style: { margin: 0 } }, `${data.images.length} images${nocap ? `, ${nocap} without a caption` : ""}. Click a tag to see its images; “Rarest” is handy for spotting typos and junk tags.`),
+      h("div.row", { style: { gap: "10px", flexWrap: "wrap" } },
+        h("div.search", { style: { flex: 1, minWidth: "200px" } }, icon("search"), h("input.input", { placeholder: "Search tags", oninput: (e) => { q = e.target.value.toLowerCase(); draw(); } })),
+        seg([["most", "Most used"], ["rare", "Rarest"], ["az", "A–Z"]], sort, (v) => { sort = v; draw(); })),
+      list),
       [{ label: "Close", kind: "ghost" }]);
     close = () => document.querySelector(".scrim")?.remove();
     await p;
