@@ -1,6 +1,6 @@
 // Shared bits for the dataset tools.
 import { api } from "../api.js";
-import { h, btn, store, toastError } from "../dom.js";
+import { h, btn, store, toastError, clear } from "../dom.js";
 import { icon } from "../icons.js";
 import { pathInput } from "../components.js";
 
@@ -12,14 +12,29 @@ export const setFolder = (f) => store.set("dsFolder", f);
 /** Folder picker row: path box + Load + quick chips for the Train page's dataset folders. */
 export function folderBar(ctx, value, onLoad, { button = "Load", icon: ic = "folder" } = {}) {
   let cur = value;
-  const go = () => { if (!cur) return; setFolder(cur); onLoad(cur); };
+  // A notice when this folder is used by the running training (or a queued one).
+  const busy = h("div");
+  const checkBusy = async (f) => {
+    clear(busy);
+    if (!f) return;
+    try {
+      const u = await api.ds_in_use(f);
+      if (u.running) clear(busy, h("div.notice.warn", icon("alert"),
+        `The training that's running (${u.running}) uses this folder. Moving, renaming, cropping or resizing its images is paused until it finishes. Caption edits are fine; they apply to the next training.`));
+      else if (u.queued.length) clear(busy, h("div.notice", icon("info"),
+        `A queued training (${u.queued.join(", ")}) uses this folder; it will train on the folder as it is when it starts.`));
+    } catch { /* no notice */ }
+  };
+  const go = () => { if (!cur) return; setFolder(cur); onLoad(cur); checkBusy(cur); };
+  checkBusy(cur);
   const input = pathInput(cur, (v) => { cur = v; }, { folder: true, placeholder: "C:/datasets/my_character" });
   input.querySelector("input").addEventListener("keydown", (e) => { if (e.key === "Enter") { cur = e.target.value.trim(); go(); } });
   const trainFolders = (ctx.draft?.dataset?.subsets || []).map((s) => s.image_dir).filter(Boolean).filter((f) => f !== cur);
   return h("div.stack.sm",
     h("div.row.nowrap", h("div", { style: { flex: 1 } }, input), btn(button, { icon: ic, kind: "primary", onclick: () => { cur = input.querySelector("input").value.trim(); go(); } })),
     trainFolders.length ? h("div.row", h("span.tiny.faint", "From Train:"), trainFolders.map((f) =>
-      h("button.chip.accent", { style: { border: 0, cursor: "pointer" }, onclick: () => { cur = f; input.querySelector("input").value = f; go(); } }, f.split(/[\\/]/).pop()))) : null);
+      h("button.chip.accent", { style: { border: 0, cursor: "pointer" }, onclick: () => { cur = f; input.querySelector("input").value = f; go(); } }, f.split(/[\\/]/).pop()))) : null,
+    busy);
 }
 
 /** Progress block for a worker/background task. Returns {el, set(snapshot)}. */

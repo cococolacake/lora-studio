@@ -91,6 +91,17 @@ def main():
         width=1400, height=900, min_size=(1100, 700), background_color="#F4F4F5",
     )
     api._attach_window(window)
+
+    def on_closing():
+        """Closing stops a running training, so ask first (an accidental ✕ could cost hours)."""
+        if not api._trainer.state().get("current"):
+            return True
+        try:
+            return bool(window.create_confirmation_dialog(
+                "Stop the training?", "A training is running. Closing LoRA Studio stops it.\n\nClose anyway?"))
+        except Exception:
+            return True   # very old pywebview without dialogs: behave as before
+    window.events.closing += on_closing
     start = {"debug": args.debug, "private_mode": False}
     shown = []
     window.events.shown += lambda: shown.append(True)

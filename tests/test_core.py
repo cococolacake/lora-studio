@@ -278,3 +278,51 @@ def test_each_run_gets_its_own_folder(tmp_path, monkeypatch):
     d = start({"output_dir": str(out), "output_name": "bad:name"})
     assert [Path(x).name for x in (a, b, c, d)] == ["shion_v1", "shion_v1 (2)", "shion_v1 (3)", "bad_name"]
     assert all(Path(x).parent == out for x in (a, b, c, d))
+
+
+# ---- safety while training ---------------------------------------------------------------------
+
+def _api_with_running(monkeypatch, image_dir, name="Shion"):
+    from studio import api as api_mod, trainer
+    a = api_mod.Api()
+    monkeypatch.setattr(a._trainer, "state", lambda: {"current": {"id": "r1", "name": name}, "queue": []})
+    monkeypatch.setattr(trainer, "load_run", lambda rid: {"id": rid, "name": name,
+                                                          "dataset": {"subsets": [{"image_dir": str(image_dir)}]}})
+    return a
+
+
+def test_images_of_the_running_training_are_protected(tmp_path, monkeypatch):
+    ds = tmp_path / "shion"; ds.mkdir(); _img(ds / "1.png")
+    other = tmp_path / "other"; other.mkdir(); _img(other / "1.png")
+    a = _api_with_running(monkeypatch, ds)
+    for call in (lambda: a.ds_move([str(ds / "1.png")]), lambda: a.ds_rename(str(ds)),
+                 lambda: a.ds_crop(str(ds / "1.png"), [0, 0, 10, 10]), lambda: a.ds_batch_resize({"folder": str(ds)})):
+        with pytest.raises(RuntimeError, match="being used by the training"):
+            call()
+    a.ds_save_caption(str(ds / "1.txt"), "1girl")            # captions are fine
+    assert a.ds_in_use(str(ds))["running"] == "Shion" and a.ds_in_use(str(other))["running"] is None
+    a.ds_move([str(other / "1.png")])                        # other folders are fine
+
+
+def test_no_sd_scripts_update_during_training(tmp_path, monkeypatch):
+    a = _api_with_running(monkeypatch, tmp_path)
+    for call in (a.sd_update, a.sd_rollback, lambda: a.sd_switch_branch("dev")):
+        with pytest.raises(RuntimeError, match="A training is running"):
+            call()
+
+
+def test_copies_to_swarm_never_overwrite_another_run(tmp_path, monkeypatch):
+    from studio import runs, swarm, trainer
+    base = tmp_path / "Lora"
+    def run_with(content, own):
+        f = tmp_path / own / "shion_v1.safetensors"; f.parent.mkdir(parents=True, exist_ok=True); f.write_text(content)
+        r = {"id": own, "config": {"output_name": "shion_v1"}, "own_folder": str(f.parent)}
+        monkeypatch.setattr(trainer, "load_run", lambda rid: r)
+        monkeypatch.setattr(trainer, "save_run", lambda run: None)
+        monkeypatch.setattr(runs, "outputs", lambda run: [{"path": str(f), "name": f.name}])
+        return swarm.copy_run_outputs(own, "final", str(base), "swarm")["folder"]
+    a = run_with("first", "shion_v1")
+    b = run_with("second", "shion_v1 (2)")
+    c = run_with("third", "old_style")       # an older run whose folder name clashes with nothing
+    assert Path(a).name == "shion_v1" and Path(b).name == "shion_v1 (2)"
+    assert (Path(a) / "shion_v1.safetensors").read_text() == "first"

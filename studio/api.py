@@ -172,13 +172,20 @@ class Api:
     def sd_branches(self):
         return sdscripts.branches()
 
+    def _guard_sd(self, what):
+        if self._trainer.state().get("current"):
+            raise RuntimeError(f"A training is running. {what} after it has finished, so it doesn't break mid-run.")
+
     def sd_update(self, install_deps=True):
+        self._guard_sd("Update sd-scripts")
         return Task.spawn("Updating sd-scripts", sdscripts.update, install_deps).id
 
     def sd_switch_branch(self, branch, install_deps=True):
+        self._guard_sd("Switch branches")
         return Task.spawn(f"Switching to {branch}", sdscripts.switch_branch, branch, install_deps).id
 
     def sd_rollback(self, install_deps=True):
+        self._guard_sd("Roll back")
         return Task.spawn("Rolling back sd-scripts", sdscripts.rollback, install_deps).id
 
     def sd_install(self, dest, branch="main", python_cmd="", torch_index=""):
@@ -373,6 +380,51 @@ class Api:
 
     # ---- dataset tools ---------------------------------------------------------
 
+    def _training_folders(self, include_queued=False):
+        """Image folders of the running training (and optionally the queued ones): [(folder, run name, running)]."""
+        st = self._trainer.state()
+        runs_ = ([(st["current"], True)] if st.get("current") else []) + \
+                ([(q, False) for q in st.get("queue", [])] if include_queued else [])
+        out = []
+        for r, running in runs_:
+            full = trainer.load_run(r["id"]) or r
+            for sub in (full.get("dataset") or {}).get("subsets") or []:
+                d = str(sub.get("image_dir") or "").strip()
+                if d:
+                    try:
+                        out.append((Path(d).expanduser().resolve(), full.get("name") or "a run", running))
+                    except OSError:
+                        pass
+        return out
+
+    def _guard_images(self, *paths):
+        """Stop image changes (move, rename, crop, resize…) in a folder the running training uses."""
+        busy = [(f, n) for f, n, running in self._training_folders() if running]
+        if not busy:
+            return
+        for raw in paths:
+            if not raw:
+                continue
+            try:
+                p = Path(str(raw)).expanduser().resolve()
+            except OSError:
+                continue
+            for folder, name in busy:
+                if p == folder or folder in p.parents or p in folder.parents:
+                    raise RuntimeError(f"“{folder.name}” is being used by the training that's running ({name}). "
+                                       "Changing its images now could make the training fail, so wait until it "
+                                       "has finished. Caption edits are fine; they apply to the next training.")
+
+    def ds_in_use(self, folder):
+        """Is this folder used by the running training, or by queued ones? (for a notice on the dataset tools)"""
+        try:
+            f = Path(str(folder)).expanduser().resolve()
+        except OSError:
+            return {"running": None, "queued": []}
+        hits = [(n, running) for d, n, running in self._training_folders(include_queued=True)
+                if d == f or f in d.parents or d in f.parents]
+        return {"running": next((n for n, r in hits if r), None), "queued": [n for n, r in hits if not r]}
+
     def ds_list(self, folder, sub=None, ext=".txt"):
         return dataset_tools.list_folder(folder, ext, sub)
 
@@ -386,26 +438,32 @@ class Api:
         return dataset_tools.undo(folder)
 
     def ds_move(self, paths, to_bin="_deleted", ext=".txt"):
+        self._guard_images(*(paths or []))
         if to_bin not in dataset_tools.BINS:
             raise RuntimeError("Unknown folder.")
         return dataset_tools.move_images(paths, to_bin, ext)
 
     def ds_restore(self, paths, ext=".txt"):
+        self._guard_images(*(paths or []))
         return dataset_tools.restore_images(paths, ext)
 
     def ds_rename_plan(self, folder, prefix="DATA_", start=1, recursive=False):
         return dataset_tools.rename_plan(folder, prefix, int(start), recursive)
 
     def ds_rename(self, folder, prefix="DATA_", start=1, recursive=False):
+        self._guard_images(folder)
         return dataset_tools.rename_apply(folder, prefix, int(start), recursive)
 
     def ds_crop(self, path, box, out_w=None, out_h=None):
+        self._guard_images(path)
         return dataset_tools.crop_image(path, box, out_w, out_h)
 
     def ds_restore_original(self, path):
+        self._guard_images(path)
         return dataset_tools.restore_original(path)
 
     def ds_batch_resize(self, params):
+        self._guard_images(params.get("folder"), *(params.get("paths") or []))
         return dataset_tools.start_batch_resize(**params).id
 
     def autocomplete(self, prefix):
@@ -527,6 +585,7 @@ class Api:
     # ---- import / gallery-dl ------------------------------------------------------------
 
     def make_dataset(self, params):
+        self._guard_images(params.get("dest"))
         return Task.spawn("Making a dataset", importer.make_dataset, params).id
 
     def gdl_status(self):
