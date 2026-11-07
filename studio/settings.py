@@ -50,6 +50,7 @@ DEFAULTS = {
     "notify_on_finish": True,
     "theme": DEFAULT_THEME,
     "onboarded": False,
+    "default_preset": "",        # preset that new training sessions start from ("" = none)
 }
 
 _lock = threading.Lock()
