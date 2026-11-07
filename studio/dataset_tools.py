@@ -11,7 +11,9 @@ from PIL import Image, ImageOps
 from .util import Task, is_image, natural_key
 
 DUPES, DELETED, ORIGINALS = "_duplicates", "_deleted", "_originals"
-SPECIAL_DIRS = {DUPES, DELETED, ORIGINALS}
+METADATA = "_metadata"          # gallery-dl's per-image .json files (tags for captions)
+BINS = {DUPES, DELETED, ORIGINALS}
+SPECIAL_DIRS = BINS | {METADATA}  # folders that scans and imports skip
 
 
 def tag_key(tag):
@@ -194,7 +196,7 @@ def restore_images(paths, ext=".txt"):
     n = 0
     for p in paths:
         p = Path(p)
-        if not p.exists() or p.parent.name not in SPECIAL_DIRS:
+        if not p.exists() or p.parent.name not in BINS:
             continue
         target = unique_dest(p.parent.parent, p.name)
         shutil.move(str(p), str(target))

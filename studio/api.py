@@ -267,7 +267,7 @@ class Api:
         return dataset_tools.undo(folder)
 
     def ds_move(self, paths, to_bin="_deleted", ext=".txt"):
-        if to_bin not in dataset_tools.SPECIAL_DIRS:
+        if to_bin not in dataset_tools.BINS:
             raise RuntimeError("Unknown folder.")
         return dataset_tools.move_images(paths, to_bin, ext)
 

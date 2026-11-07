@@ -6,14 +6,14 @@ from pathlib import Path
 
 from PIL import Image
 
-from .dataset_tools import SPECIAL_DIRS, tag_key
+from .dataset_tools import METADATA, SPECIAL_DIRS, tag_key
 from .util import is_image, natural_key
 
 
 def _tags_from_metadata(img, opts):
     """Danbooru-style tags from gallery-dl's metadata (file.jpg.json) or tag files (file.jpg.txt)."""
     img = Path(img)
-    for js in (img.with_name(img.name + ".json"), img.with_suffix(".json")):
+    for js in (img.parent / METADATA / (img.name + ".json"), img.with_name(img.name + ".json"), img.with_suffix(".json")):
         if js.exists():
             try:
                 data = json.loads(js.read_text(encoding="utf-8", errors="replace"))
@@ -49,10 +49,11 @@ def run(task, p):
     src, dest = Path(p["source"]), Path(p["dest"])
     if not src.is_dir():
         raise RuntimeError(f"Source folder not found: {src}")
-    if dest.exists() and any(is_image(f.name) for f in dest.iterdir()):
-        raise RuntimeError("The destination already has images in it. Pick a new or empty folder.")
     if dest.resolve() == src.resolve():
-        raise RuntimeError("Pick a different destination than the source.")
+        return _in_place(task, src, p)   # e.g. "Download into" and "Save the dataset in" are the same folder
+    if dest.exists() and any(is_image(f.name) for f in dest.iterdir()):
+        raise RuntimeError("The destination already has images in it. Pick a new or empty folder, "
+                           "or the same folder the images are in to build the dataset right there.")
     dest.mkdir(parents=True, exist_ok=True)
     images = []
     for f in sorted(src.rglob("*") if p.get("recursive", True) else src.iterdir(), key=lambda f: natural_key(str(f))):
@@ -95,6 +96,74 @@ def run(task, p):
     if stats["too_small"]:
         task.log(f"Skipped {stats['too_small']} images smaller than {min_side}px.")
     return {**stats, "dest": str(dest).replace("\\", "/")}
+
+
+def _caption_for(f, p):
+    """Caption tags for one image, read before it's renamed (metadata is keyed by the original name)."""
+    use_meta = p.get("captions", "metadata") == "metadata"
+    tags = _tags_from_metadata(f, p) if use_meta else None
+    if tags is None:
+        existing = f.with_suffix(".txt")       # no site tags: keep a caption that was already made for it
+        if existing.exists():
+            tags = [t.strip() for t in existing.read_text(encoding="utf-8", errors="replace").split(",") if t.strip()]
+    trigger = (p.get("trigger") or "").strip()
+    if trigger:
+        tags = [trigger] + [t for t in (tags or []) if tag_key(t) != tag_key(trigger)]
+    return tags
+
+
+def _in_place(task, folder, p):
+    """Build the dataset inside the folder the images are already in: rename to DATA_1, DATA_2…,
+    write captions, and move too-small or broken images into the _deleted bin (nothing is thrown away)."""
+    from .dataset_tools import DELETED, unique_dest
+    images = sorted([f for f in folder.iterdir() if f.is_file() and is_image(f.name)], key=lambda f: natural_key(f.name))
+    min_side = int(p.get("min_side") or 0)
+    prefix = p.get("prefix", "DATA_")
+    stats = {"found": len(images), "copied": 0, "too_small": 0, "unreadable": 0, "captioned": 0, "uncaptioned": 0}
+    keep = []
+    for i, f in enumerate(images, 1):
+        task.progress = {"n": i, "total": len(images), "msg": f"Checking {i}/{len(images)}"}
+        try:
+            with Image.open(f) as im:
+                w, h = im.size
+        except Exception:
+            w = h = None
+        if w is None or (min_side and min(w, h) < min_side):
+            stats["unreadable" if w is None else "too_small"] += 1
+            bin_dir = folder / DELETED
+            bin_dir.mkdir(exist_ok=True)
+            shutil.move(str(f), str(unique_dest(bin_dir, f.name)))
+            old_txt = f.with_suffix(".txt")
+            if old_txt.exists():
+                shutil.move(str(old_txt), str(unique_dest(bin_dir, old_txt.name)))
+            continue
+        keep.append((f, _caption_for(f, p)))
+    # Rename in two steps (to temporary names first), so no file can overwrite another.
+    temps = []
+    for k, (f, tags) in enumerate(keep):
+        old_txt = f.with_suffix(".txt")
+        if old_txt.exists():
+            old_txt.unlink()                  # replaced by the new caption below
+        tmp = folder / f".lstmp_{k}{f.suffix.lower()}"
+        f.rename(tmp)
+        temps.append((tmp, tags))
+    n = int(p.get("start") or 1)
+    for tmp, tags in temps:
+        target = folder / f"{prefix}{n}{tmp.suffix}"
+        if target.exists():
+            target = unique_dest(folder, target.name)
+        tmp.rename(target)
+        if tags:
+            target.with_suffix(".txt").write_text(", ".join(tags), encoding="utf-8")
+            stats["captioned"] += 1
+        else:
+            stats["uncaptioned"] += 1
+        stats["copied"] += 1
+        n += 1
+    task.log(f"Built the dataset in place: {stats['copied']} of {stats['found']} images in {folder}.")
+    if stats["too_small"] or stats["unreadable"]:
+        task.log(f"Moved {stats['too_small'] + stats['unreadable']} too-small or unreadable images into the {DELETED} bin.")
+    return {**stats, "dest": str(folder).replace("\\", "/")}
 
 
 def make_dataset(task, p):
