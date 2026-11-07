@@ -96,6 +96,12 @@ def coerce(kind, raw):
             return float(s)
         except ValueError:
             return s
+    if kind == "number":   # whole number or decimal, e.g. lr_warmup_steps = 100 or 0.1
+        try:
+            f = float(s)
+        except ValueError:
+            return s
+        return int(f) if f.is_integer() and not any(c in s for c in ".eE") else f
     if kind == "list":
         if s.startswith("["):
             try:

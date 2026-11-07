@@ -30,7 +30,19 @@ def kind_of(action):
     t = getattr(action.type, "__name__", None)
     if t in ("int", "float"):
         return t
+    if callable(action.type) and _gives_numbers(action.type):
+        return "number"   # e.g. sd-scripts' int_or_float: "100" (steps) or "0.1" (a fraction)
     return "str"
+
+
+def _gives_numbers(fn):
+    """Does a custom argparse type turn text into numbers? (int_or_float and friends)"""
+    try:
+        a, b = fn("2"), fn("0.5")
+    except Exception:
+        return False
+    is_num = lambda v: isinstance(v, (int, float)) and not isinstance(v, bool)
+    return is_num(a) and is_num(b)
 
 
 def english_help(action):

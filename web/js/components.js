@@ -84,7 +84,7 @@ export function argField(arg, value, onchange, { showHelp = true } = {}) {
     control = pathInput(value, onchange, { folder: FOLDER_RE.test(arg.key), kind: "model",
       placeholder: arg.default != null ? String(arg.default) : "" });
   } else {
-    const isNum = arg.kind === "int" || arg.kind === "float";
+    const isNum = arg.kind === "int" || arg.kind === "float" || arg.kind === "number";
     control = h("input.input" + (isNum ? ".nums" : ""), {
       value: value ?? "", placeholder: arg.default != null ? String(arg.default) : "",
       inputmode: isNum ? "decimal" : null,

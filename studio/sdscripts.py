@@ -336,6 +336,9 @@ def _pretty(fname):
 
 # ---- argument schema ----------------------------------------------------
 
+SCHEMA_VERSION = 2   # bump when _schema_dump.py changes, so cached option lists are read again
+
+
 def _schema_cache_clear():
     for f in paths.cache_dir().glob("schema_*.json"):
         f.unlink(missing_ok=True)
@@ -346,7 +349,7 @@ def schema(script, refresh=False):
     repo = root()
     st = status()
     key = (st.get("commit_full") or "nogit")[:12]
-    cache = paths.cache_dir() / f"schema_{key}_{script}.json"
+    cache = paths.cache_dir() / f"schema_v{SCHEMA_VERSION}_{key}_{script}.json"
     if not refresh:
         cached = read_json(cache)
         if cached:
