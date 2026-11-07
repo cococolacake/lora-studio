@@ -180,3 +180,79 @@ def test_sample_gif(tmp_path):
     gif = samples.make_gif({"config": {"output_dir": str(tmp_path), "output_name": "t"}}, 0)
     with Image.open(gif) as im:
         assert im.n_frames == 3
+
+
+# ---- updating LoRA Studio itself ---------------------------------------------------------------
+
+def _fake_install(root):
+    (root / "studio").mkdir(parents=True)
+    (root / "web" / "css").mkdir(parents=True)
+    (root / "main.py").write_text("print('old')")
+    (root / "studio" / "__init__.py").write_text('__version__ = "1.0.0"')
+    (root / "web" / "css" / "custom.css").write_text("/* my own styles */")
+    (root / ".venv").mkdir()
+    (root / ".venv" / "keep.txt").write_text("venv")
+    (root / "requirements.txt").write_text("")
+
+
+def test_zip_update_keeps_venv_and_custom_css(tmp_path, monkeypatch):
+    import zipfile
+    from studio import selfupdate
+    app = tmp_path / "app"; _fake_install(app)
+    rel = tmp_path / "lora-studio-9.9.9"
+    (rel / "studio").mkdir(parents=True); (rel / "web" / "css").mkdir(parents=True)
+    (rel / "main.py").write_text("print('new')")
+    (rel / "studio" / "__init__.py").write_text('__version__ = "9.9.9"')
+    (rel / "web" / "css" / "custom.css").write_text("/* template */")
+    (rel / "requirements.txt").write_text("")
+    z = tmp_path / "rel.zip"
+    with zipfile.ZipFile(z, "w") as zf:
+        for f in rel.rglob("*"):
+            zf.write(f, f.relative_to(tmp_path).as_posix())
+    monkeypatch.setattr(selfupdate, "ROOT", app)
+    monkeypatch.setattr(selfupdate, "method", lambda: "zip")
+    monkeypatch.setattr(selfupdate, "_download", lambda url, dest: Path(dest).write_bytes(z.read_bytes()))
+    monkeypatch.setattr(selfupdate, "_requirements", lambda task: None)
+    r = selfupdate.update(Task("u"), "v9.9.9")
+    assert r["restart"] is True
+    assert '9.9.9' in (app / "studio" / "__init__.py").read_text() and "new" in (app / "main.py").read_text()
+    assert (app / "web" / "css" / "custom.css").read_text() == "/* my own styles */"
+    assert (app / ".venv" / "keep.txt").exists()
+
+
+def test_zip_update_refuses_a_wrong_download(tmp_path, monkeypatch):
+    import zipfile
+    from studio import selfupdate
+    app = tmp_path / "app"; _fake_install(app)
+    z = tmp_path / "bad.zip"
+    with zipfile.ZipFile(z, "w") as zf:
+        zf.writestr("something/readme.txt", "not lora studio")
+    monkeypatch.setattr(selfupdate, "ROOT", app)
+    monkeypatch.setattr(selfupdate, "method", lambda: "zip")
+    monkeypatch.setattr(selfupdate, "_download", lambda url, dest: Path(dest).write_bytes(z.read_bytes()))
+    with pytest.raises(RuntimeError, match="isn't a LoRA Studio release"):
+        selfupdate.update(Task("u"), "v9.9.9")
+    assert "old" in (app / "main.py").read_text()
+
+
+def test_git_update_pulls_and_respects_local_changes(tmp_path, monkeypatch):
+    import shutil as sh
+    if not sh.which("git"):
+        pytest.skip("git not installed")
+    from studio import selfupdate
+    run = lambda *a, cwd: subprocess.run(["git", *a], cwd=cwd, check=True, capture_output=True)
+    origin = tmp_path / "origin"; origin.mkdir()
+    run("init", "-q", "-b", "main", cwd=origin)
+    run("config", "user.email", "t@t", cwd=origin); run("config", "user.name", "t", cwd=origin)
+    (origin / "main.py").write_text("v1"); run("add", ".", cwd=origin); run("commit", "-qm", "v1", cwd=origin)
+    app = tmp_path / "app"
+    run("clone", "-q", str(origin), str(app), cwd=tmp_path)
+    (origin / "main.py").write_text("v2"); run("commit", "-qam", "v2", cwd=origin)
+    monkeypatch.setattr(selfupdate, "ROOT", app)
+    monkeypatch.setattr(selfupdate, "_requirements", lambda task: None)
+    assert selfupdate.method() == "git"
+    assert selfupdate.update(Task("u"))["restart"] is True
+    assert (app / "main.py").read_text() == "v2"
+    (app / "main.py").write_text("my local edit")
+    with pytest.raises(RuntimeError, match="changes of its own"):
+        selfupdate.update(Task("u"))
