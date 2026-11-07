@@ -2,6 +2,7 @@
 
 Uses Swarm's HTTP API (POST <url>/API/<route>, JSON in/out, session_id from GetNewSession).
 """
+import filecmp
 import json
 import os
 import re
@@ -156,7 +157,17 @@ def copy_run_outputs(run_id, which, base, key):
         outs = [{"path": best, "name": Path(best).name}]
     if not base:
         raise RuntimeError("Set the folder first (SwarmUI & ComfyUI page).")
-    dest = Path(base) / "LoRA Studio" / safe_name(name)
+    # Each run gets its own folder there too (named like its output folder, e.g. "shion_v1 (2)"),
+    # so two runs with the same name never overwrite each other's LoRAs.
+    own = run.get("own_folder")
+    folder_name = safe_name(Path(own).name) if own else safe_name(name)
+    root = Path(base) / "LoRA Studio"
+    dest, n = root / folder_name, 2
+    sent = set((run.get(key) or {}).get("sent") or [])
+    while dest.exists() and any(
+            (dest / o["name"]).exists() and str(dest / o["name"]).replace("\\", "/") not in sent
+            and not filecmp.cmp(o["path"], dest / o["name"], shallow=False) for o in outs):
+        dest, n = root / f"{folder_name} ({n})", n + 1     # someone else's file is there: use the next folder
     dest.mkdir(parents=True, exist_ok=True)
     copied = []
     for o in outs:
