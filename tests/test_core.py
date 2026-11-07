@@ -135,3 +135,48 @@ def test_preflight_is_quiet_when_all_is_well(tmp_path):
 
 def test_version_order():
     assert appupdate._ver("v0.10.0") > appupdate._ver("0.9.9") > appupdate._ver("v0.6.6") and appupdate._ver("junk") == ()
+
+
+# ---- when the queue is done ------------------------------------------------------------------
+
+def test_power_countdown_can_be_cancelled_and_resets(monkeypatch):
+    import time
+    from studio import power
+    ran = []
+    monkeypatch.setattr(power, "_run", lambda a: ran.append(a))
+    monkeypatch.setattr(power, "GRACE", 0.3)
+    monkeypatch.setattr("studio.notify.toast", lambda *a, **k: False)
+    power.queue_finished()                       # nothing chosen: nothing happens
+    assert power.get()["pending"] is None
+    power.set_action("sleep"); power.queue_finished(); power.cancel(); time.sleep(0.5)
+    assert ran == [] and power.get()["action"] == "none"
+    power.set_action("shutdown"); power.queue_finished(); time.sleep(0.6)
+    assert ran == ["shutdown"] and power.get()["action"] == "none"
+
+
+# ---- sharing presets -------------------------------------------------------------------------
+
+def test_shared_preset_has_no_personal_paths(tmp_path):
+    from studio.api import Api
+    a = Api()
+    a.preset_save("share test", {"script": "x.py", "args": {
+        "pretrained_model_name_or_path": "C:/Users/me/model.safetensors", "vae": "C:/Users/me/vae.safetensors",
+        "output_dir": "C:/Users/me/out", "output_name": "mine", "learning_rate": 3e-5},
+        "dataset": {"subsets": [{"image_dir": "C:/Users/me/ds", "num_repeats": 3}]}, "lora_info": {"title": "x", "trigger": "y"}})
+    out = a.preset_export("share test", str(tmp_path))
+    text = Path(out).read_text()
+    assert "C:/Users/me" not in text and "learning_rate" in text and '"num_repeats": 3' in text
+    first, second = a.preset_import(out)["name"], a.preset_import(out)["name"]
+    assert first != second   # importing never overwrites a preset you have
+
+
+# ---- sample animation --------------------------------------------------------------------------
+
+def test_sample_gif(tmp_path):
+    from studio import samples
+    (tmp_path / "sample").mkdir()
+    for ep in (1, 2, 3):
+        _img(tmp_path / "sample" / f"t_e{ep:06d}_00_20261106120{ep}00.png", (512, 512))
+    gif = samples.make_gif({"config": {"output_dir": str(tmp_path), "output_name": "t"}}, 0)
+    with Image.open(gif) as im:
+        assert im.n_frames == 3

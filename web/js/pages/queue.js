@@ -1,6 +1,7 @@
 // Queue: what's training now (live loss + log) and what's next.
 import { api } from "../api.js";
-import { h, btn, card, chip, empty, fmtAgo, fmtDuration, toastError, confirmBox, clear } from "../dom.js";
+import { h, btn, card, chip, empty, fmtAgo, fmtDuration, toast, toastError, confirmBox, clear } from "../dom.js";
+import { seg } from "../components.js";
 import { icon } from "../icons.js";
 import { liveRun } from "../liverun.js";
 import { gpuCard } from "../gpu.js";
@@ -12,7 +13,31 @@ export default {
     const headSlot = h("div");
     const currentSlot = h("div");
     const nextSlot = h("div");
-    root.append(headSlot, h("div.stack", currentSlot, gpuCard(ctx), nextSlot));
+    const powerSlot = h("div");
+    root.append(headSlot, h("div.stack", currentSlot, gpuCard(ctx), powerSlot, nextSlot));
+
+    // "When the queue is done": a one-time sleep / shut down after the last training.
+    let lastPower = "";
+    function power(st) {
+      const pw = st.power || { action: "none" };
+      const key = pw.action + "|" + (pw.pending || "");
+      if (key === lastPower) return;
+      lastPower = key;
+      const set = async (v) => {
+        try {
+          await api.power_set(v);
+          if (v !== "none") toast(v === "sleep" ? "Sleep when done" : "Shut down when done",
+            "After the last training there's a 1-minute countdown you can cancel. This is a one-time setting.", "good", "moon");
+          refresh();
+        } catch (e) { toastError(e); }
+      };
+      clear(powerSlot, card({ title: "When the queue is done" },
+        h("div.row", { style: { gap: "14px", flexWrap: "wrap" } },
+          seg([["none", "Do nothing", "check"], ["sleep", "Sleep", "moon"], ["shutdown", "Shut down", "power"]], pw.action, set),
+          h("div.small.muted", { style: { flex: 1, minWidth: "220px" } }, pw.action === "none"
+            ? "Handy for overnight batches: put the PC to sleep or shut it down after the last training."
+            : `After the last training finishes there's a 1-minute countdown you can cancel, then the PC will ${pw.action === "sleep" ? "go to sleep" : "shut down"}. Pressing Stop yourself won't trigger it. Resets to “Do nothing” afterwards.`))));
+    }
 
     let live = null, liveId = null, lastQueueKey = "", lastRunning = null;
     ctx.onLeave(() => live?.stop());
@@ -86,6 +111,7 @@ export default {
         header(st);
       }
       current(st);
+      power(st);
       upNext(st);
     }
     const refresh = () => api.state().then(apply).catch(toastError);

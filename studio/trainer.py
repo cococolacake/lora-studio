@@ -300,6 +300,12 @@ class Trainer:
                 run["status"] = "failed"
                 run["error"] = str(e)
                 self._finish(run)
+            # Last one in the queue and not stopped by hand: "When the queue is done" (sleep/shut down)
+            with self.lock:
+                last = not self.queue
+            if last and run.get("status") in ("done", "failed"):
+                from . import power
+                power.queue_finished()
 
     def _command(self, run):
         repo = sdscripts.root()
@@ -477,8 +483,9 @@ class Trainer:
                 r = load_run(rid)
                 if r:
                     queued.append({k: r.get(k) for k in ("id", "name", "script", "family", "created", "estimate")})
+            from . import power
             return {"running": self.queue_running, "current": cur, "queue": queued,
-                    "events": self.events[-10:]}
+                    "events": self.events[-10:], "power": power.get()}
 
     def live_log(self, run_id, since):
         with self.lock:

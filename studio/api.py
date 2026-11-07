@@ -78,6 +78,7 @@ class Api:
         types = {"image": ("Images (*.png;*.jpg;*.jpeg;*.webp;*.gif)",),
                  "toml": ("TOML (*.toml)",),
                  "zip": ("Zip files (*.zip)",),
+                 "preset": ("LoRA Studio presets (*.json)",),
                  "model": ("Models (*.safetensors;*.ckpt;*.pt;*.sft)", "All files (*.*)")}.get(kind, ())
         return self._dialog("open", types)
 
@@ -95,6 +96,21 @@ class Api:
 
     def diagnostics(self):
         return diagnostics.report(native=bool(getattr(self, "_window", None)))
+
+    def samples_gif(self, run_id, row, ms=700):
+        from . import samples, trainer as tr
+        run = tr.load_run(run_id)
+        if not run:
+            raise RuntimeError("Run not found.")
+        return samples.make_gif(run, row, ms)
+
+    def power_set(self, action):
+        from . import power
+        return power.set_action(action)
+
+    def power_cancel(self):
+        from . import power
+        return power.cancel()
 
     def preflight(self, job):
         return preflight.check(job)
@@ -245,6 +261,42 @@ class Api:
         if safe_name(settings.get("default_preset") or "") == safe_name(name):
             settings.save({"default_preset": ""})
         return self.presets()
+
+    def preset_export(self, name, folder):
+        """Save a preset as a file to share. Paths that only make sense on this PC are left out."""
+        from .preflight import PATH_KEY
+        p = read_json(paths.presets_dir() / f"{safe_name(name)}.json")
+        if not p:
+            raise RuntimeError(f"There's no preset called {name}.")
+        folder = Path(folder).expanduser()
+        if not folder.is_dir():
+            raise RuntimeError("Choose a folder to save the preset file in.")
+        args = {k: v for k, v in (p.get("args") or {}).items() if not PATH_KEY.search(k) and k != "output_name"}
+        ds = dict(p.get("dataset") or {})
+        if ds.get("subsets"):
+            ds["subsets"] = [{k: v for k, v in s.items() if k != "image_dir"} for s in ds["subsets"][:1]]
+        info = dict(p.get("lora_info") or {}, title="", trigger="")
+        shared = {"lora_studio_preset": 1, "preset_name": p.get("preset_name") or name, "script": p.get("script"),
+                  "family": p.get("family"), "mode": p.get("mode"), "args": args, "dataset": ds,
+                  "extra_args": p.get("extra_args") or "", "samples": p.get("samples"), "lora_info": info}
+        out = folder / f"{safe_name(name)}.lorastudio.json"
+        write_json(out, shared)
+        return str(out).replace("\\", "/")
+
+    def preset_import(self, path):
+        """Add a shared preset file to your presets (never overwrites one you have)."""
+        data = read_json(Path(path).expanduser())
+        if not isinstance(data, dict) or not isinstance(data.get("args"), dict) or not data.get("script"):
+            raise RuntimeError("That file isn't a LoRA Studio preset.")
+        base = str(data.get("preset_name") or Path(path).stem.replace(".lorastudio", "")).strip() or "Shared preset"
+        name, n = base, 2
+        while (paths.presets_dir() / f"{safe_name(name)}.json").exists():
+            name, n = f"{base} ({n})", n + 1
+        data.pop("lora_studio_preset", None)
+        data.pop("schema_args", None)
+        data["preset_name"] = name
+        write_json(paths.presets_dir() / f"{safe_name(name)}.json", data)
+        return {"name": name, "presets": self.presets()}
 
     def preset_set_default(self, name=""):
         """Choose the preset new training sessions start from ("" = start from the script's own defaults)."""

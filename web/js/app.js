@@ -109,6 +109,21 @@ function renderRail() {
       item(settingsPage)));
 }
 
+// "When the queue is done" countdown: a bar on every page with a Cancel button.
+let $power = null;
+function powerBar(pw) {
+  if (!pw?.pending) { $power?.remove(); $power = null; return; }
+  const verb = pw.pending === "sleep" ? "go to sleep" : "shut down";
+  const text = `The queue is finished. Your PC will ${verb} in ${pw.seconds_left ?? 60} s.`;
+  if (!$power) {
+    $power = h("div.power-bar", { role: "alert" }, icon("power"), h("span.grow", text),
+      h("button.btn.primary", { type: "button", onclick: () => api.power_cancel().then(() => { $power?.remove(); $power = null; toast("Cancelled", "Your PC stays on.", "good", "check"); }).catch(toastError) }, "Cancel"));
+    document.body.append($power);
+  } else {
+    $power.querySelector(".grow").textContent = text;
+  }
+}
+
 // A newer LoRA Studio on GitHub? Shown as a small download button in the rail.
 async function checkUpdate() {
   try {
@@ -141,6 +156,7 @@ async function poll() {
     const st = await api.state();
     const wasRunning = !!ctx.state?.current;
     ctx.state = st;
+    powerBar(st.power);
     if (wasRunning !== !!st.current) renderRail();
     for (const ev of st.events || []) {
       if (ev.t <= lastEventT) continue;

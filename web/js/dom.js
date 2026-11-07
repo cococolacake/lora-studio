@@ -82,11 +82,11 @@ export function toast(title, text = "", kind = "", ic = "bell", ms = 5000) {
 export const toastError = (e) => toast("Something went wrong", e?.message || String(e), "bad", "alert", 9000);
 
 // ---- modal ----
-export function modal(title, body, actions = []) {
+export function modal(title, body, actions = [], opts = {}) {
   return new Promise((resolve) => {
     const close = (v) => { scrim.remove(); resolve(v); };
     const scrim = h("div.scrim", { onmousedown: (e) => e.target === scrim && close(null) },
-      h("div.modal",
+      h("div.modal", { class: opts.wide ? "wide" : "" },
         h("div.m-head", h("h3", title), h("div.spacer"), btn("", { icon: "x", kind: "ghost", size: "sm", onclick: () => close(null) })),
         h("div.m-body", body),
         h("div.m-foot", actions.map((a) => btn(a.label, { kind: a.kind, icon: a.icon, onclick: () => close(a.value ?? a.label) })))));
