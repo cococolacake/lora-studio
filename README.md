@@ -87,35 +87,10 @@ On Linux? Skip to [Linux](#linux).
 4. On first launch, **point it at your sd-scripts folder** (the one with `train_network.py`), or let it install a fresh copy.
 
 ### Updating
-Download the new version and unzip it over the old folder, keeping the `.venv` folder. If you're asked whether to replace files, say yes. Your settings, run history, presets and themes are stored separately in `%APPDATA%\LoRA Studio`, so updates never touch them.
 
-### Troubleshooting
-- **The window is blank or won't open:** install the WebView2 "Evergreen Runtime" from [Microsoft](https://developer.microsoft.com/microsoft-edge/webview2/). You can also run it in your browser: `.venv\Scripts\python.exe main.py --browser`.
-- **Something errors:** run `LoRA Studio (debug).bat`. It keeps a console window open with the details and lets you right-click → Inspect.
-- **Reporting a bug:** **Settings → About → Copy diagnostics** copies your versions, system, GPU and the end of the last failed log (your name and logins are left out). Paste it into a [new issue](https://github.com/cococolacake/lora-studio/issues/new/choose).
-- **The auto-tagger says a package is missing:** click the **Install** button it shows. It adds `timm` to your sd-scripts environment without affecting training.
+**The easy way:** when a new version is out, a small download button with a dot appears in LoRA Studio's sidebar (and in **Settings → About**). Click **Update now**: LoRA Studio downloads the new version, keeps your `.venv`, your `custom.css` and all your settings, runs and presets, installs anything new, and restarts with one click.
 
-### Linux
-
-LoRA Studio runs on Linux too (tested on Ubuntu-style desktops; any distro with Python 3.10+ should work). You need **Python 3.10+**, **git**, and an NVIDIA driver for training.
-
-```bash
-git clone https://github.com/cococolacake/lora-studio.git
-cd lora-studio
-./install.sh                 # one time
-./lora-studio.sh             # start it
-./create-desktop-entry.sh    # optional: adds it to your app menu
-```
-
-- **The app window** needs GTK or Qt. `install.sh` uses your system's GTK if it's there (`sudo apt install python3-gi gir1.2-webkit2-4.1` on Debian/Ubuntu); otherwise it installs Qt with pip. Pick one yourself with `./install.sh --gtk` or `./install.sh --qt`. If neither works, LoRA Studio simply opens in your web browser (`./lora-studio.sh --browser` does that on purpose).
-- **Your data** (settings, runs, presets, themes) lives in `~/.local/share/lora-studio`. If you used an older version that made `~/.lora_studio`, that folder keeps being used.
-- **Notifications** use `notify-send` (`sudo apt install libnotify-bin` if it's missing).
-- **SwarmUI** starts with its `launch-linux.sh`, and **ComfyUI** needs a git install (the Windows portable build won't run on Linux). Their output goes to `logs/` in the data folder, since there's no console window.
-- **pixiv's Get token** opens your terminal app. If none is found, LoRA Studio shows the command to run yourself.
-- **sd-scripts:** a fresh install uses `python3.10` or `python3.11` if you have one (sd-scripts recommends 3.10). On Debian/Ubuntu you may need `sudo apt install python3.10-venv`.
-- **Updating:** `git pull` in the folder (or unzip the new version over it, keeping `.venv`), then run `./install.sh` again.
-
----
+**By hand:** download the new zip and unzip it over your LoRA Studio folder (keep the `.venv` folder), or **Pull** in GitHub Desktop / `git pull` if you cloned it. Then start LoRA Studio as usual.
 
 ## Using it
 

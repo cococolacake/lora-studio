@@ -5,6 +5,7 @@
     python main.py --debug    app window with developer tools (right-click > Inspect)
 """
 import argparse
+import time
 import os
 import sys
 import webbrowser
@@ -47,6 +48,7 @@ def main():
     ap.add_argument("--browser", action="store_true", help="open in the default web browser")
     ap.add_argument("--port", type=int, default=0, help="port for --browser mode")
     ap.add_argument("--debug", action="store_true", help="enable dev tools in the app window")
+    ap.add_argument("--wait-port", action="store_true", help=argparse.SUPPRESS)  # after an in-app update/restart
     args = ap.parse_args()
 
     api = Api()
@@ -59,17 +61,28 @@ def main():
                   "Install it with:  pip install pywebview")
             args.browser = True
 
+    from studio.devserver import serve
+
+    def serve_on(port):
+        """After a restart the old LoRA Studio may still be closing: wait for its port a little."""
+        for _ in range(30 if args.wait_port and port else 1):
+            try:
+                return serve(api, port, background=True)
+            except OSError:
+                if not (args.wait_port and port):
+                    raise
+                time.sleep(0.5)
+        raise OSError("port busy")
+
     if args.browser:
-        from studio.devserver import serve
-        server, url = serve(api, args.port, background=True)
+        server, url = serve_on(args.port)
         _browser_mode(api, url)
         return
 
     # Serve the UI ourselves (no caching, so updates always show up) on a fixed port,
     # so the window's saved state (drafts, view settings) survives restarts.
-    from studio.devserver import serve
     try:
-        server, url = serve(api, 42011, background=True)
+        server, url = serve_on(42011)
     except OSError:
         server, url = serve(api, 0, background=True)
 

@@ -5,6 +5,7 @@ import { icon, logo } from "./icons.js";
 import { applyTheme, paintBanner } from "./theme.js";
 import { setNative } from "./components.js";
 import { setMedia } from "./media.js";
+import { updateNow } from "./selfupdate.js";
 
 import home from "./pages/home.js";
 import train from "./pages/train.js";
@@ -138,16 +139,7 @@ async function checkUpdate() {
 }
 
 async function showUpdate() {
-  const u = ctx.update?.latest;
-  if (!u) return;
-  const win = ctx.boot.platform === "windows";
-  const go = await modal(`LoRA Studio ${u.tag} is available`, h("div.stack.sm",
-    h("p", { style: { margin: 0 } }, `You have ${ctx.update.current}. The new version is ${u.tag}${u.prerelease ? " (pre-release)" : ""}.`),
-    h("p.small.muted", { style: { margin: 0 } }, win
-      ? "To update: download the zip from the release page and unzip it over your LoRA Studio folder (keep the .venv folder), or Pull in GitHub Desktop if you use it."
-      : "To update: run git pull in the LoRA Studio folder (or unzip the new version over it), then ./install.sh again.")),
-    [{ label: "Later", kind: "ghost", value: false }, { label: "See what's new", kind: "primary", value: true }]);
-  if (go) api.open_url(u.url).catch(toastError);
+  if (ctx.update?.latest) updateNow(ctx, ctx.update.latest);
 }
 
 let lastEventT = Date.now() / 1000;

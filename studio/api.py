@@ -1,6 +1,7 @@
 """Everything the web UI can call. Exposed to JavaScript as window.pywebview.api.<method>
 (and over HTTP by devserver.py when running in a normal browser)."""
 import base64
+import time
 import os
 import sys
 import mimetypes
@@ -114,6 +115,37 @@ class Api:
 
     def preflight(self, job):
         return preflight.check(job)
+
+    def app_update_info(self):
+        from . import selfupdate
+        return selfupdate.info()
+
+    def app_self_update(self, tag=None):
+        """Update LoRA Studio itself (git pull, or the release zip). Runs as a task."""
+        from . import selfupdate
+        if self._trainer.state().get("current"):
+            raise RuntimeError("A training is running. Update after it has finished (or stop it first).")
+        return Task.spawn("Update LoRA Studio", selfupdate.update, tag).id
+
+    def app_restart(self):
+        """Start a fresh LoRA Studio and close this one."""
+        from . import selfupdate
+        if self._trainer.state().get("current"):
+            raise RuntimeError("A training is running. Restart after it has finished.")
+        selfupdate.restart()
+        import threading
+
+        def bye():
+            time.sleep(0.8)
+            if getattr(self, "_window", None):
+                try:
+                    self._window.destroy()     # closes the app window; main.py then exits
+                    return
+                except Exception:
+                    pass
+            os._exit(0)
+        threading.Thread(target=bye, daemon=True).start()
+        return True
 
     def app_update(self, force=False):
         if not force and not settings.get("check_app_updates"):

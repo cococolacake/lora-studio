@@ -4,6 +4,7 @@ import { h, btn, card, toast, toastError, promptBox, confirmBox, clear, modal } 
 import { icon } from "../icons.js";
 import { seg, switchEl, rangeEl, pathInput } from "../components.js";
 import { ACCENTS, PATTERNS, patternCSS, accentColors, headerCSS, applyTheme } from "../theme.js";
+import { updateNow } from "../selfupdate.js";
 
 const SECTIONS = [["appearance", "Appearance", "palette"], ["training", "Training", "wand"], ["paths", "Folders & backup", "folder"], ["about", "About", "info"]];
 
@@ -194,10 +195,14 @@ function backupCard(ctx) {
 
 function about(ctx, root) {
   const s = ctx.boot.settings;
-  const upd = h("div.small.muted", "");
+  const upd = h("div.row", { style: { gap: "10px", flexWrap: "wrap" } });
   const showUpd = (u) => {
-    upd.textContent = !u || u.off ? "" : u.newer ? `${u.latest.tag} is available.` : u.latest ? `You're up to date (latest is ${u.latest.tag}).` : "Couldn't reach GitHub just now.";
+    if (u && !u.off) ctx.update = u;
+    clear(upd, !u || u.off ? null
+      : u.newer ? [h("span.small", h("b", `${u.latest.tag} is available.`)), btn("Update now", { icon: "download", kind: "primary", size: "sm", onclick: () => updateNow(ctx, u.latest) })]
+      : h("span.small.muted", u.latest ? `You're up to date (latest is ${u.latest.tag}).` : "Couldn't reach GitHub just now."));
   };
+  if (ctx.update) showUpd(ctx.update);
   root.append(ctx.header({ title: "LoRA Studio", subtitle: `Version ${ctx.boot.version}`, icon: "sparkle" }),
     h("div.stack",
       card(null, h("p", { style: { marginTop: 0 } }, "A friendly front end for kohya-ss/sd-scripts. Your sd-scripts install does the training; LoRA Studio builds the configs, queues runs, and keeps the history."),
@@ -205,7 +210,7 @@ function about(ctx, root) {
       card({ title: "Updates" },
         h("div.row", { style: { gap: "12px", flexWrap: "wrap" } },
           switchEl(s.check_app_updates !== false, async (v) => { await ctx.saveSettings({ check_app_updates: v }); }, "Tell me when a new version is out"),
-          btn("Check now", { icon: "refresh", onclick: async () => { upd.textContent = "Checking…"; try { showUpd(await api.app_update(true)); } catch (e) { toastError(e); } } })),
+          btn("Check now", { icon: "refresh", onclick: async () => { clear(upd, h("span.small.muted", "Checking…")); try { showUpd(await api.app_update(true)); } catch (e) { toastError(e); } } })),
         h("div", { style: { marginTop: "8px" } }, upd)),
       card({ title: "Something not working?" },
         h("p.small.muted", { style: { marginTop: 0 } }, "Copy diagnostics puts your LoRA Studio and sd-scripts versions, system, GPU and the end of the last failed run's log on your clipboard, ready to paste into a bug report. Your name is hidden from folder paths and site logins are never included."),
