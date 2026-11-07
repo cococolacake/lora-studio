@@ -22,16 +22,18 @@
 - **Simple and full views:** *Simple* shows the settings that matter; *All options* lists every one, with search.
 - **Queue:** line up several runs and walk away. Watch live loss, speed, time left and the log.
 - **Run history:** every run keeps its exact config, sd-scripts version, loss curve and log. Re-run it, tweak it, or **resume** from a saved state.
-- **Sample previews:** your prompts are rendered every epoch and shown as a prompt × epoch grid.
-- **Presets:** save your favourite setups, or import existing `training.toml` / `dataset_config.toml` files.
+- **Sample previews:** your prompts are rendered every epoch and shown as a prompt × epoch grid. **Compare** any two with a slider or fade, or turn a prompt's samples into an **animated GIF**.
+- **Presets:** save your favourite setups, or import existing `training.toml` / `dataset_config.toml` files. Pick a **default preset** that every **New session** starts from, and **share presets** as small files (your own paths are left out).
 - **Time estimates:** see roughly how long a run will take before you start; LoRA Studio learns your GPU's speed from past runs.
 - **Best epoch:** star the epoch you like in the sample grid; it's saved as `…-best.safetensors` and can be copied to SwarmUI or ComfyUI in one click.
 - **GPU monitor:** VRAM, load, temperature and power while you train.
 - **Notifications:** a desktop notification when a run finishes or fails.
+- **Check before training:** wrong values, missing models or empty image folders are caught in seconds, before the model loads.
+- **Overnight batches:** let the PC sleep or shut down when the queue is done (with a 1-minute countdown you can cancel).
 
 **Dataset tools**
 - **New dataset in one click:** download with **gallery-dl** (Danbooru, Gelbooru, e621, pixiv and hundreds more), skip tiny images, number everything, turn the site's tags into captions, and check for duplicates. Site logins and API keys are stored on your PC only.
-- **Images & tags:** caption editor with tag chips, autocomplete, filters, tag stats and bulk add/remove/replace with undo.
+- **Images & tags:** caption editor with tag chips, autocomplete, filters, keyboard shortcuts and bulk add/remove/replace with undo. The **tag overview** shows every tag by how often it's used (sort by rarest to spot typos), and renames or removes it everywhere.
 - **Auto-tagging:** with the WD EVA02 tagger.
 - **Crop & resize:** a Photos-style crop window, plus batch resize to a long side, short side or exact size (e.g. 1024×1024, 832×1216). Originals are always kept.
 - **Duplicates:** finds look-alike images with CLIP; you review before anything moves, then delete them for good with one click.
@@ -90,6 +92,7 @@ Download the new version and unzip it over the old folder, keeping the `.venv` f
 ### Troubleshooting
 - **The window is blank or won't open:** install the WebView2 "Evergreen Runtime" from [Microsoft](https://developer.microsoft.com/microsoft-edge/webview2/). You can also run it in your browser: `.venv\Scripts\python.exe main.py --browser`.
 - **Something errors:** run `LoRA Studio (debug).bat`. It keeps a console window open with the details and lets you right-click → Inspect.
+- **Reporting a bug:** **Settings → About → Copy diagnostics** copies your versions, system, GPU and the end of the last failed log (your name and logins are left out). Paste it into a [new issue](https://github.com/cococolacake/lora-studio/issues/new/choose).
 - **The auto-tagger says a package is missing:** click the **Install** button it shows. It adds `timm` to your sd-scripts environment without affecting training.
 
 ### Linux

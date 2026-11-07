@@ -1,6 +1,6 @@
 // Home: what's training, what's next, recent results, sd-scripts status.
 import { api } from "../api.js";
-import { h, btn, card, chip, empty, statusChip, fmtAgo, fmtLoss, fmtDuration, clear } from "../dom.js";
+import { h, btn, card, chip, empty, statusChip, fmtAgo, fmtLoss, fmtDuration, clear, store } from "../dom.js";
 import { icon } from "../icons.js";
 import { liveRun } from "../liverun.js";
 import { gpuCard } from "../gpu.js";
@@ -46,6 +46,30 @@ export default {
     const tools = card({ title: "Shortcuts" }, h("div.stack.sm",
       [["wand", "New training", "train", {}], ["tag", "Tag & tidy a dataset", "dataset", {}], ["palette", "Change the look", "settings", { section: "appearance" }]].map(([ic, label, page, p]) =>
         h("div.list-row.click", { onclick: () => ctx.go(page, p) }, h("div.ic.accent", icon(ic)), h("div.main-col", h("div.title", label)), icon("right")))));
+
+    // First time? A short guide that ticks itself off, then gets out of the way.
+    const steps = [
+      { done: !!sd.valid, title: "Connect sd-scripts", text: "Point LoRA Studio at your kohya-ss/sd-scripts folder, or let it install a fresh copy.",
+        action: btn("Set up", { size: "sm", onclick: () => ctx.go("sdscripts") }) },
+      { done: !!store.get("dsFolder"), title: "Make a dataset", text: "Download images with gallery-dl or pick a folder; LoRA Studio captions, numbers and checks them.",
+        action: btn("New dataset", { size: "sm", onclick: () => ctx.go("dataset", { tool: "new" }) }) },
+      { done: runs.some((r) => r.status === "done"), title: "Train your first LoRA", text: "Pick a training script, check the settings, and press Train now. Samples and the loss graph show up live.",
+        action: btn("Train", { size: "sm", onclick: () => ctx.go("train") }) },
+    ];
+    const guideSlot = h("div");
+    const drawGuide = () => {
+      const left = steps.filter((x) => !x.done).length;
+      if (!left || store.get("guideHidden")) return clear(guideSlot);
+      clear(guideSlot, card({ title: "Getting started", actions: h("div.row", { style: { gap: "10px" } },
+          h("span.small.faint", `${steps.length - left} of ${steps.length} done`),
+          btn("Hide", { size: "sm", kind: "ghost", onclick: () => { store.set("guideHidden", true); drawGuide(); } })) },
+        h("div.guide", steps.map((x, i) => h("div.guide-step", { class: x.done ? "done" : "" },
+          h("div.guide-num", x.done ? icon("check") : String(i + 1)),
+          h("div.main-col", h("div.title", x.title), h("div.small.muted", x.text)),
+          x.done ? chip("Done", "good", "check") : x.action)))));
+    };
+    drawGuide();
+    root.append(guideSlot);
 
     root.append(h("div.grid.c3", nowSlot, h("div.stack", sdCard, gpuCard(ctx, { compact: true })), recent, h("div.stack", queueSlot, tools)));
 

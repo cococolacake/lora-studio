@@ -583,3 +583,20 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px;
   background: var(--accent-soft); color: var(--accent-text); font: inherit; font-size: 11.5px; font-weight: 700; }
 .chip-btn svg { width: 11px; height: 11px; }
 .chip-btn:hover { transform: translateY(-1px); }
+
+/* Home: Getting started guide */
+.guide { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.guide-step { display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 18px; background: var(--surface-2); }
+.guide-step .main-col .title { font-weight: 600; margin-bottom: 4px; }
+.guide-step .btn, .guide-step .chip { align-self: flex-start; margin-top: auto; }
+.guide-num { width: 30px; height: 30px; border-radius: 99px; display: grid; place-items: center; font-weight: 700;
+  background: var(--accent-soft); color: var(--accent-text); }
+.guide-num svg { width: 16px; height: 16px; }
+.guide-step.done { opacity: .72; }
+.guide-step.done .guide-num { background: var(--good-soft); color: var(--good); }
+@media (max-width: 1100px) { .guide { grid-template-columns: 1fr; } }
+
+/* Keyboard shortcuts list */
+.keys { display: grid; grid-template-columns: auto 1fr; gap: 10px 16px; align-items: center; }
+.keys kbd { font-family: var(--font-mono, ui-monospace, monospace); font-size: 12.5px; padding: 4px 9px; border-radius: 8px;
+  background: var(--surface-2); border: 1px solid var(--line, rgba(0,0,0,.08)); box-shadow: 0 1px 0 var(--line, rgba(0,0,0,.08)); white-space: nowrap; justify-self: start; }
