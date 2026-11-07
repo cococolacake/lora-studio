@@ -51,6 +51,7 @@ export function viewer(ctx, params, root) {
         btn("Auto-tag", { icon: "sparkle", kind: panel === "autotag" ? "primary" : "", onclick: () => togglePanel("autotag") }),
         btn("Bulk edit", { icon: "list", kind: panel === "bulk" ? "primary" : "", onclick: () => togglePanel("bulk") }),
         btn("Tags", { icon: "chart", title: "Tag overview: every tag and how often it\u2019s used", onclick: showStats }),
+        btn("", { icon: "keyboard", title: "Keyboard shortcuts (?)", onclick: showKeys }),
         btn("", { icon: "rollback", title: "Undo last bulk edit", onclick: undo }),
       ] : data ? [btn("Back to dataset", { icon: "left", onclick: () => { view = "dataset"; load(); } })] : [],
     }));
@@ -394,6 +395,12 @@ export function viewer(ctx, params, root) {
     await p;
   }
 
+  function showKeys() {
+    const keys = [["← →  or  ↑ ↓", "Previous / next image"], ["Delete", "Move the image to the _deleted bin (restorable)"],
+      ["C", "Crop the image"], ["Ctrl + S", "Save the tags"], ["?", "Show this list"]];
+    return modal("Keyboard shortcuts", h("div.keys", keys.map(([k, what]) => [h("kbd", k), h("span", what)])), [{ label: "Close", kind: "primary" }]);
+  }
+
   // ---- keyboard ----
   const onKey = (e) => {
     if (!data || document.querySelector(".scrim, .lightbox")) return;
@@ -404,6 +411,7 @@ export function viewer(ctx, params, root) {
     else if (e.key === "ArrowLeft" || e.key === "ArrowUp") { select(sel - 1); e.preventDefault(); }
     else if (e.key === "Delete" && view === "dataset") del();
     else if (e.key.toLowerCase() === "c" && view === "dataset") crop();
+    else if (e.key === "?") showKeys();
   };
   window.addEventListener("keydown", onKey);
   ctx.onLeave(() => window.removeEventListener("keydown", onKey));
