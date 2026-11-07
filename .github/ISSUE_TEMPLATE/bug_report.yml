@@ -1,0 +1,33 @@
+name: Bug report
+description: Something isn't working the way it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this! ♡
+        Tip: **Settings → About → Copy diagnostics** puts your versions, system, GPU and the end of the last failed run's log on your clipboard (your name and site logins are left out).
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead? Screenshots help a lot.
+      placeholder: "I clicked Make dataset with a pixiv link, and…"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How can it be reproduced?
+      placeholder: |
+        1. Open Train
+        2. Pick anima_train_network.py
+        3. …
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: Paste from Settings → About → Copy diagnostics.
+      render: markdown
+    validations:
+      required: true

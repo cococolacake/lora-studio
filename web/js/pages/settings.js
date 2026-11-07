@@ -1,6 +1,6 @@
 // Settings: appearance (theme engine), training defaults, paths, about.
 import { api } from "../api.js";
-import { h, btn, card, toast, toastError, promptBox, confirmBox, clear } from "../dom.js";
+import { h, btn, card, toast, toastError, promptBox, confirmBox, clear, modal } from "../dom.js";
 import { icon } from "../icons.js";
 import { seg, switchEl, rangeEl, pathInput } from "../components.js";
 import { ACCENTS, PATTERNS, patternCSS, accentColors, headerCSS, applyTheme } from "../theme.js";
@@ -193,7 +193,37 @@ function backupCard(ctx) {
 }
 
 function about(ctx, root) {
+  const s = ctx.boot.settings;
+  const upd = h("div.small.muted", "");
+  const showUpd = (u) => {
+    upd.textContent = !u || u.off ? "" : u.newer ? `${u.latest.tag} is available.` : u.latest ? `You're up to date (latest is ${u.latest.tag}).` : "Couldn't reach GitHub just now.";
+  };
   root.append(ctx.header({ title: "LoRA Studio", subtitle: `Version ${ctx.boot.version}`, icon: "sparkle" }),
-    card(null, h("p", { style: { marginTop: 0 } }, "A friendly front end for kohya-ss/sd-scripts. Your sd-scripts install does the training; LoRA Studio builds the configs, queues runs, and keeps the history."),
-      h("p.small.muted", { style: { marginBottom: 0 } }, ctx.boot.native ? "Running in the app window." : "Running in browser mode.")));
+    h("div.stack",
+      card(null, h("p", { style: { marginTop: 0 } }, "A friendly front end for kohya-ss/sd-scripts. Your sd-scripts install does the training; LoRA Studio builds the configs, queues runs, and keeps the history."),
+        h("p.small.muted", { style: { marginBottom: 0 } }, ctx.boot.native ? "Running in the app window." : "Running in browser mode.")),
+      card({ title: "Updates" },
+        h("div.row", { style: { gap: "12px", flexWrap: "wrap" } },
+          switchEl(s.check_app_updates !== false, async (v) => { await ctx.saveSettings({ check_app_updates: v }); }, "Tell me when a new version is out"),
+          btn("Check now", { icon: "refresh", onclick: async () => { upd.textContent = "Checking…"; try { showUpd(await api.app_update(true)); } catch (e) { toastError(e); } } })),
+        h("div", { style: { marginTop: "8px" } }, upd)),
+      card({ title: "Something not working?" },
+        h("p.small.muted", { style: { marginTop: 0 } }, "Copy diagnostics puts your LoRA Studio and sd-scripts versions, system, GPU and the end of the last failed run's log on your clipboard, ready to paste into a bug report. Your name is hidden from folder paths and site logins are never included."),
+        h("div.row", { style: { gap: "10px", flexWrap: "wrap" } },
+          btn("Copy diagnostics", { icon: "copy", kind: "primary", onclick: () => copyDiagnostics() }),
+          btn("Report a problem", { icon: "alert", onclick: () => api.open_url("https://github.com/cococolacake/lora-studio/issues/new/choose").catch(toastError) })))));
+}
+
+export async function copyDiagnostics() {
+  let text;
+  try { text = await api.diagnostics(); } catch (e) { return toastError(e); }
+  try {
+    await navigator.clipboard.writeText(text);
+    toast("Diagnostics copied", "Paste them into your bug report.", "good", "copy");
+  } catch {
+    // Some windows don't allow clipboard access: show it so it can be copied by hand.
+    const ta = h("textarea.textarea.mono", { rows: 14, readonly: true, style: { width: "100%" } });
+    ta.value = text;
+    await modal("Diagnostics", h("div.stack.sm", h("p.small.muted", { style: { margin: 0 } }, "Select all (Ctrl+A) and copy (Ctrl+C):"), ta), [{ label: "Done", kind: "primary" }]);
+  }
 }

@@ -165,6 +165,7 @@ The app is plain Python plus HTML/CSS/JS with no build step.
 ```
 main.py                 starts the window (or --browser for a normal browser tab)
 install.sh, lora-studio.sh, create-desktop-entry.sh   the Linux versions of the .bat files
+tests/                  quick checks (python -m pytest tests) + a browser smoke test, run on every pull request
 studio/                 Python backend
   api.py                every function the UI can call
   sdscripts.py          find / install / update / switch / roll back sd-scripts; read a script's options

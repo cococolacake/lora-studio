@@ -169,6 +169,21 @@ export default {
           [{ label: "Go back", kind: "ghost", value: false }, { label: "Queue anyway", value: true }]);
         if (!go) return;
       }
+      let issues = [];
+      try { issues = await api.preflight(job()); } catch { issues = []; }
+      if (issues.length) {
+        const errors = issues.filter((x) => x.level === "error");
+        const go = await modal(errors.length ? "This would stop sd-scripts" : "Worth a look before training",
+          h("div.stack.sm",
+            h("p.small.muted", { style: { margin: 0 } }, errors.length
+              ? "These would make the training fail after the model loads. Fixing them first saves a wait."
+              : "Training can go ahead; these are just things to double-check."),
+            issues.map((x) => h(x.level === "error" ? "div.notice.bad" : "div.notice.warn", icon("alert"), x.msg))),
+          errors.length
+            ? [{ label: "Train anyway", kind: "ghost", value: true }, { label: "Go back and fix", kind: "primary", value: false }]
+            : [{ label: "Go back", kind: "ghost", value: false }, { label: start ? "Train now" : "Add to queue", kind: "primary", value: true }]);
+        if (!go) return;
+      }
       try {
         await api.enqueue(job(), start);
         toast(start ? "Training started" : "Added to queue", job().name || draft.script, "good", start ? "play" : "layers");

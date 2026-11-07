@@ -1,0 +1,60 @@
+# Runs on every pull request (and push to main): quick checks so bugs are caught before merging.
+# Shows as a green ✓ or red ✗ on the pull request. No GPU or sd-scripts needed.
+name: Checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"   # the oldest Python LoRA Studio supports
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install Pillow tomli pytest
+
+      - name: Python files compile
+        run: python -m compileall -q main.py studio
+
+      - name: JavaScript files are valid
+        run: |
+          for f in $(find web/js -name '*.js'); do node --check "$f" || exit 1; done
+
+      - name: Shell scripts are valid
+        run: for f in *.sh; do bash -n "$f" || exit 1; done
+
+      - name: Tests
+        run: python -m pytest -q tests
+
+      - name: Browser smoke test (every page opens without errors)
+        run: |
+          npm install --no-save playwright@1
+          npx playwright install --with-deps chromium
+          python - <<'EOF'
+          from pathlib import Path
+          from PIL import Image
+          d = Path("/tmp/smoke_ds"); d.mkdir(exist_ok=True)
+          for i in range(6):
+              Image.new("RGB", (768, 768), (240, 150 + i * 15, 210)).save(d / f"img_{i}.png")
+              (d / f"img_{i}.txt").write_text("1girl, smile")
+          EOF
+          LORA_STUDIO_HOME=/tmp/smoke_home python main.py --browser --port 8765 > /tmp/app.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:8765/ > /dev/null && break; sleep 1; done
+          SMOKE_URL=http://127.0.0.1:8765 SMOKE_DATASET=/tmp/smoke_ds node tests/smoke.mjs || (cat /tmp/app.log; exit 1)
