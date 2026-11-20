@@ -20,6 +20,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.10"   # the oldest Python LoRA Studio supports
+          cache: pip               # reuse downloaded packages between runs
+          cache-dependency-path: .github/workflows/checks.yml
 
       - uses: actions/setup-node@v4
         with:
@@ -27,7 +29,6 @@ jobs:
 
       - name: Install
         run: |
-          python -m pip install --upgrade pip
           pip install Pillow tomli pytest
 
       - name: Python files compile
@@ -45,8 +46,8 @@ jobs:
 
       - name: Browser smoke test (every page opens without errors)
         run: |
+          # uses the Google Chrome that GitHub's machines already have, so no browser download
           npm install --no-save playwright@1
-          npx playwright install --with-deps chromium
           python - <<'EOF'
           from pathlib import Path
           from PIL import Image
@@ -57,4 +58,4 @@ jobs:
           EOF
           LORA_STUDIO_HOME=/tmp/smoke_home python main.py --browser --port 8765 > /tmp/app.log 2>&1 &
           for i in $(seq 1 30); do curl -sf http://127.0.0.1:8765/ > /dev/null && break; sleep 1; done
-          SMOKE_URL=http://127.0.0.1:8765 SMOKE_DATASET=/tmp/smoke_ds node tests/smoke.mjs || (cat /tmp/app.log; exit 1)
+          SMOKE_CHANNEL=chrome SMOKE_URL=http://127.0.0.1:8765 SMOKE_DATASET=/tmp/smoke_ds node tests/smoke.mjs || (cat /tmp/app.log; exit 1)
