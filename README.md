@@ -47,8 +47,8 @@
 - **Test grids:** render epoch × strength grids through SwarmUI.
 
 **Looks**
-- **Modes and accents:** light and dark modes, plus 10 pastel accent colours.
-- **Custom header:** a patterned header (checker, gingham, sparkles…) or your own art.
+- **Glass themes:** Default, Cool Glass, Warm Glass and Lilac, in light and dark.
+- **Glass effects:** Efficient (the default), Full or Off, and a simpler look while training if you want it.
 - **Your own styles:** a `custom.css` file for anything else.
 
 <table>
