@@ -36,8 +36,8 @@
 [data-style="glass"][data-glass="full"] .banner,
 [data-style="glass"][data-glass="full"] .modal,
 [data-style="glass"][data-glass="full"] .toast {
-  -webkit-backdrop-filter: blur(24px) saturate(150%);
-  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
 }
 /* solid look: glass off, or paused while a training runs */
 [data-style="glass"][data-glass="off"] body::before,
