@@ -4,13 +4,12 @@
    Examples (remove the comment markers to try them):
 
    Rounder cards:
-     .card { border-radius: 28px; }
+     [data-style="glass"] .card { border-radius: 28px; }
 
-   A brand-new accent, then pick it by setting "accent": "matcha"
-   in a theme file (Settings → Appearance → Save as theme):
-     [data-accent="matcha"] { --accent: #9CC98A; --accent-ink: #1E3313;
-                              --accent-soft: #EEF6EA; --accent-text: #5E8F4B; }
+   A different button colour for Cool Glass (light mode):
+     [data-family="cool"]:not([data-base="dark"]) {
+       --accent: #3F9C8C; --accent-2: #7CC9B8; --glow: rgba(63,156,140,.34); }
 
-   Warmer light background:
-     [data-base="light"] { --bg: #F5F3F0; }
+   Softer colour blobs behind the glass:
+     [data-style="glass"] body::before { opacity: .6; }
    ============================================================ */
