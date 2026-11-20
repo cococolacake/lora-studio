@@ -144,6 +144,26 @@
   --accent: #6E5E9E; --accent-2: #A48DD6; --accent-ink: #FFFFFF; --accent-soft: rgba(184,166,221,.26); --accent-text: #5A4A8E; --glow: rgba(140,121,200,.37);
   color-scheme: light;
 }
+/* Heart Glass: the colours of cococolacake.party. Dark is the site's plum night with pink, magenta,
+   aqua and lilac glow; light is a soft blush version. Pink buttons carry dark text so labels stay readable. */
+[data-style="glass"][data-family="heart"] {
+  --bg: #F6E7F0; --bg2: #EAD6E6; --b1: #FFB3D9; --b2: #FFC9E3; --b3: #BDF5EE; --b4: #DCCBFF;
+  --glass: rgba(255,250,253,.55); --surface: #FBEFF6; --surface-2: rgba(255,255,255,.45); --surface-3: rgba(120,40,90,.08);
+  --side: rgba(255,250,253,.45); --edge: rgba(255,255,255,.75); --line: rgba(120,40,90,.11); --line-strong: rgba(120,40,90,.18);
+  --text: #2B1426; --text-2: #5E3F56; --text-3: #75566C;
+  --tint: 120,40,90; --hi: rgba(255,255,255,.9);
+  --accent: #FF5FB0; --accent-2: #FF8AC8; --accent-ink: #2B0A1E; --accent-soft: rgba(255,95,176,.16); --accent-text: #B5246E; --glow: rgba(255,95,176,.38);
+  color-scheme: light;
+}
+[data-style="glass"][data-family="heart"][data-base="dark"] {
+  --bg: #160B22; --bg2: #1D0E2C; --b1: rgba(255,95,176,.55); --b2: rgba(224,64,127,.48); --b3: rgba(62,242,220,.26); --b4: rgba(155,107,255,.38);
+  --glass: rgba(255,255,255,.07); --surface: #24142F; --surface-2: rgba(255,255,255,.06); --surface-3: rgba(255,255,255,.09);
+  --side: rgba(255,255,255,.055); --edge: rgba(255,255,255,.14); --line: rgba(255,255,255,.09); --line-strong: rgba(255,255,255,.15);
+  --text: #F4EAF6; --text-2: #C9B6D2; --text-3: #AA97B6;
+  --tint: 8,0,16; --hi: rgba(255,255,255,.18);
+  --accent: #FF5FB0; --accent-2: #FF8AC8; --accent-ink: #2B0A1E; --accent-soft: rgba(255,95,176,.18); --accent-text: #FF9BCF; --glow: rgba(255,95,176,.42);
+  color-scheme: dark;
+}
 [data-style="glass"] {
   --shadow-sm: 0 2px 6px -2px rgba(var(--tint), .16);
   --shadow-md: 0 18px 40px -18px rgba(var(--tint), .18), 0 2px 8px -3px rgba(var(--tint), .16);

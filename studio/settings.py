@@ -10,7 +10,7 @@ _HEADER = {"type": "none"}   # page headers are plain title bars (patterned head
 DEFAULT_THEME = {
     "name": "Default",
     "style": "glass",
-    "family": "default",        # glass colours: default | cool | warm | lilac
+    "family": "default",        # glass colours: default | cool | warm | lilac | heart
     "base": "light",            # light | dark
     "glass": "efficient",       # efficient (see-through, no live blur) | full (live blur) | off
     "simpleWhileTraining": True,  # solid look while a training runs, so it gets the whole GPU
@@ -24,6 +24,7 @@ BUILTIN_THEMES = [
     {**copy.deepcopy(DEFAULT_THEME), "name": "Cool Glass", "family": "cool"},
     {**copy.deepcopy(DEFAULT_THEME), "name": "Warm Glass", "family": "warm"},
     {**copy.deepcopy(DEFAULT_THEME), "name": "Lilac", "family": "lilac"},
+    {**copy.deepcopy(DEFAULT_THEME), "name": "Heart Glass", "family": "heart"},
 ]
 
 

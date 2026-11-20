@@ -43,7 +43,7 @@ Everything about LoRA Studio in one place. For the short version, see the [READM
 - **Test grids:** render epoch × strength grids through SwarmUI.
 
 **Looks**
-- **Glass themes:** Default, Cool Glass, Warm Glass and Lilac, in light and dark.
+- **Glass themes:** Default, Cool Glass, Warm Glass, Lilac and Heart Glass, in light and dark (Lilac is light only).
 - **Glass effects:** Efficient (the default), Full or Off, and a simpler look while training if you want it.
 - **Your own styles:** a `custom.css` file for anything else.
 
@@ -138,7 +138,7 @@ Turn on **Save state** (Train → Output) before training. If a run is stopped o
 - **ComfyUI:** on the ComfyUI tab, pick **The one inside SwarmUI** (nothing else to set up) or **A separate ComfyUI install**. For a separate install, choose its folder: the portable folder with `run_nvidia_gpu.bat`, or a git install with `main.py`. LoRAs are copied to `models/loras/LoRA Studio/<name>/`; refresh ComfyUI's LoRA list to see them.
 
 ### Making it yours
-- **Settings → Appearance:** pick a theme (Default, Cool Glass, Warm Glass or Lilac), light or dark, how much glass effect you want, and the font. **Save as theme** keeps your mix.
+- **Settings → Appearance:** pick a theme (Default, Cool Glass, Warm Glass, Lilac or Heart Glass), light or dark, how much glass effect you want, and the font. **Save as theme** keeps your mix.
 - **`web/css/custom.css`:** loaded last, so anything you put there wins. It has a few examples to start from.
 
 ## For developers

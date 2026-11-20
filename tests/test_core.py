@@ -338,7 +338,7 @@ def test_old_themes_move_to_glass(monkeypatch, tmp_path):
     assert (t["style"], t["family"], t["base"], t["header"]["type"]) == ("glass", "default", "dark", "none")
     (tmp_path / "settings.json").write_text('{"theme": {"name": "Cool Glass", "style": "glass", "family": "cool", "base": "light"}}')
     assert settings.load()["theme"]["family"] == "cool"
-    assert [x["name"] for x in settings.BUILTIN_THEMES] == ["Default", "Cool Glass", "Warm Glass", "Lilac"]
+    assert [x["name"] for x in settings.BUILTIN_THEMES] == ["Default", "Cool Glass", "Warm Glass", "Lilac", "Heart Glass"]
     assert settings.DEFAULT_THEME["glass"] == "efficient" and settings.DEFAULT_THEME["simpleWhileTraining"] is True
 
 
