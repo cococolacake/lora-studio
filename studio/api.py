@@ -24,6 +24,14 @@ class Api:
     def _attach_window(self, window):
         self._window = window
 
+    _titlebar = None   # set by main.py on Windows: tints the window's title bar
+
+    def set_titlebar(self, bg, text, dark=False):
+        """Match the Windows title bar to the theme. Does nothing elsewhere."""
+        import re
+        ok = all(isinstance(c, str) and re.fullmatch(r"#[0-9a-fA-F]{6}", c) for c in (bg, text))
+        return bool(ok and self._titlebar and self._titlebar(bg, text, bool(dark)))
+
     # ---- app / settings --------------------------------------------------
 
     def bootstrap(self):

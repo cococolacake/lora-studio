@@ -1,6 +1,6 @@
 /* ============================================================
-   Theme tokens. A theme = a base (light/dark) + an accent.
-   To make your own accent, copy one [data-accent] block below.
+   Theme tokens. The base blocks below hold shared values (status
+   colours and fallbacks); each glass family further down sets the rest.
    ============================================================ */
 
 :root {
@@ -72,22 +72,84 @@
   color-scheme: dark;
 }
 
-/* ---------- accents: pastels sharing one brightness ----------
-   --accent       the colour itself
-   --accent-ink   text/icons placed ON the accent
-   --accent-soft  a whisper of it for backgrounds
-   --accent-text  readable accent-coloured text on the page   */
-[data-accent="periwinkle"] { --accent: #9381FF; --accent-ink: #FFFFFF; --accent-soft: #EEEBFF; --accent-text: #6A55F0; }
-[data-accent="cobalt"]     { --accent: #2F6BFF; --accent-ink: #FFFFFF; --accent-soft: #E4ECFF; --accent-text: #2459E0; }
-[data-accent="sky"]        { --accent: #7DB7FF; --accent-ink: #0E2C55; --accent-soft: #E7F1FF; --accent-text: #2E78D6; }
-[data-accent="mint"]       { --accent: #75C97F; --accent-ink: #103817; --accent-soft: #E6F6E8; --accent-text: #2F9440; }
-[data-accent="sage"]       { --accent: #A3B59F; --accent-ink: #1F2C1C; --accent-soft: #EEF2ED; --accent-text: #5E7759; }
-[data-accent="peach"]      { --accent: #FFB48A; --accent-ink: #55260B; --accent-soft: #FFF0E7; --accent-text: #D9692B; }
-[data-accent="rose"]       { --accent: #FF94BE; --accent-ink: #571233; --accent-soft: #FFEAF2; --accent-text: #D6457F; }
-[data-accent="butter"]     { --accent: #F2D46B; --accent-ink: #463500; --accent-soft: #FBF5DC; --accent-text: #A88500; }
-[data-accent="lilac"]      { --accent: #C9A4FF; --accent-ink: #36145F; --accent-soft: #F4ECFF; --accent-text: #8A4FE0; }
-[data-accent="mono"]       { --accent: #17171A; --accent-ink: #FFFFFF; --accent-soft: #EDEDEF; --accent-text: #17171A; }
+/* ============================================================
+   Glass themes (data-style="glass"). A family sets every colour,
+   light and dark; light sits at a soft mid-tone, dark at charcoal.
+   --b1..--b4 are the soft colour blobs behind the glass.
+   ============================================================ */
+:root {
+  --font-ui: "Geist", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --font-ui-mono: "Geist Mono", "Cascadia Code", Consolas, monospace;
+  /* spacing scale: use these, not one-off pixel values */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px;
+}
+@font-face { font-family: "Geist"; src: url("../fonts/Geist-Variable.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+@font-face { font-family: "Geist Mono"; src: url("../fonts/GeistMono-Variable.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
 
-/* in dark mode the soft tint becomes a translucent glow */
-[data-base="dark"] { --accent-soft: color-mix(in srgb, var(--accent) 15%, transparent); --accent-text: var(--accent); }
-[data-base="dark"][data-accent="mono"] { --accent: #F2F2F4; --accent-ink: #111113; }
+[data-style="glass"][data-family="default"] {
+  --bg: #E4E5E9; --bg2: #D3D5DB; --b1: rgba(255,255,255,.75); --b2: #C3C6D2; --b3: #E8E2E6; --b4: transparent;
+  --glass: rgba(248,248,251,.55); --surface: #EEEFF2; --surface-2: rgba(255,255,255,.42); --surface-3: rgba(30,31,37,.07);
+  --side: rgba(248,248,251,.45); --edge: rgba(255,255,255,.7); --line: rgba(30,32,40,.10); --line-strong: rgba(30,32,40,.16);
+  --text: #1E1F25; --text-2: #4B4D58; --text-3: #5F6270;
+  --tint: 40,42,56; --hi: rgba(255,255,255,.85);
+  --accent: #2B2C33; --accent-2: #4C4E5A; --accent-ink: #F6F6F8; --accent-soft: rgba(30,31,37,.08); --accent-text: #1E1F25; --glow: rgba(30,31,37,.24);
+}
+[data-style="glass"][data-family="default"][data-base="dark"] {
+  --bg: #2C2D33; --bg2: #212227; --b1: #3C3E49; --b2: #30344A; --b3: #433C48; --b4: transparent;
+  --glass: rgba(255,255,255,.065); --surface: #2E2F36; --surface-2: rgba(255,255,255,.055); --surface-3: rgba(255,255,255,.08);
+  --side: rgba(255,255,255,.05); --edge: rgba(255,255,255,.11); --line: rgba(255,255,255,.09); --line-strong: rgba(255,255,255,.15);
+  --text: #F0F0F3; --text-2: #B6B7C0; --text-3: #9C9DA8;
+  --tint: 0,0,0; --hi: rgba(255,255,255,.13);
+  --accent: #F2F2F5; --accent-2: #C8C9D2; --accent-ink: #1E1F25; --accent-soft: rgba(255,255,255,.09); --accent-text: #F0F0F3; --glow: rgba(255,255,255,.16);
+}
+[data-style="glass"][data-family="cool"] {
+  --bg: #DCE3EE; --bg2: #C9D2E2; --b1: #B3C2F3; --b2: #B8DEEC; --b3: #E3E7F7; --b4: transparent;
+  --glass: rgba(244,248,255,.50); --surface: #E7ECF5; --surface-2: rgba(255,255,255,.40); --surface-3: rgba(52,72,130,.08);
+  --side: rgba(244,248,255,.42); --edge: rgba(255,255,255,.72); --line: rgba(40,60,110,.11); --line-strong: rgba(40,60,110,.18);
+  --text: #1A2135; --text-2: #444D68; --text-3: #58627D;
+  --tint: 52,72,130; --hi: rgba(255,255,255,.88);
+  --accent: #5876F5; --accent-2: #68BDEE; --accent-ink: #FFFFFF; --accent-soft: rgba(88,118,245,.13); --accent-text: #3452CF; --glow: rgba(88,118,245,.34);
+}
+[data-style="glass"][data-family="cool"][data-base="dark"] {
+  --bg: #252D3F; --bg2: #1B2231; --b1: #36498F; --b2: #246A80; --b3: #33305F; --b4: transparent;
+  --glass: rgba(200,215,255,.075); --surface: #283043; --surface-2: rgba(220,230,255,.06); --surface-3: rgba(200,215,255,.09);
+  --side: rgba(200,215,255,.06); --edge: rgba(200,215,255,.15); --line: rgba(200,215,255,.11); --line-strong: rgba(200,215,255,.18);
+  --text: #EEF2FF; --text-2: #B4BDD7; --text-3: #97A2C0;
+  --tint: 5,10,30; --hi: rgba(220,230,255,.15);
+  --accent: #7D96FF; --accent-2: #7ED2F6; --accent-ink: #0E1430; --accent-soft: rgba(125,150,255,.17); --accent-text: #AFC1FF; --glow: rgba(125,150,255,.38);
+}
+[data-style="glass"][data-family="warm"] {
+  --bg: #ECE2DA; --bg2: #DDCDC2; --b1: #F0BCA4; --b2: #E8BCC9; --b3: #F6ECE2; --b4: transparent;
+  --glass: rgba(255,249,245,.50); --surface: #F0E7E0; --surface-2: rgba(255,255,255,.40); --surface-3: rgba(110,60,40,.08);
+  --side: rgba(255,249,245,.42); --edge: rgba(255,255,255,.72); --line: rgba(110,60,40,.11); --line-strong: rgba(110,60,40,.18);
+  --text: #2E2420; --text-2: #5C4C45; --text-3: #715F57;
+  --tint: 110,60,40; --hi: rgba(255,255,255,.88);
+  --accent: #DB7A5D; --accent-2: #E097AE; --accent-ink: #FFFFFF; --accent-soft: rgba(219,122,93,.13); --accent-text: #AE5236; --glow: rgba(219,122,93,.34);
+}
+[data-style="glass"][data-family="warm"][data-base="dark"] {
+  --bg: #302723; --bg2: #241D1A; --b1: #7A3E32; --b2: #6A374F; --b3: #4C3327; --b4: transparent;
+  --glass: rgba(255,228,215,.075); --surface: #342A26; --surface-2: rgba(255,235,225,.06); --surface-3: rgba(255,228,215,.09);
+  --side: rgba(255,228,215,.06); --edge: rgba(255,228,215,.14); --line: rgba(255,228,215,.11); --line-strong: rgba(255,228,215,.18);
+  --text: #FBEFE9; --text-2: #D4C0B6; --text-3: #B5A197;
+  --tint: 20,8,4; --hi: rgba(255,235,225,.14);
+  --accent: #F0997B; --accent-2: #EFA8BF; --accent-ink: #2A1510; --accent-soft: rgba(240,153,123,.17); --accent-text: #F8B7A0; --glow: rgba(240,153,123,.36);
+}
+/* Lilac is a light-only theme (dark mode uses Cool Glass dark) */
+[data-style="glass"][data-family="lilac"] {
+  --bg: #EFE4E2; --bg2: #E2D5DD; --b1: #DAC8F1; --b2: #B8A6DD; --b3: #F7EBE5; --b4: #EDDDEC;
+  --glass: rgba(252,246,249,.50); --surface: #F1E8EC; --surface-2: rgba(255,255,255,.40); --surface-3: rgba(104,94,123,.09);
+  --side: rgba(252,246,249,.42); --edge: rgba(255,255,255,.74); --line: rgba(104,94,123,.12); --line-strong: rgba(104,94,123,.20);
+  --text: #2F2840; --text-2: #595070; --text-3: #685E7B;
+  --tint: 104,94,123; --hi: rgba(255,255,255,.88);
+  --accent: #6E5E9E; --accent-2: #A48DD6; --accent-ink: #FFFFFF; --accent-soft: rgba(184,166,221,.26); --accent-text: #5A4A8E; --glow: rgba(140,121,200,.37);
+  color-scheme: light;
+}
+[data-style="glass"] {
+  --shadow-sm: 0 2px 6px -2px rgba(var(--tint), .16);
+  --shadow-md: 0 18px 40px -18px rgba(var(--tint), .18), 0 2px 8px -3px rgba(var(--tint), .16);
+  --shadow-lg: 0 24px 60px -16px rgba(var(--tint), .30), 0 4px 14px -4px rgba(var(--tint), .20);
+  --highlight: inset 0 1px 0 var(--hi);
+  --log-bg: var(--surface-2);
+  --font: var(--font-ui); --font-display: var(--font-ui); --mono: var(--font-ui-mono);
+}
+[data-style="glass"][data-font="system"] { --font: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; --font-display: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; }

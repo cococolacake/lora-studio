@@ -2,7 +2,7 @@
 import { api } from "./api.js";
 import { h, clear, toast, toastError, store, btn, modal } from "./dom.js";
 import { icon, logo } from "./icons.js";
-import { applyTheme, paintBanner } from "./theme.js";
+import { applyTheme, paintBanner, setTrainingLook } from "./theme.js";
 import { setNative } from "./components.js";
 import { setMedia } from "./media.js";
 import { updateNow } from "./selfupdate.js";
@@ -44,6 +44,7 @@ const ctx = {
     clear($side);
     const inner = h("div.main-inner.page");
     clear($main, inner);
+    simpleNote();
     $main.scrollTop = 0;
     try {
       const out = page.mount(ctx, params, inner);
@@ -73,41 +74,67 @@ const ctx = {
     setNative(ctx.boot.native);
     setMedia(ctx.boot.media);
     applyTheme(ctx.boot.settings.theme);
+    syncTitlebar();
     return ctx.boot;
   },
 
   async saveSettings(patch) {
     const s = await api.save_settings(patch);
     ctx.boot.settings = s;
-    if (patch.theme) applyTheme(s.theme);
+    if (patch.theme) { applyTheme(s.theme); syncTitlebar(); }
     return s;
   },
 };
 window.ctx = ctx; // handy in the dev tools console
 
+// In the app window on Windows, tint the title bar to match the theme's background.
+function syncTitlebar() {
+  if (!ctx.boot?.native) return;
+  const cs = getComputedStyle(document.documentElement);
+  const bg = cs.getPropertyValue("--bg").trim(), text = cs.getPropertyValue("--text").trim();
+  api.set_titlebar(bg, text, document.documentElement.dataset.base === "dark").catch(() => { /* not Windows */ });
+}
+
 function renderRail() {
   const running = ctx.state?.current;
   const item = (p) => {
-    const b = h("button.rail-btn", { onclick: () => ctx.go(p.id), class: ctx.page?.id === p.id ? "active" : "" },
-      icon(p.icon), h("span.tip", p.label));
+    const b = h("button.rail-btn", { onclick: () => ctx.go(p.id), class: ctx.page?.id === p.id ? "active" : "", "aria-label": p.label },
+      icon(p.icon), h("span.lbl", p.short || p.label), h("span.tip", p.label));
     if (p.id === "queue" && running) b.append(h("span.badge-dot"));
     return b;
   };
   const base = ctx.boot?.settings?.theme?.base || "light";
   clear($rail,
     h("div.logo", { title: "LoRA Studio" }, logo()),
+    h("div.rail-div"),
     h("div.nav", PAGES.map(item)),
+    h("div.rail-div"),
     h("div.bottom",
       ctx.update?.newer ? h("button.rail-btn.update-btn", { onclick: showUpdate },
-        icon("download"), h("span.badge-dot"), h("span.tip", `Update available: ${ctx.update.latest.tag}`)) : null,
+        icon("download"), h("span.badge-dot"), h("span.lbl", "Update"), h("span.tip", `Update available: ${ctx.update.latest.tag}`)) : null,
       h("button.rail-btn", {
         onclick: async () => {
           const t = { ...ctx.boot.settings.theme, base: base === "dark" ? "light" : "dark" };
           await ctx.saveSettings({ theme: t });
           renderRail();
         },
-      }, icon(base === "dark" ? "sun" : "moon"), h("span.tip", base === "dark" ? "Light mode" : "Dark mode")),
+      }, icon(base === "dark" ? "sun" : "moon"), h("span.lbl", base === "dark" ? "Light" : "Dark"), h("span.tip", base === "dark" ? "Light mode" : "Dark mode")),
       item(settingsPage)));
+}
+
+// Glass themes switch to a solid look while a training runs, so the training
+// gets the whole GPU. A short note at the top says why, with a way to keep the glass.
+let keepGlass = false;
+function simpleNote() {
+  const training = !!ctx.state?.current && !keepGlass;
+  const on = setTrainingLook(training);
+  const note = $main.querySelector(":scope > .simple-note");
+  if (!on) { note?.remove(); return; }
+  if (note) return;
+  $main.prepend(h("div.simple-note", { role: "status" }, icon("cpu"),
+    h("span.grow", h("b", "Simple look while training. "),
+      h("span.muted", "Glass effects are paused so the training gets all of your GPU. They come back when it finishes.")),
+    btn("Keep glass on", { size: "sm", kind: "ghost", onclick: () => { keepGlass = true; simpleNote(); } })));
 }
 
 // "When the queue is done" countdown: a bar on every page with a Cancel button.
@@ -149,6 +176,7 @@ async function poll() {
     const wasRunning = !!ctx.state?.current;
     ctx.state = st;
     powerBar(st.power);
+    simpleNote();
     if (wasRunning !== !!st.current) renderRail();
     for (const ev of st.events || []) {
       if (ev.t <= lastEventT) continue;

@@ -26,8 +26,8 @@ export function newDataset(ctx, params, root) {
   root.append(
     ctx.header({ title: "New dataset", subtitle: "Download with gallery-dl or start from a folder; get a clean, captioned dataset in one go.", icon: "download" }),
     h("div.stack",
-      card({ title: "1 · Where the images come from" }, srcSlot),
-      card({ title: "2 · The dataset" }, dsSlot),
+      card({ title: "Where the images come from" }, srcSlot),
+      card({ title: "The dataset" }, dsSlot),
       card(null, h("div.row", h("div.steps-flow", { style: { flex: 1 } },
         h("div.stepc", h("b", "Download"), "gallery-dl saves the posts with their tags"),
         h("div.stepc", h("b", "Filter"), "skips tiny images"),

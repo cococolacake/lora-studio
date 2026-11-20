@@ -69,8 +69,21 @@ export function icon(name, cls = "") {
   return span.firstChild;
 }
 
-// The app mark: the little (•ᴗ-) face from web/assets/icon.svg.
+// The app mark: the little (•ᴗ-) face (web/assets/icon.svg is the app icon version).
 export function logo() {
+  // Glass themes: the same face as line art in the theme's text colour,
+  // inside a line-drawn rounded square, so it matches the rail icons.
+  if (document.documentElement.dataset.style === "glass") {
+    const span = document.createElement("span");
+    span.style.display = "contents";
+    span.innerHTML = `<svg viewBox="0 0 512 512" class="app-mark line" role="img" aria-label="LoRA Studio">
+      <rect x="56" y="56" width="400" height="400" rx="112" fill="none" stroke="currentColor" stroke-width="20"/>
+      <g transform="translate(256 262) scale(1.25) translate(-256 -266)" fill="none" stroke="currentColor" stroke-width="20" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="176" cy="236" r="7" fill="currentColor" stroke-width="24"/>
+        <path d="M308 236 H360"/><path d="M222 292 Q256 330 290 292"/>
+      </g></svg>`;
+    return span.firstChild;
+  }
   const img = document.createElement("img");
   img.src = "assets/icon.svg";
   img.alt = "LoRA Studio";

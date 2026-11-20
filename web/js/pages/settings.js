@@ -3,7 +3,7 @@ import { api } from "../api.js";
 import { h, btn, card, toast, toastError, promptBox, confirmBox, clear, modal } from "../dom.js";
 import { icon } from "../icons.js";
 import { seg, switchEl, rangeEl, pathInput } from "../components.js";
-import { ACCENTS, PATTERNS, patternCSS, accentColors, headerCSS, applyTheme } from "../theme.js";
+import { applyTheme } from "../theme.js";
 import { updateNow } from "../selfupdate.js";
 
 const SECTIONS = [["appearance", "Appearance", "palette"], ["training", "Training", "wand"], ["paths", "Folders & backup", "folder"], ["about", "About", "info"]];
@@ -38,16 +38,24 @@ function appearance(ctx, root) {
   const body = h("div.stack");
   root.append(body);
 
+  // Glass theme previews: the family's background, a panel and its button colour.
+  const FAMILY = {
+    default: { light: ["#E4E5E9", "#D3D5DB", "rgba(255,255,255,.75)", "#C3C6D2", "#2B2C33", "#4C4E5A"], dark: ["#2C2D33", "#212227", "#3C3E49", "#30344A", "#F2F2F5", "#C8C9D2"] },
+    cool: { light: ["#DCE3EE", "#C9D2E2", "#B3C2F3", "#B8DEEC", "#5876F5", "#68BDEE"], dark: ["#252D3F", "#1B2231", "#36498F", "#246A80", "#7D96FF", "#7ED2F6"] },
+    warm: { light: ["#ECE2DA", "#DDCDC2", "#F0BCA4", "#E8BCC9", "#DB7A5D", "#E097AE"], dark: ["#302723", "#241D1A", "#7A3E32", "#6A374F", "#F0997B", "#EFA8BF"] },
+    lilac: { light: ["#EFE4E2", "#E2D5DD", "#DAC8F1", "#B8A6DD", "#6E5E9E", "#A48DD6"] },
+  };
   function themePreview(t) {
-    const css = headerCSS(t) || { background: "var(--surface-3)" };
-    const accent = (ACCENTS.find((a) => a[0] === t.accent) || ACCENTS[0])[2];
-    const dark = t.base === "dark";
-    return h("div.tp", { style: css },
-      h("div.mini", { style: { background: dark ? "#19191C" : "#fff" } }, h("i", { style: { background: accent } }), h("b", { style: { background: dark ? "#fff" : "#17171A" } })));
+    const fam = FAMILY[t.family] || FAMILY.default;
+    const [b1, b2, c1, c2, a1, a2] = (t.base === "dark" && fam.dark) || fam.light;
+    const panel = t.base === "dark" && fam.dark ? "rgba(255,255,255,.08)" : "rgba(255,255,255,.55)";
+    return h("div.tp", { style: { background: `radial-gradient(60% 90% at 10% 0%, ${c1}, transparent), radial-gradient(60% 90% at 100% 20%, ${c2}, transparent), linear-gradient(160deg, ${b1}, ${b2})` } },
+      h("div.mini", { style: { background: panel, boxShadow: "inset 0 1px 0 rgba(255,255,255,.5)", border: "1px solid rgba(255,255,255,.45)" } },
+        h("i", { style: { background: `linear-gradient(165deg, ${a1}, ${a2})` } }), h("b", { style: { background: t.base === "dark" && fam.dark ? "#fff" : "#17171A" } })));
   }
 
   function draw() {
-    clear(headSlot, ctx.header({ title: "Appearance", subtitle: "Changes apply instantly. The header above is a live preview.", icon: "palette",
+    clear(headSlot, ctx.header({ title: "Appearance", subtitle: "Changes apply right away.", icon: "palette",
       actions: [btn("Save as theme", { icon: "save", onclick: async () => {
         const name = await promptBox("Save theme", "Theme name", theme.name && !themes.find((t) => !t.user && t.name === theme.name) ? theme.name : "My theme");
         if (!name) return;
@@ -58,77 +66,35 @@ function appearance(ctx, root) {
         toast("Theme saved", name, "good", "palette");
       } })] }));
 
-    const hd = theme.header;
-    const isOn = (t) => t.name === theme.name && t.base === theme.base && t.accent === theme.accent;
-
+    const isOn = (t) => t.name === theme.name && t.family === theme.family;
+    const pick = (t) => { const base = theme.base; theme = structuredClone({ ...t, user: undefined }); delete theme.user; theme.base = base; commit(); };
     const gallery = card({ title: "Themes" }, h("div.theme-cards", themes.map((t) =>
-      h("button.theme-card", { class: isOn(t) ? "on" : "", onclick: () => { theme = structuredClone({ ...t, user: undefined }); delete theme.user; commit(); } },
-        themePreview(t),
+      h("button.theme-card", { class: isOn(t) ? "on" : "", onclick: () => pick(t) },
+        themePreview({ ...t, base: theme.base }),
         h("div.tn", t.name, h("div.spacer"), t.user ? h("span", { title: "Delete theme", style: { color: "var(--text-3)", display: "flex" },
           onclick: async (e) => { e.stopPropagation(); themes = await api.delete_theme(t.name); ctx.boot.themes = themes; draw(); } }, icon("trash")) : null)))));
 
-    const colours = card({ title: "Colours" }, h("div.row", { style: { gap: "48px", alignItems: "flex-start", flexWrap: "nowrap" } },
-      h("div.field", h("label", "Mode"), seg([["light", "Light", "sun"], ["dark", "Dark", "moon"]], theme.base, (v) => { theme.base = v; commit(); })),
-      h("div.field", { style: { flex: 1 } }, h("label", "Accent"), h("div.swatches", { style: { marginTop: "4px" } }, ACCENTS.map(([id, label, hex]) =>
-        h("button.swatch", { class: theme.accent === id ? "on" : "", onclick: () => { theme.accent = id; commit(); } },
-          h("span.ball", { style: { background: hex } }), label))))));
+    const colours = card({ title: "Mode" }, h("div.stack",
+      seg([["light", "Light", "sun"], ["dark", "Dark", "moon"]], theme.base, (v) => { theme.base = v; commit(); }),
+      theme.family === "lilac" && theme.base === "dark" ? h("p.small.faint", { style: { margin: 0 } }, "Lilac is a light theme, so dark mode uses Cool Glass dark.") : null));
 
-    // ---- header editor ----
-    const [ac1, ac2, ac3] = accentColors(theme.accent, theme.base);
-    const colors = hd.useAccent ? [ac1, ac2] : (hd.colors?.length ? hd.colors : [ac1, ac2]);
-    const tiles = h("div.pattern-tiles", PATTERNS.map(([id, label]) =>
-      h("button.ptile", { class: hd.pattern === id && hd.type === "pattern" ? "on" : "", onclick: () => { hd.type = "pattern"; hd.pattern = id; commit(); } },
-        h("div.p", { style: patternCSS(id, colors[0], colors[1], Math.max(10, (hd.scale || 28) * 0.55), ac3) }), label)));
+    const effects = card({ title: "Glass effects" }, h("div.stack",
+      seg([["efficient", "Efficient"], ["full", "Full"], ["off", "Off"]], theme.glass || "efficient", (v) => { theme.glass = v; commit(); }),
+      h("p.small.muted", { style: { margin: 0 } }, ({
+        efficient: "See-through panels over a still background. It looks almost the same as Full and is very light on your GPU. Recommended.",
+        full: "Real live blur behind every panel. It's the prettiest, and it uses the most GPU power, so it suits a strong graphics card.",
+        off: "Solid panels, no see-through or blur. The colours and layout stay the same.",
+      })[theme.glass || "efficient"]),
+      theme.glass === "off" ? null : switchEl(theme.simpleWhileTraining !== false, (v) => { theme.simpleWhileTraining = v; commit(false); }, "Simpler look while training"),
+      theme.glass === "off" ? null : h("p.small.faint", { style: { margin: 0 } }, "While a LoRA trains, panels turn solid so the training gets the whole GPU. They go back when it finishes.")));
 
-    const colorIn = (i) => h("input.color-in", { type: "color", value: colors[i], disabled: hd.useAccent,
-      oninput: (e) => { hd.colors = [...colors]; hd.colors[i] = e.target.value; colors[i] = e.target.value; commit(false); } });
+    const text = card({ title: "Text" }, h("div.field", h("label", "Font"),
+      seg([["geist", "Geist"], ["system", "System"]], theme.font === "system" ? "system" : "geist", (v) => { theme.font = v; commit(); })));
 
-    const fileIn = h("input", { type: "file", accept: "image/*", style: { display: "none" }, onchange: async (e) => {
-      const f = e.target.files[0];
-      if (!f) return;
-      try {
-        hd.image = await imageToDataUrl(f);
-        hd.type = "image";
-        commit();
-      } catch (err) { toastError(err); }
-    } });
-
-    const headerCard = card({ title: "Header" },
-      h("div.stack",
-        seg([["pattern", "Pattern", "sparkle"], ["image", "Image", "image"], ["none", "None", "x"]], hd.type, (v) => { hd.type = v; commit(); }),
-        hd.type === "pattern" ? [
-          tiles,
-          h("div.grid.c3",
-            h("div.field", h("label", "Colours"), h("div.row", colorIn(0), colorIn(1), switchEl(hd.useAccent, (v) => { hd.useAccent = v; if (!v) hd.colors = [...colors]; commit(); }, "Match accent"))),
-            h("div.field", h("label", "Pattern size"), rangeEl(hd.scale || 28, 10, 80, 1, (v) => { hd.scale = v; commit(false); })),
-            h("div.field", h("label", "Header height"), rangeEl(hd.height || 132, 96, 260, 2, (v) => { hd.height = v; commit(false); }))),
-        ] : null,
-        hd.type === "image" ? [
-          h("div.row", fileIn, btn(hd.image ? "Choose another image" : "Choose an image", { icon: "upload", kind: "primary", onclick: () => fileIn.click() }),
-            hd.image ? btn("Remove", { icon: "trash", kind: "ghost", onclick: () => { hd.image = ""; hd.type = "pattern"; commit(); } }) : null),
-          h("div.grid.c3",
-            h("div.field", h("label", "Fit"), seg([["cover", "Fill"], ["tile", "Tile"], ["contain", "Fit"]], hd.imageFit || "cover", (v) => { hd.imageFit = v; commit(false); })),
-            h("div.field", h("label", "Tile size"), rangeEl(hd.scale || 28, 10, 80, 1, (v) => { hd.scale = v; commit(false); })),
-            h("div.field", h("label", "Header height"), rangeEl(hd.height || 132, 96, 260, 2, (v) => { hd.height = v; commit(false); }))),
-          h("p.small.faint", { style: { margin: 0 } }, "Your art is stored with the theme, so saved themes keep their image. Tile mode works well for seamless patterns."),
-        ] : null,
-        hd.type === "none" ? h("p.small.muted", { style: { margin: 0 } }, "A clean page title with no banner.") : null));
-
-    clear(body, gallery, colours, headerCard,
-      h("div.notice", icon("info"), h("div", "Want to go further? ", h("span.mono", "web/css/custom.css"), " is yours to edit. Add new accents, change corner roundness, anything. It's loaded last, so it wins.")));
+    clear(body, gallery, colours, effects, text,
+      h("div.notice", icon("info"), h("div", "Want to go further? ", h("span.mono", "web/css/custom.css"), " is yours to edit: change colours, corner roundness, anything. It's loaded last, so it wins.")));
   }
   draw();
-}
-
-async function imageToDataUrl(file, maxW = 2400) {
-  const url = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(file); });
-  if (file.size < 1.5e6 || file.type === "image/gif") return url;
-  const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
-  const scale = Math.min(1, maxW / img.width);
-  const c = document.createElement("canvas");
-  c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
-  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
-  return c.toDataURL("image/webp", 0.9);
 }
 
 // ---------------------------------------------------------------------------

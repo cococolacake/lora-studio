@@ -5,33 +5,36 @@ import threading
 from . import paths
 from .util import read_json, safe_name, write_json
 
+_HEADER = {"type": "none"}   # page headers are plain title bars (patterned headers were removed)
+
 DEFAULT_THEME = {
-    "name": "Soft Light",
+    "name": "Default",
+    "style": "glass",
+    "family": "default",        # glass colours: default | cool | warm | lilac
     "base": "light",            # light | dark
-    "accent": "periwinkle",
-    "header": {
-        "type": "pattern",      # pattern | image | none
-        "pattern": "checker",   # see web/js/patterns.js
-        "colors": ["#ECEAFF", "#FFFFFF"],
-        "useAccent": True,      # derive pattern colors from the accent
-        "scale": 28,
-        "image": "",            # data URL when type == image
-        "imageFit": "cover",    # cover | tile | contain
-        "height": 132,
-    },
+    "glass": "efficient",       # efficient (see-through, no live blur) | full (live blur) | off
+    "simpleWhileTraining": True,  # solid look while a training runs, so it gets the whole GPU
+    "font": "geist",            # geist | system
+    "header": dict(_HEADER),
 }
+
 
 BUILTIN_THEMES = [
     DEFAULT_THEME,
-    {**copy.deepcopy(DEFAULT_THEME), "name": "Soft Dark", "base": "dark",
-     "header": {**DEFAULT_THEME["header"], "pattern": "grid"}},
-    {**copy.deepcopy(DEFAULT_THEME), "name": "Meadow", "accent": "mint",
-     "header": {**DEFAULT_THEME["header"], "pattern": "sparkles"}},
-    {**copy.deepcopy(DEFAULT_THEME), "name": "Peach Fuzz", "accent": "peach",
-     "header": {**DEFAULT_THEME["header"], "pattern": "gingham"}},
-    {**copy.deepcopy(DEFAULT_THEME), "name": "Cobalt Night", "base": "dark", "accent": "cobalt",
-     "header": {**DEFAULT_THEME["header"], "pattern": "dots"}},
+    {**copy.deepcopy(DEFAULT_THEME), "name": "Cool Glass", "family": "cool"},
+    {**copy.deepcopy(DEFAULT_THEME), "name": "Warm Glass", "family": "warm"},
+    {**copy.deepcopy(DEFAULT_THEME), "name": "Lilac", "family": "lilac"},
 ]
+
+
+def _to_glass(theme):
+    """Themes from before the glass look (the classic pastel ones) become the glass Default,
+    keeping light or dark mode, so an older setup never lands on a theme that no longer exists."""
+    if (theme or {}).get("style") == "glass":
+        return theme
+    return {**copy.deepcopy(DEFAULT_THEME), "base": (theme or {}).get("base", "light"),
+            **({"name": theme["name"]} if theme and theme.get("name") and theme.get("user") else {})}
+
 
 DEFAULTS = {
     "sd_scripts_dir": "",
@@ -66,9 +69,11 @@ def load():
     data = read_json(_path(), {}) or {}
     merged = copy.deepcopy(DEFAULTS)
     merged.update(data)
+    saved = data.get("theme") or {}
     theme = copy.deepcopy(DEFAULT_THEME)
-    theme.update(merged.get("theme") or {})
-    theme["header"] = {**DEFAULT_THEME["header"], **(theme.get("header") or {})}
+    if saved:
+        theme.update(_to_glass(saved))
+    theme["header"] = dict(_HEADER)   # patterned headers were removed
     merged["theme"] = theme
     return merged
 
@@ -94,6 +99,7 @@ def list_themes():
         if isinstance(t, dict) and t.get("name"):
             t["user"] = True
             user.append(t)
+    user = [dict(_to_glass(t), name=t.get("name", "My theme"), user=True) for t in user]
     return [dict(t, user=False) for t in BUILTIN_THEMES] + user
 
 
