@@ -606,3 +606,12 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px;
 .stack > .seg, .field > .seg { align-self: flex-start; }
 .home-guide:not(:empty) { margin-bottom: 18px; }
 [data-style="glass"] .home-guide:not(:empty) { margin-bottom: var(--s4); }
+
+/* Home: both columns end on the same line. The last card in each column grows to fill
+   (or the one before it, when the last slot is empty or hidden). */
+.home-cols { align-items: stretch; }
+.home-col > :last-child,
+.home-col > :has(+ :empty:last-child),
+.home-col > :has(+ .hidden:last-child) { flex: 1 1 auto; }
+.home-col > div:not(.card):not(:empty) { display: flex; flex-direction: column; }
+.home-col > div:not(.card):not(:empty) > .card { flex: 1 1 auto; }
