@@ -44,6 +44,7 @@ function appearance(ctx, root) {
     cool: { light: ["#DCE3EE", "#C9D2E2", "#B3C2F3", "#B8DEEC", "#5876F5", "#68BDEE"], dark: ["#252D3F", "#1B2231", "#36498F", "#246A80", "#7D96FF", "#7ED2F6"] },
     warm: { light: ["#ECE2DA", "#DDCDC2", "#F0BCA4", "#E8BCC9", "#DB7A5D", "#E097AE"], dark: ["#302723", "#241D1A", "#7A3E32", "#6A374F", "#F0997B", "#EFA8BF"] },
     lilac: { light: ["#EFE4E2", "#E2D5DD", "#DAC8F1", "#B8A6DD", "#6E5E9E", "#A48DD6"] },
+    heart: { light: ["#F6E7F0", "#EAD6E6", "#FFB3D9", "#BDF5EE", "#FF5FB0", "#FF8AC8"], dark: ["#160B22", "#1D0E2C", "#FF5FB0", "#9B6BFF", "#FF5FB0", "#FF8AC8"] },
   };
   function themePreview(t) {
     const fam = FAMILY[t.family] || FAMILY.default;
