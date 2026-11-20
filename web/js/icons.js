@@ -69,7 +69,7 @@ export function icon(name, cls = "") {
   return span.firstChild;
 }
 
-// The app mark: the little (•ᴗ-) face from web/assets/icon.svg.
+// The app mark: the little (•ᴗ-) face (web/assets/icon.svg is the app icon version).
 export function logo() {
   // Glass themes: the same face as line art in the theme's text colour,
   // inside a line-drawn rounded square, so it matches the rail icons.
