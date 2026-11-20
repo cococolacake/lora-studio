@@ -209,3 +209,11 @@
 
 /* pages without a side panel: don't leave a double gap where it would be */
 [data-style="glass"] .shell:has(> .side:empty) .main { margin-left: calc(-1 * var(--s4)); }
+
+/* rounded clickable rows: a straight divider between them (a border would curl at the corners),
+   hidden next to the row under the mouse */
+[data-style="glass"] .list-row.click { border-top-color: transparent; position: relative; }
+[data-style="glass"] .list-row.click + .list-row.click::before {
+  content: ""; position: absolute; left: 12px; right: 12px; top: -1px; height: 1px; background: var(--line); pointer-events: none;
+}
+[data-style="glass"] .list-row.click:hover::before, [data-style="glass"] .list-row.click:hover + .list-row.click::before { opacity: 0; }
