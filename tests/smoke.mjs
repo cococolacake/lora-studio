@@ -8,7 +8,7 @@ const dataset = process.env.SMOKE_DATASET;
 const errors = [];
 let where = "start";
 
-const browser = await chromium.launch();
+const browser = await chromium.launch(process.env.SMOKE_CHANNEL ? { channel: process.env.SMOKE_CHANNEL } : {});   // SMOKE_CHANNEL=chrome uses the installed Chrome
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
 page.on("pageerror", (e) => errors.push(`[${where}] ${e.message}`));
 page.on("console", (m) => { if (m.type() === "error" && !/Failed to load resource/.test(m.text())) errors.push(`[${where}] ${m.text()}`); });
