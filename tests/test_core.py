@@ -326,3 +326,34 @@ def test_copies_to_swarm_never_overwrite_another_run(tmp_path, monkeypatch):
     c = run_with("third", "old_style")       # an older run whose folder name clashes with nothing
     assert Path(a).name == "shion_v1" and Path(b).name == "shion_v1 (2)"
     assert (Path(a) / "shion_v1.safetensors").read_text() == "first"
+
+
+def test_old_themes_move_to_glass(monkeypatch, tmp_path):
+    """A setup from before the glass themes (classic pastels, patterned header) lands on glass Default,
+    keeping light or dark mode, instead of on a theme that no longer exists."""
+    from studio import paths, settings
+    monkeypatch.setattr(paths, "data_dir", lambda: tmp_path)
+    (tmp_path / "settings.json").write_text('{"theme": {"name": "Cobalt Night", "base": "dark", "accent": "cobalt", "header": {"type": "pattern", "pattern": "dots"}}}')
+    t = settings.load()["theme"]
+    assert (t["style"], t["family"], t["base"], t["header"]["type"]) == ("glass", "default", "dark", "none")
+    (tmp_path / "settings.json").write_text('{"theme": {"name": "Cool Glass", "style": "glass", "family": "cool", "base": "light"}}')
+    assert settings.load()["theme"]["family"] == "cool"
+    assert [x["name"] for x in settings.BUILTIN_THEMES] == ["Default", "Cool Glass", "Warm Glass", "Lilac"]
+    assert settings.DEFAULT_THEME["glass"] == "efficient" and settings.DEFAULT_THEME["simpleWhileTraining"] is True
+
+
+def test_shortcut_helper_is_quiet_off_windows():
+    from studio import winshortcut
+    if os.name != "nt":
+        assert winshortcut.make(start_menu=True, desktop=True) == []
+    assert winshortcut.APP_ID == "LoRAStudio.App"
+    assert 'SetCurrentProcessExplicitAppUserModelID("LoRAStudio.App")' in (ROOT / "main.py").read_text()
+
+
+def test_titlebar_only_takes_plain_hex_colours():
+    from studio.api import Api
+    a = Api.__new__(Api)
+    seen = []
+    a._titlebar = lambda bg, text, dark: seen.append((bg, text, dark)) or True
+    assert a.set_titlebar("#252D3F", "#EEF2FF", True) is True
+    assert a.set_titlebar("red; drop", "#EEF2FF") is False and len(seen) == 1

@@ -4,6 +4,7 @@ import { h, btn, card, chip, empty, statusChip, fmtAgo, fmtLoss, fmtDuration, cl
 import { icon } from "../icons.js";
 import { liveRun } from "../liverun.js";
 import { gpuCard } from "../gpu.js";
+import { thumbUrl, lightbox } from "../media.js";
 
 function greeting() {
   const hr = new Date().getHours();
@@ -15,7 +16,7 @@ export default {
 
   async mount(ctx, params, root) {
     const headSlot = h("div");
-    const nowSlot = h("div.span2");
+    const nowSlot = h("div");
     const queueSlot = h("div");
     root.append(headSlot);
 
@@ -41,7 +42,6 @@ export default {
         h("div.nums.small", { style: { minWidth: "64px", textAlign: "right" } }, fmtLoss(r.loss)),
         statusChip(r.status))))
         : h("p.muted.small", { style: { margin: 0 } }, "Finished trainings show up here with their final loss."));
-    recent.classList.add("span2");
 
     const tools = card({ title: "Shortcuts" }, h("div.stack.sm",
       [["wand", "New training", "train", {}], ["tag", "Tag & tidy a dataset", "dataset", {}], ["palette", "Change the look", "settings", { section: "appearance" }]].map(([ic, label, page, p]) =>
@@ -56,13 +56,20 @@ export default {
       { done: runs.some((r) => r.status === "done"), title: "Train your first LoRA", text: "Pick a training script, check the settings, and press Train now. Samples and the loss graph show up live.",
         action: btn("Train", { size: "sm", onclick: () => ctx.go("train") }) },
     ];
-    const guideSlot = h("div");
+    const guideSlot = h("div.home-guide");
     const drawGuide = () => {
       const left = steps.filter((x) => !x.done).length;
       if (!left || store.get("guideHidden")) return clear(guideSlot);
-      clear(guideSlot, card({ title: "Getting started", actions: h("div.row", { style: { gap: "10px" } },
-          h("span.small.faint", `${steps.length - left} of ${steps.length} done`),
-          btn("Hide", { size: "sm", kind: "ghost", onclick: () => { store.set("guideHidden", true); drawGuide(); } })) },
+      const hide = btn("Hide", { size: "sm", kind: "ghost", onclick: () => { store.set("guideHidden", true); drawGuide(); } });
+      if (left === 1) {
+        const next = steps.find((x) => !x.done);
+        return clear(guideSlot, card({ title: "" }, h("div.guide-line",
+          h("div.guide-num", String(steps.indexOf(next) + 1)),
+          h("div.main-col", h("div.title", `One step left: ${next.title.toLowerCase()}`), h("div.small.muted", next.text)),
+          next.action, hide)));
+      }
+      clear(guideSlot, card({ title: "Getting started", actions: h("div.row",
+          h("span.small.faint", `${steps.length - left} of ${steps.length} done`), hide) },
         h("div.guide", steps.map((x, i) => h("div.guide-step", { class: x.done ? "done" : "" },
           h("div.guide-num", x.done ? icon("check") : String(i + 1)),
           h("div.main-col", h("div.title", x.title), h("div.small.muted", x.text)),
@@ -71,7 +78,28 @@ export default {
     drawGuide();
     root.append(guideSlot);
 
-    root.append(h("div.grid.c3", nowSlot, h("div.stack", sdCard, gpuCard(ctx, { compact: true })), recent, h("div.stack", queueSlot, tools)));
+    const samplesSlot = h("div");
+    const withSamples = done.find((r) => r.status === "done");
+    if (withSamples) {
+      api.run_detail(withSamples.id).then((r) => {
+        const g = r.sample_grid;
+        if (!g?.cells?.length) return;
+        const cols = g.columns.slice(-4);
+        const pick = cols.map((col) => [...g.cells].reverse().find((c) => c.col === col && c.row === 0)).filter(Boolean);
+        if (!pick.length) return;
+        const items = pick.map((c) => ({ ...c, title: `${c.col} · prompt 1`, sub: g.prompts[0] || "" }));
+        clear(samplesSlot, card({ title: "Latest samples", actions: h("div.row",
+            h("span.small.faint.ellipsis", { style: { maxWidth: "320px" } }, `${r.name}${g.prompts[0] ? ", " + g.prompts[0] : ""}`),
+            btn("Open run", { size: "sm", kind: "ghost", onclick: () => ctx.go("runs", { run: r.id }) })) },
+          h("div.sample-strip", items.map((c, i) => h("figure",
+            h("button", { onclick: () => lightbox(items, i), title: c.col }, h("img", { src: thumbUrl(c.path, 320), loading: "lazy", alt: `${c.col} sample` })),
+            h("figcaption", h("span", c.col)))))));
+      }).catch(() => { /* no samples: the card stays hidden */ });
+    }
+
+    root.append(h("div.home-cols",
+      h("div.home-col", nowSlot, recent, samplesSlot),
+      h("div.home-col", sdCard, gpuCard(ctx, { compact: true }), queueSlot, tools)));
 
     let live = null, liveId = null, lastKey = "";
     ctx.onLeave(() => live?.stop());
@@ -81,9 +109,13 @@ export default {
       if (key !== lastKey) {
         lastKey = key;
         const n = st.queue.length;
-        clear(headSlot, ctx.header({ title: greeting(), icon: "sparkle",
+        const banner = ctx.header({ title: st.current ? "Training in progress" : greeting(), icon: "sparkle",
           subtitle: st.current ? `Training “${st.current.name}”${n ? `, ${n} more waiting` : ""}.` : n ? `${n} run${n === 1 ? "" : "s"} waiting in the queue.` : "Nothing training right now. Ready when you are.",
-          actions: [btn("New training", { icon: "wand", kind: "primary", onclick: () => ctx.go("train") })] }));
+          actions: [st.current
+            ? btn("Add to queue", { icon: "layers", kind: "primary", onclick: () => ctx.go("train") })
+            : btn("New training", { icon: "wand", kind: "primary", onclick: () => ctx.go("train") })] });
+        banner.classList.add("hero");
+        clear(headSlot, banner);
         clear(queueSlot, card({ title: "Queue", actions: btn("Open", { size: "sm", kind: "ghost", onclick: () => ctx.go("queue") }) },
           h("div.row", h("div", { style: { fontFamily: "var(--font-display)", fontSize: "34px", fontWeight: 600, lineHeight: 1 } }, String(n)),
             h("div.small.muted", n === 1 ? "run waiting" : "runs waiting", h("br"), st.running ? "Queue is on" : "Queue is paused")),
@@ -93,8 +125,9 @@ export default {
       if (!cur) {
         if (liveId !== null || !nowSlot.childNodes.length) {
           live?.stop(); live = null; liveId = null;
-          clear(nowSlot, card({ title: "Now training" }, empty("sparkle", "Nothing is training", "Pick a script, point it at your images, and press Train now.",
-            btn("Start a training", { icon: "wand", kind: "primary", onclick: () => ctx.go("train") }))));
+          clear(nowSlot, card({ title: "" }, h("div.guide-line",
+            h("div.list-row", { style: { padding: 0, border: 0 } }, h("div.ic", icon("sparkle"))),
+            h("div.main-col", h("div.title", "Nothing is training"), h("div.small.muted", "Press New training to pick a script and point it at your images.")))));
         }
         return;
       }

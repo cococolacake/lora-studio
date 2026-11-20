@@ -1,0 +1,200 @@
+/* ============================================================
+   Glass look. Only active with <html data-style="glass">.
+   data-glass="efficient" (default): see-through panels over a static
+     soft background. No live blur, so it costs the GPU almost nothing.
+   data-glass="full": real backdrop blur on panels.
+   data-glass="off", or data-simple (while training): solid panels.
+   ============================================================ */
+
+[data-style="glass"] body {
+  background: linear-gradient(160deg, var(--bg), var(--bg2)) fixed;
+  letter-spacing: -0.005em;
+}
+/* the soft colour blobs behind everything (static, so they're cheap) */
+[data-style="glass"] body::before {
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(38% 46% at 12% 8%, var(--b1), transparent 72%),
+    radial-gradient(34% 42% at 88% 18%, var(--b2), transparent 72%),
+    radial-gradient(46% 48% at 62% 100%, var(--b3), transparent 72%),
+    radial-gradient(30% 36% at 30% 70%, var(--b4), transparent 72%);
+}
+[data-style="glass"] .shell { position: relative; z-index: 0; padding: var(--s4); gap: var(--s4); grid-template-columns: 84px auto 1fr; height: 100vh; }
+
+/* ---------- shared glass surface ---------- */
+[data-style="glass"] .rail,
+[data-style="glass"] .side,
+[data-style="glass"] .card,
+[data-style="glass"] .banner {
+  background: var(--glass);
+  border: 1px solid var(--edge);
+  box-shadow: var(--highlight), var(--shadow-md);
+}
+[data-style="glass"][data-glass="full"] .rail,
+[data-style="glass"][data-glass="full"] .side,
+[data-style="glass"][data-glass="full"] .card,
+[data-style="glass"][data-glass="full"] .banner,
+[data-style="glass"][data-glass="full"] .modal,
+[data-style="glass"][data-glass="full"] .toast {
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  backdrop-filter: blur(24px) saturate(150%);
+}
+/* solid look: glass off, or paused while a training runs */
+[data-style="glass"][data-glass="off"] body::before,
+[data-style="glass"][data-simple] body::before { opacity: .35; }
+[data-style="glass"][data-glass="off"] :is(.rail, .side, .card, .banner),
+[data-style="glass"][data-simple] :is(.rail, .side, .card, .banner) {
+  background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none;
+  box-shadow: var(--highlight), 0 1px 3px rgba(var(--tint), .14);
+}
+
+/* ---------- rail: a floating bar with labels ---------- */
+[data-style="glass"] .rail {
+  border-radius: 26px; padding: 14px 0; gap: 2px; min-height: 0; overflow: hidden;
+}
+[data-style="glass"] .rail .logo { width: 52px; height: 52px; margin: 0; color: var(--text); }
+[data-style="glass"] .rail .logo svg { width: 40px; height: 40px; }
+[data-style="glass"] .rail .nav { justify-content: flex-start; gap: 2px; flex: 0 1 auto; min-height: 0; overflow-y: auto; width: 100%; }
+[data-style="glass"] .rail .bottom { gap: 2px; margin-top: auto; }
+[data-style="glass"] .rail-div { display: block; width: 44px; height: 1px; margin: 10px 0; flex: none; background: linear-gradient(90deg, transparent, var(--line-strong), transparent); }
+[data-style="glass"] .rail-btn {
+  width: 66px; height: auto; padding: 8px 0 6px; border-radius: 16px; color: var(--text-2);
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+}
+[data-style="glass"] .rail-btn svg { width: 20px; height: 20px; }
+[data-style="glass"] .rail-btn .lbl { display: block; font-size: 12px; font-weight: 500; line-height: 1.2; white-space: nowrap; }
+[data-style="glass"] .rail-btn .tip { display: none; }
+[data-style="glass"] .rail-btn:hover { color: var(--text); background: var(--surface-3); }
+[data-style="glass"] .rail-btn.active {
+  color: var(--accent-ink); background: linear-gradient(165deg, var(--accent), var(--accent-2));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 10px 22px -8px var(--glow);
+}
+[data-style="glass"] .rail-btn.active::after { display: none; }
+[data-style="glass"] .rail-btn .badge-dot { top: 6px; right: 14px; box-shadow: 0 0 0 2px var(--surface); }
+[data-style="glass"] .rail-btn.update-btn { color: var(--accent-text); }
+
+/* ---------- side panel ---------- */
+[data-style="glass"] .side {
+  margin-left: 0; padding: 20px 12px; border-radius: 24px; width: 240px;
+}
+[data-style="glass"] .side h2 { font-size: 20px; margin: 0 10px 12px; }
+[data-style="glass"] .side .sep { background: linear-gradient(90deg, transparent, var(--line-strong), transparent); }
+[data-style="glass"] .side-item { border-radius: 12px; padding: 8px 12px; }
+[data-style="glass"] .side-item:hover { background: var(--surface-3); }
+[data-style="glass"] .side-item.active { background: var(--surface-2); box-shadow: var(--highlight), 0 0 0 1px var(--edge), var(--shadow-sm); }
+[data-style="glass"] .side-item .sub { font-size: 12px; }
+
+/* ---------- main area ---------- */
+[data-style="glass"] .main { border-radius: 24px; }
+[data-style="glass"] .main-inner { padding: 0 var(--s1) var(--s6); max-width: 1280px; }
+[data-style="glass"] .stack { gap: var(--s4); }
+[data-style="glass"] .grid { gap: var(--s4); }
+[data-style="glass"] .stack > .banner, [data-style="glass"] .banner { margin-bottom: var(--s4); }
+
+/* ---------- page header: the banner becomes a glass header ---------- */
+[data-style="glass"] .banner { height: auto; min-height: 76px; border-radius: 24px; overflow: hidden;
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s5); padding: var(--s4) var(--s5); flex-wrap: wrap; }
+[data-style="glass"] .banner .art { opacity: .55; -webkit-mask-image: linear-gradient(90deg, transparent 30%, #000); mask-image: linear-gradient(90deg, transparent 30%, #000); }
+[data-style="glass"] .banner.none .art { display: none; }
+[data-style="glass"] .banner .sticker { position: relative; left: auto; bottom: auto; background: none; box-shadow: none; padding: 0; gap: var(--s3); max-width: none; }
+[data-style="glass"] .banner .sticker .chip-icon { display: none; }
+[data-style="glass"] .sticker h1 { font-size: 20px; letter-spacing: -.01em; }
+[data-style="glass"] .sticker p { font-size: 14px; margin-top: 2px; }
+[data-style="glass"] .banner .banner-actions { position: relative; right: auto; bottom: auto; margin: 0; }
+/* the big greeting on Home */
+[data-style="glass"] .banner.hero { min-height: 120px; padding: 28px 32px; border-radius: 26px; }
+[data-style="glass"] .banner.hero .sticker h1 { font-size: 26px; letter-spacing: -.02em; }
+
+/* ---------- cards ---------- */
+[data-style="glass"] .card { border-radius: 20px; padding: 20px; }
+[data-style="glass"] .card.tight { padding: var(--s3) var(--s4); }
+[data-style="glass"] .card-head { margin-bottom: var(--s4); }
+[data-style="glass"] .stat, [data-style="glass"] .guide-step, [data-style="glass"] .issue, [data-style="glass"] .steps-flow .stepc {
+  background: var(--surface-2); border: 1px solid var(--edge); box-shadow: var(--highlight);
+}
+[data-style="glass"] .guide-step { border-radius: 14px; }
+[data-style="glass"] .guide-num { background: linear-gradient(165deg, var(--accent), var(--accent-2)); color: var(--accent-ink); box-shadow: 0 6px 14px -6px var(--glow); }
+[data-style="glass"] .guide-step.done { opacity: 1; }
+[data-style="glass"] .guide-step.done .guide-num { background: var(--surface-3); color: var(--text-2); box-shadow: none; }
+
+/* ---------- buttons ---------- */
+[data-style="glass"] .btn {
+  border-radius: 99px; font-weight: 500; background: var(--surface-2); color: var(--text);
+  box-shadow: var(--highlight), 0 4px 10px -6px rgba(var(--tint), .3), 0 0 0 1px var(--edge);
+  transition: transform .12s ease, box-shadow .15s ease, background .15s ease;
+}
+[data-style="glass"] .btn:hover { background: var(--glass); transform: translateY(-1px); box-shadow: var(--highlight), 0 8px 16px -8px rgba(var(--tint), .35), 0 0 0 1px var(--edge); }
+[data-style="glass"] .btn:active { transform: translateY(0); box-shadow: inset 0 1px 3px rgba(var(--tint), .18), 0 0 0 1px var(--edge); }
+[data-style="glass"] .btn.primary {
+  color: var(--accent-ink); background: linear-gradient(165deg, var(--accent), var(--accent-2));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 12px 26px -10px var(--glow);
+}
+[data-style="glass"] .btn.primary:hover { filter: brightness(1.04); background: linear-gradient(165deg, var(--accent), var(--accent-2)); box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 14px 28px -10px var(--glow); }
+[data-style="glass"] .btn.ghost { background: transparent; box-shadow: none; color: var(--text-2); }
+[data-style="glass"] .btn.ghost:hover { background: var(--surface-3); color: var(--text); }
+[data-style="glass"] .btn.danger.solid { background: var(--bad); color: #fff; }
+[data-style="glass"] .btn.sm { font-size: 14px; }
+
+/* ---------- form controls ---------- */
+[data-style="glass"] .input, [data-style="glass"] .select, [data-style="glass"] textarea.input {
+  border-radius: 12px; background: var(--surface-2); border: 1px solid var(--edge); box-shadow: inset 0 1px 2px rgba(var(--tint), .06);
+}
+[data-style="glass"] .input:focus, [data-style="glass"] .select:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); background: var(--surface); }
+[data-style="glass"] .field > label:first-child, [data-style="glass"] .label { font-weight: 500; }
+[data-style="glass"] .seg { background: var(--surface-3); border: 1px solid var(--edge); }
+[data-style="glass"] .seg button { font-weight: 500; font-size: 14px; }
+[data-style="glass"] .seg button.on { background: var(--glass); box-shadow: var(--highlight), 0 4px 10px -4px rgba(var(--tint), .3); }
+[data-style="glass"] .switch .track { background: var(--surface-3); box-shadow: inset 0 1px 3px rgba(var(--tint), .14); }
+[data-style="glass"] .switch input:checked + .track { background: linear-gradient(165deg, var(--accent), var(--accent-2)); }
+[data-style="glass"] .switch input:checked + .track::after { background: var(--accent-ink); }
+[data-style="glass"] .check input:checked { background: var(--accent); }
+
+/* ---------- chips, dots, progress ---------- */
+[data-style="glass"] .chip { background: var(--surface-2); border: 1px solid var(--edge); color: var(--text); font-weight: 500; }
+[data-style="glass"] .chip.good, [data-style="glass"] .chip.warn, [data-style="glass"] .chip.bad, [data-style="glass"] .chip.info, [data-style="glass"] .chip.accent { background: var(--surface-2); color: var(--text); }
+[data-style="glass"] .chip.good .dot { color: var(--good); }
+[data-style="glass"] .chip.warn .dot { color: var(--warn); }
+[data-style="glass"] .chip.bad .dot { color: var(--bad); }
+[data-style="glass"] .chip.info .dot, [data-style="glass"] .chip.accent .dot { color: var(--accent-text); }
+/* crisp dot with a faint ring on light themes; a small glow on dark */
+[data-style="glass"] .chip .dot { box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 16%, transparent); }
+[data-style="glass"][data-base="dark"] .chip .dot { box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 14%, transparent), 0 0 6px color-mix(in srgb, currentColor 55%, transparent); }
+[data-style="glass"] .progress { background: var(--surface-3); box-shadow: none; height: 8px; }
+[data-style="glass"] .progress > i { background-color: var(--accent); background-image: linear-gradient(90deg, var(--accent), var(--accent-2)); box-shadow: 0 0 14px var(--glow); animation: none; }
+
+/* ---------- lists, empty states, misc ---------- */
+[data-style="glass"] .list-row { border-top-color: var(--line); }
+[data-style="glass"] .list-row .ic { background: var(--surface-2); border: 1px solid var(--edge); box-shadow: var(--highlight); }
+[data-style="glass"] .list-row.click:hover { background: var(--surface-3); }
+[data-style="glass"] .empty { padding: var(--s5) var(--s4); }
+[data-style="glass"] .empty .art { background: var(--surface-2); border: 1px solid var(--edge); color: var(--text-2); width: 48px; height: 48px; border-radius: 14px; }
+[data-style="glass"] .empty .art svg { width: 22px; height: 22px; }
+[data-style="glass"] .modal { background: var(--surface); border: 1px solid var(--edge); box-shadow: var(--highlight), var(--shadow-lg); }
+[data-style="glass"] .toast { background: var(--surface); border: 1px solid var(--edge); }
+[data-style="glass"] .notice { background: var(--surface-2); border: 1px solid var(--edge); }
+[data-style="glass"] .notice svg { color: var(--accent-text); }
+[data-style="glass"] .thumb, [data-style="glass"] .vtile, [data-style="glass"] .sgrid .sc { box-shadow: 0 0 0 1px var(--edge); }
+[data-style="glass"] .tabs button.on::after { background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+
+/* the "Simple look while training" banner */
+.simple-note { display: flex; align-items: center; gap: var(--s3); padding: 10px 12px 10px 16px; border-radius: 16px; margin-bottom: var(--s4); }
+.simple-note svg { color: var(--accent-text); }
+[data-style="glass"] .simple-note { background: var(--surface); border: 1px solid var(--edge); box-shadow: var(--highlight), var(--shadow-sm); }
+
+/* the Home "Latest samples" strip */
+.sample-strip { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: var(--s3); }
+.sample-strip figure { margin: 0; display: flex; flex-direction: column; gap: var(--s2); }
+.sample-strip button { aspect-ratio: 1; border: 0; padding: 0; border-radius: 14px; overflow: hidden; cursor: zoom-in; background: var(--surface-2); box-shadow: 0 0 0 1px var(--line); }
+.sample-strip img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.sample-strip figcaption { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); font-size: 12px; font-weight: 500; }
+
+/* the one-line Getting started card */
+.guide-line { display: flex; align-items: center; gap: var(--s3); }
+
+@media (prefers-reduced-motion: reduce) {
+  [data-style="glass"] .btn, [data-style="glass"] .btn:hover { transition: none; transform: none; }
+}
+@media (max-width: 900px) {
+  [data-style="glass"] .shell { grid-template-columns: 84px 1fr; }
+  [data-style="glass"] .side { display: none; }
+}

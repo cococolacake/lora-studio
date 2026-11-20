@@ -9,6 +9,8 @@ import time
 import os
 import sys
 import webbrowser
+import mimetypes
+mimetypes.add_type("font/woff2", ".woff2")  # the app window serves the bundled fonts too
 
 if sys.version_info < (3, 10):
     sys.exit("LoRA Studio needs Python 3.10 or newer.")
@@ -34,6 +36,27 @@ def _windows_icon(title):
                 user32.SendMessageW(hwnd, 0x80, which, hicon)           # WM_SETICON
     except Exception:
         pass
+
+
+def _windows_titlebar(title, bg, text, dark):
+    """Tint the Windows title bar to match the theme (Windows 11; older Windows just ignores it)."""
+    try:
+        import ctypes
+        from ctypes import wintypes
+        hwnd = ctypes.windll.user32.FindWindowW(None, title)
+        if not hwnd:
+            return False
+        dwm = ctypes.windll.dwmapi
+        def setattr_(attr, value):
+            v = wintypes.DWORD(value)
+            dwm.DwmSetWindowAttribute(wintypes.HWND(hwnd), wintypes.DWORD(attr), ctypes.byref(v), ctypes.sizeof(v))
+        colorref = lambda hx: int(hx[5:7] + hx[3:5] + hx[1:3], 16)   # #RRGGBB -> 0x00BBGGRR
+        setattr_(20, 1 if dark else 0)          # DWMWA_USE_IMMERSIVE_DARK_MODE
+        setattr_(35, colorref(bg))              # DWMWA_CAPTION_COLOR
+        setattr_(36, colorref(text))            # DWMWA_TEXT_COLOR
+        return True
+    except Exception:
+        return False
 
 
 def main():
@@ -107,6 +130,15 @@ def main():
     window.events.shown += lambda: shown.append(True)
     if os.name == "nt":
         window.events.shown += lambda: _windows_icon("LoRA Studio")
+        api._titlebar = lambda bg, text, dark: _windows_titlebar("LoRA Studio", bg, text, dark)
+
+        def _shortcut():   # a Start menu shortcut with our app ID, so a pinned taskbar button relaunches LoRA Studio
+            try:
+                from studio import winshortcut
+                winshortcut.ensure_start_menu()
+            except Exception:
+                pass
+        window.events.shown += lambda: __import__("threading").Thread(target=_shortcut, daemon=True).start()
     else:
         start["icon"] = ICON_PNG   # Linux window/taskbar icon (GTK and Qt)
         # Window class "lora-studio", so the taskbar matches the app-menu entry (create-desktop-entry.sh).
