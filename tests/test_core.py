@@ -4,6 +4,7 @@ Each test guards something that broke before, or that would be painful to break.
 No GPU, sd-scripts or internet needed.
 """
 import json
+import re
 import os
 import subprocess
 import sys
@@ -391,3 +392,15 @@ def test_character_tag_prune_is_one_undo(tmp_path):
     assert (tmp_path / "2.txt").read_text(encoding="utf-8") == "mychar, 1girl, closed eyes"
     dt.undo(str(tmp_path))
     assert [(tmp_path / f"{i}.txt").read_text(encoding="utf-8") for i in range(3)] == caps
+def test_release_notes_come_from_the_pull_request():
+    sys.path.insert(0, str(ROOT / ".github"))
+    import release_notes as rn
+    body = ("Intro\n\n## Testing\n- ok\n\n## Suggested release notes (v1.3.0)\n"
+            "> **Character tags.** One click.\n>\n> - Undo works\n\n## Other\nnot this")
+    assert rn.notes_section(body) == "**Character tags.** One click.\n\n- Undo works"
+    tpl = "## Release notes\n<!-- hint -->\n**New thing.**\n"
+    assert rn.notes_section(tpl) == "**New thing.**"
+    assert rn.notes_section("## Release notes\n<!-- hint -->\n") is None
+    assert rn.notes_section("## Release notes\nShort.\n\n---\n_footer_") == "Short."
+    assert rn.build("Fix a typo", "no notes here", "7") == "- Fix a typo\n\n<sub>From #7</sub>\n"
+    assert re.fullmatch(r"\d+\.\d+\.\d+", rn.version())
