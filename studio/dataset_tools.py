@@ -310,7 +310,14 @@ def _save_like(im, path):
     if fmt == "JPEG" and im.mode not in ("RGB", "L"):
         im = im.convert("RGB")
     kw = {"quality": 95} if fmt in ("JPEG", "WEBP") else {}
-    im.save(p, fmt, **kw)
+    # write a new file and swap it in rather than overwriting: a dataset image can be a hard link
+    # to the download it came from, and overwriting would change the download too
+    tmp = p.with_name(p.name + ".tmp")
+    try:
+        im.save(tmp, fmt, **kw)
+        os.replace(tmp, p)
+    finally:
+        tmp.unlink(missing_ok=True)
 
 
 def crop_image(path, box, out_w=None, out_h=None):
@@ -334,8 +341,7 @@ def restore_original(path):
     b = p.parent / ORIGINALS / p.name
     if not b.exists():
         raise RuntimeError("No backup of this image.")
-    shutil.copy2(b, p)
-    b.unlink()
+    os.replace(b, p)             # swap the file in (never write into p: it may be a hard link)
     return True
 
 

@@ -1,6 +1,7 @@
 """Turn a downloaded folder (e.g. from gallery-dl) into a clean dataset in one go:
-copy images, skip tiny ones, number them, and write captions from the download's tags."""
+link (or copy) images, skip tiny ones, number them, and write captions from the download's tags."""
 import json
+import os
 import shutil
 from pathlib import Path
 
@@ -45,6 +46,19 @@ def _tags_from_metadata(img, opts):
     return None
 
 
+def link_or_copy(src, dst):
+    """Hard-link dst to src when they're on the same drive, so the dataset image takes no extra
+    disk space next to the download it came from; copy otherwise (another drive, FAT/exFAT,
+    network shares). Returns True if it linked. The dataset tools never edit images in place
+    (they write a new file and swap it in), so cropping a dataset image leaves the download alone."""
+    try:
+        os.link(src, dst)
+        return True
+    except OSError:
+        shutil.copy2(src, dst)
+        return False
+
+
 def run(task, p):
     src, dest = Path(p["source"]), Path(p["dest"])
     if not src.is_dir():
@@ -66,7 +80,7 @@ def run(task, p):
     trigger = (p.get("trigger") or "").strip()
     use_meta = p.get("captions", "metadata") == "metadata"
     n = int(p.get("start") or 1)
-    stats = {"found": len(images), "copied": 0, "too_small": 0, "unreadable": 0, "captioned": 0, "uncaptioned": 0}
+    stats = {"found": len(images), "copied": 0, "linked": 0, "too_small": 0, "unreadable": 0, "captioned": 0, "uncaptioned": 0}
     for i, f in enumerate(images, 1):
         task.progress = {"n": i, "total": len(images), "msg": f"Copying {i}/{len(images)}"}
         try:
@@ -79,7 +93,7 @@ def run(task, p):
             stats["too_small"] += 1
             continue
         target = dest / f"{prefix}{n}{f.suffix.lower()}"
-        shutil.copy2(f, target)
+        stats["linked"] += link_or_copy(f, target)
         tags = _tags_from_metadata(f, p) if use_meta else None
         if tags is None and not use_meta:
             existing = f.with_suffix(".txt")   # keep captions that were already made for these images
@@ -94,7 +108,9 @@ def run(task, p):
             stats["uncaptioned"] += 1
         stats["copied"] += 1
         n += 1
-    task.log(f"Copied {stats['copied']} of {stats['found']} images into {dest}.")
+    task.log(f"Added {stats['copied']} of {stats['found']} images to {dest}.")
+    if stats["linked"]:
+        task.log(f"{stats['linked']} of them are hard links to the originals, so they take no extra disk space.")
     if stats["too_small"]:
         task.log(f"Skipped {stats['too_small']} images smaller than {min_side}px.")
     return {**stats, "dest": str(dest).replace("\\", "/")}
@@ -145,7 +161,7 @@ def _in_place(task, folder, p):
                 "'Save the dataset in' and use 'A folder on this PC' to build it from the download folder.")
     min_side = int(p.get("min_side") or 0)
     prefix = p.get("prefix", "DATA_")
-    stats = {"found": len(images), "copied": 0, "too_small": 0, "unreadable": 0, "captioned": 0, "uncaptioned": 0}
+    stats = {"found": len(images), "copied": 0, "linked": 0, "too_small": 0, "unreadable": 0, "captioned": 0, "uncaptioned": 0}
     keep = []
     for i, f in enumerate(images, 1):
         task.progress = {"n": i, "total": len(images), "msg": f"Checking {i}/{len(images)}"}

@@ -1,4 +1,4 @@
-// New dataset: download with gallery-dl (or pick a folder you already have), then copy, filter, number and
+// New dataset: download with gallery-dl (or pick a folder you already have), then link (or copy), filter, number and
 // caption everything into a clean dataset, in one click.
 import { api } from "../api.js";
 import { h, btn, card, chip, modal, toast, toastError, clear, store } from "../dom.js";
