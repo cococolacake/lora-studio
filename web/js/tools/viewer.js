@@ -51,6 +51,7 @@ export function viewer(ctx, params, root) {
         btn("Auto-tag", { icon: "sparkle", kind: panel === "autotag" ? "primary" : "", onclick: () => togglePanel("autotag") }),
         btn("Bulk edit", { icon: "list", kind: panel === "bulk" ? "primary" : "", onclick: () => togglePanel("bulk") }),
         btn("Tags", { icon: "chart", title: "Tag overview: every tag and how often it\u2019s used", onclick: showStats }),
+        btn("Character tags", { icon: "wand", title: "Remove the tags your trigger word should learn (hair, eyes, outfit…)", onclick: characterTags }),
         btn("", { icon: "keyboard", title: "Keyboard shortcuts (?)", onclick: showKeys }),
         btn("", { icon: "rollback", title: "Undo last bulk edit", onclick: undo }),
       ] : data ? [btn("Back to dataset", { icon: "left", onclick: () => { view = "dataset"; load(); } })] : [],
@@ -393,6 +394,86 @@ export function viewer(ctx, params, root) {
       [{ label: "Close", kind: "ghost" }]);
     close = () => document.querySelector(".scrim")?.remove();
     await p;
+  }
+
+  // Character LoRA clean-up: with one trigger word, the character's fixed look (hair, eyes,
+  // body features, default outfit) should be left untagged so the trigger learns it. Lists the
+  // tags that look like that, ticks the ones in at least half the captions, and removes the
+  // ticked ones (plus puts the trigger first) as one bulk edit you can undo.
+  async function characterTags() {
+    const paths = filter.q || filter.special ? shown.map((i) => i.path) : null;
+    let trig = trigger();
+    let found = null;
+    const picked = new Set();
+    const groups = [
+      ["name", "Character name", "The trigger word replaces it."],
+      ["hair", "Hair", ""],
+      ["eyes", "Eyes", ""],
+      ["body", "Body & features", ""],
+      ["outfit", "Outfit & accessories", "Only tick the outfit the character nearly always wears."],
+    ];
+    const list = h("div.stack.sm", { style: { maxHeight: "48vh", overflow: "auto", paddingRight: "6px" } });
+    let goBtn = null;
+    const common = (t) => t.group === "name" || t.count / found.total >= 0.5;
+    const refreshBtn = () => {
+      if (!goBtn) return;
+      goBtn.disabled = !picked.size;
+      goBtn.lastChild.textContent = picked.size ? `Remove ${picked.size} tag${picked.size === 1 ? "" : "s"}` : "Remove tags";
+    };
+    const draw = () => {
+      if (!found) return clear(list, h("p.small.muted", "Reading captions…"));
+      if (!found.tags.length) return clear(list, empty("check", "Nothing to remove", "No hair, eye, body or outfit tags were found in these captions."));
+      clear(list, groups.map(([g, label, hint]) => {
+        const tags = found.tags.filter((t) => t.group === g);
+        if (!tags.length) return null;
+        return h("div.ctag-group",
+          h("div.row", h("span.label", label), hint ? h("span.tiny.faint", hint) : null),
+          h("div.ctags", tags.map((t) => h("button.ctag", {
+            type: "button", class: picked.has(t.tag) ? "on" : "",
+            title: `${t.count} of ${found.total} captions`,
+            onclick: () => { picked.has(t.tag) ? picked.delete(t.tag) : picked.add(t.tag); draw(); },
+          }, picked.has(t.tag) ? icon("check") : null, t.tag, h("span.n", `${Math.round((t.count / found.total) * 100)}%`)))));
+      }));
+      refreshBtn();
+    };
+    const fetchTags = async () => {
+      found = null; draw();
+      try { found = await api.ds_character_tags(folder, trig, paths); }
+      catch (e) { toastError(e); found = { total: 0, tags: [] }; }
+      picked.clear();
+      found.tags.filter(common).forEach((t) => picked.add(t.tag));
+      draw();
+    };
+    const pick = (fn) => { if (!found) return; picked.clear(); found.tags.filter(fn).forEach((t) => picked.add(t.tag)); draw(); };
+
+    const body = h("div.stack.sm",
+      h("p.small.muted", { style: { margin: 0 } },
+        "With a single trigger word, leave the character\u2019s fixed look untagged (hair, eyes, body features, default outfit) so the trigger learns it. ",
+        "Pose, expression, framing, background, held objects and other people stay tagged."),
+      h("div.row", { style: { gap: "10px", flexWrap: "wrap", alignItems: "flex-end" } },
+        h("div.field", { style: { flex: 1, minWidth: "180px" } }, h("label", "Trigger word (put first)"),
+          h("input.input", { value: trig, placeholder: "e.g. mychar", onchange: (e) => { trig = e.target.value.trim(); fetchTags(); } })),
+        h("div.row.nowrap",
+          btn("In half or more", { size: "sm", title: "Tick the tags used in at least half the captions", onclick: () => pick(common) }),
+          btn("All", { size: "sm", onclick: () => pick(() => true) }),
+          btn("None", { size: "sm", onclick: () => pick(() => false) }))),
+      list,
+      h("p.tiny.faint", { style: { margin: 0 } },
+        `${paths ? `Only the ${paths.length} filtered images. ` : ""}Ticked tags are removed from every caption; tags that only show up now and then (a second outfit, a hat in one shot) are left unticked so they stay tagged. You can undo it.`));
+
+    const p = modal("Clean up character tags", body,
+      [{ label: "Cancel", kind: "ghost", value: false }, { label: "Remove tags", kind: "primary", icon: "wand", value: true }], { wide: true });
+    goBtn = document.querySelector(".scrim:last-of-type .m-foot .btn:last-child");
+    refreshBtn();
+    fetchTags();
+    if (!(await p) || !picked.size) return;
+    try {
+      if (dirty) await saveTags(true);
+      const r = await api.ds_bulk(folder, "prune", { tags: [...picked].join(", "), trigger: trig }, paths);
+      toast("Character tags removed", `${r.changed} captions changed`, "good", "wand", 9000,
+        { action: { label: "Undo", onclick: async () => { try { await api.ds_undo(folder); load(); } catch (e) { toastError(e); } } } });
+      load();
+    } catch (e) { toastError(e); }
   }
 
   function showKeys() {
