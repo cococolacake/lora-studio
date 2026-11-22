@@ -404,3 +404,24 @@ def test_release_notes_come_from_the_pull_request():
     assert rn.notes_section("## Release notes\nShort.\n\n---\n_footer_") == "Short."
     assert rn.build("Fix a typo", "no notes here", "7") == "- Fix a typo\n\n<sub>From #7</sub>\n"
     assert re.fullmatch(r"\d+\.\d+\.\d+", rn.version())
+
+
+def test_dataset_images_link_to_downloads_and_edits_never_touch_them(tmp_path):
+    from studio import dataset_tools as dt
+    dl, ds = tmp_path / "downloads", tmp_path / "dataset"
+    dl.mkdir()
+    Image.new("RGB", (800, 600), (200, 100, 150)).save(dl / "post_1.png")
+    out = importer.run(Task("t"), {"source": str(dl), "dest": str(ds), "min_side": 0, "captions": "none"})
+    img = ds / "DATA_1.png"
+    assert out["copied"] == 1 and img.exists()
+    if out["linked"]:   # hard links work here: same file, no extra space
+        assert os.stat(img).st_ino == os.stat(dl / "post_1.png").st_ino
+    dt.crop_image(str(img), [0, 0, 400, 300])
+    with Image.open(dl / "post_1.png") as im:
+        assert im.size == (800, 600)          # the download is untouched
+    with Image.open(img) as im:
+        assert im.size == (400, 300)
+    dt.restore_original(str(img))
+    with Image.open(img) as im:
+        assert im.size == (800, 600)
+    assert not list(ds.glob("*.tmp"))
