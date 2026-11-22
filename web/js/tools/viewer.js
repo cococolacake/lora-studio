@@ -253,8 +253,8 @@ export function viewer(ctx, params, root) {
     if (!img) return;
     try {
       const r = await api.ds_move([img.path], "_deleted");
-      const t = toast("Moved to _deleted", img.name, "", "trash", 6000);
-      t.querySelector(":scope > div:nth-child(2)").append(h("div", btn("Undo", { size: "sm", kind: "ghost", onclick: async () => { t.remove(); await api.ds_restore(r.dest); load(img.path); } })));
+      toast("Moved to _deleted", img.name, "", "trash", 6000,
+        { action: { label: "Undo", onclick: async () => { try { await api.ds_restore(r.dest); load(img.path); } catch (e) { toastError(e); } } } });
       data.images = data.images.filter((x) => x.path !== img.path);
       data.bins._deleted = (data.bins._deleted || 0) + 1;
       header();

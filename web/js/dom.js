@@ -68,14 +68,78 @@ export function stat(k, v, small) {
 }
 
 // ---- toasts ----
-export function toast(title, text = "", kind = "", ic = "bell", ms = 5000) {
-  let host = document.querySelector(".toasts");
-  if (!host) document.body.append(host = h("div.toasts"));
-  const t = h(`div.toast${kind ? "." + kind : ""}`, h("div.ic", icon(ic)), h("div", h("b", title), text ? h("span", text) : null),
-    btn("", { icon: "x", kind: "ghost", size: "sm", onclick: () => t.remove() }));
-  t.querySelector(".btn").classList.add("x");
-  host.append(t);
-  if (ms) setTimeout(() => t.remove(), ms);
+// Toasts stack into a compact deck in the bottom-right corner: only the newest one is
+// shown in full and up to two older ones peek out behind it. Hovering the deck fans it
+// out and pauses every timer, so nothing disappears while you're reading it.
+const TOAST_GAP = 8, TOAST_PEEK = 3, TOAST_KEEP = 5;
+let toastHost = null, toastOpen = false, toastLeave = 0;
+
+function toastLayout() {
+  if (!toastHost) return;
+  const list = [...toastHost.children].filter((t) => !t.classList.contains("leaving")).reverse(); // newest first
+  list.forEach((t) => (t.style.height = ""));
+  const heights = list.map((t) => t.offsetHeight);
+  let y = 0;
+  list.forEach((t, i) => {
+    // collapsed cards behind the front one take its height so a taller one can't poke out
+    if (!toastOpen && i > 0) t.style.height = `${heights[0]}px`;
+    const hidden = !toastOpen && i >= TOAST_PEEK;
+    t.style.zIndex = String(100 - i);
+    t.style.transform = toastOpen ? `translateY(${-y}px)` : `translateY(${-i * 10}px) scale(${1 - i * 0.05})`;
+    t.style.opacity = hidden ? "0" : "";
+    t.style.pointerEvents = hidden ? "none" : "";
+    t.classList.toggle("behind", !toastOpen && i > 0);
+    y += heights[i] + TOAST_GAP;
+  });
+  // keep the hover area as tall as the fanned-out deck so the mouse can travel across it
+  toastHost.style.height = toastOpen ? `${Math.max(0, y - TOAST_GAP)}px` : `${heights[0] || 0}px`;
+}
+
+function toastSetOpen(open) {
+  if (toastOpen === open) return;
+  toastOpen = open;
+  toastHost.classList.toggle("open", open);
+  for (const t of toastHost.children) open ? t._pause?.() : t._resume?.();
+  toastLayout();
+}
+
+export function toast(title, text = "", kind = "", ic = "bell", ms = 5000, opts = {}) {
+  if (!toastHost || !toastHost.isConnected) {
+    document.body.append(toastHost = h("div.toasts", {
+      onmouseover: () => { clearTimeout(toastLeave); toastSetOpen(true); },
+      onmouseleave: () => { toastLeave = setTimeout(() => toastSetOpen(false), 250); },
+    }));
+  }
+  const close = () => {
+    if (t.classList.contains("leaving")) return;
+    clearTimeout(timer);
+    t.classList.add("leaving");
+    t.style.pointerEvents = "none";
+    toastLayout();
+    setTimeout(() => { t.remove(); if (!toastHost.children.length) toastSetOpen(false); }, 200);
+  };
+  const action = opts.action
+    ? btn(opts.action.label, { size: "sm", kind: "ghost", onclick: () => { close(); opts.action.onclick(); } })
+    : null;
+  const t = h(`div.toast${kind ? "." + kind : ""}`, h("div.ic", icon(ic)),
+    h("div.body", h("b", title), text ? h("span", { title: text }, text) : null),
+    action, btn("", { icon: "x", kind: "ghost", size: "sm", title: "Dismiss", onclick: close }));
+  t.querySelector(".btn:last-child").classList.add("x");
+  action?.classList.add("act");
+
+  // timer that can pause while the deck is open
+  let timer = 0, left = ms, since = 0;
+  t._resume = () => { if (!left) return; since = Date.now(); clearTimeout(timer); timer = setTimeout(close, left); };
+  t._pause = () => { if (!left) return; clearTimeout(timer); left = Math.max(1200, left - (Date.now() - since)); };
+  t.close = close;
+  t.remove = ((orig) => function () { clearTimeout(timer); orig.call(this); toastLayout(); })(t.remove);
+
+  toastHost.append(t);
+  // old toasts beyond the keep limit are dropped so the deck never grows without end
+  const live = [...toastHost.children].filter((x) => !x.classList.contains("leaving"));
+  live.slice(0, Math.max(0, live.length - TOAST_KEEP)).forEach((x) => x.close?.());
+  toastOpen ? t._pause() : t._resume();
+  toastLayout();
   return t;
 }
 
