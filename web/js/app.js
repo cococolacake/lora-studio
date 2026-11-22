@@ -187,8 +187,7 @@ async function poll() {
         stopped: ["Training stopped", "", "stop"],
       };
       const [title, kind, ic] = map[ev.type] || ["Training update", "", "bell"];
-      const t = toast(title, ev.name, kind, ic, 12000);
-      t.querySelector(":scope > div:nth-child(2)").append(h("div", btn("View run", { size: "sm", kind: "ghost", onclick: () => { t.remove(); ctx.go("runs", { run: ev.run }); } })));
+      toast(title, ev.name, kind, ic, 12000, { action: { label: "View run", onclick: () => ctx.go("runs", { run: ev.run }) } });
     }
     ctx._stateFns.forEach((fn) => { try { fn(st); } catch (e) { console.error(e); } });
   } catch (e) { console.warn("poll failed", e); }
