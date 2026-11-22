@@ -442,6 +442,9 @@ class Api:
     def ds_bulk(self, folder, op, params, paths=None, ext=".txt"):
         return dataset_tools.bulk(folder, op, params, paths, ext)
 
+    def ds_character_tags(self, folder, trigger="", paths=None, ext=".txt"):
+        return dataset_tools.character_tags(folder, trigger, paths, self._ac_csv(), ext)
+
     def ds_undo(self, folder):
         return dataset_tools.undo(folder)
 

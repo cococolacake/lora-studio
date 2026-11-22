@@ -332,6 +332,17 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px;
 .chart .tooltip { position: absolute; pointer-events: none; background: var(--surface); box-shadow: var(--shadow-md), 0 0 0 1px var(--line); border-radius: 10px; padding: 6px 10px; font-size: 12px; white-space: nowrap; transform: translate(-50%, -120%); }
 .chart .empty-chart { position: absolute; inset: 0; display: grid; place-items: center; color: var(--text-3); font-size: 13px; }
 
+/* character tag clean-up (viewer) */
+.ctag-group { display: flex; flex-direction: column; gap: 8px; padding: 4px 0 8px; }
+.ctags { display: flex; flex-wrap: wrap; gap: 6px; }
+.ctag { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 11px; border-radius: 99px; font: inherit; font-size: 12.5px;
+  background: var(--surface-2); color: var(--text-2); border: 1px solid var(--line); cursor: pointer; transition: background .15s, color .15s; }
+.ctag:hover { background: var(--surface-3); color: var(--text); }
+.ctag svg { width: 13px; height: 13px; }
+.ctag .n { font-size: 11px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.ctag.on { background: var(--accent-soft); color: var(--accent-text); border-color: transparent; }
+.ctag.on .n { color: inherit; opacity: .7; }
+
 /* toasts: a compact deck in the bottom-right; hover fans it out (layout in dom.js) */
 .toasts { position: fixed; right: 18px; bottom: 18px; width: min(340px, calc(100vw - 36px)); z-index: 50; transition: height .2s; }
 .toast { position: absolute; right: 0; bottom: 0; width: 100%; display: flex; align-items: center; gap: 10px;

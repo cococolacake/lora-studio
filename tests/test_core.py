@@ -357,3 +357,37 @@ def test_titlebar_only_takes_plain_hex_colours():
     a._titlebar = lambda bg, text, dark: seen.append((bg, text, dark)) or True
     assert a.set_titlebar("#252D3F", "#EEF2FF", True) is True
     assert a.set_titlebar("red; drop", "#EEF2FF") is False and len(seen) == 1
+
+
+def test_character_tags_sorts_fixed_look_from_what_changes():
+    from studio.dataset_tools import classify_tag
+    fixed = {"long hair": "hair", "hair between eyes": "hair", "blue eyes": "eyes", "cat ears": "body",
+             "white thighhighs": "outfit", "hair ornament": "outfit", "school uniform": "outfit"}
+    for tag, group in fixed.items():
+        assert classify_tag(tag) == group, tag
+    for tag in ["smile", "closed eyes", "hand in own hair", "holding hat", "skirt lift", "sitting",
+                "simple background", "looking at viewer", "open jacket", "1girl", "sword"]:
+        assert classify_tag(tag) is None, tag
+
+
+def test_character_tag_prune_is_one_undo(tmp_path):
+    from PIL import Image
+    from studio import dataset_tools as dt
+    caps = ["1girl, long hair, blue eyes, smile, red dress",
+            "1girl, long_hair, blue eyes, sitting, red dress, hat",
+            "mychar, 1girl, long hair, blue eyes, closed eyes"]
+    for i, c in enumerate(caps):
+        Image.new("RGB", (8, 8)).save(tmp_path / f"{i}.png")
+        (tmp_path / f"{i}.txt").write_text(c, encoding="utf-8")
+    found = dt.character_tags(str(tmp_path), "mychar")
+    counts = {t["tag"]: (t["count"], t["group"]) for t in found["tags"]}
+    assert found["total"] == 3
+    assert counts["long hair"] == (3, "hair") and counts["red dress"] == (2, "outfit") and counts["hat"] == (1, "outfit")
+    assert "smile" not in counts and "closed eyes" not in counts and "mychar" not in counts
+
+    r = dt.bulk(str(tmp_path), "prune", {"tags": "long hair, blue eyes, red dress", "trigger": "mychar"})
+    assert r["changed"] == 3
+    assert (tmp_path / "1.txt").read_text(encoding="utf-8") == "mychar, 1girl, sitting, hat"
+    assert (tmp_path / "2.txt").read_text(encoding="utf-8") == "mychar, 1girl, closed eyes"
+    dt.undo(str(tmp_path))
+    assert [(tmp_path / f"{i}.txt").read_text(encoding="utf-8") for i in range(3)] == caps

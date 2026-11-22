@@ -91,7 +91,7 @@ _lock = threading.Lock()
 
 
 def bulk(folder, op, params, paths=None, ext=".txt"):
-    """op: trigger | add | delete | replace. paths: limit to these images (e.g. the filtered view)."""
+    """op: trigger | add | delete | replace | prune. paths: limit to these images (e.g. the filtered view)."""
     imgs = paths or [i["path"] for i in list_folder(folder, ext)["images"]]
     tags = parse_tags(params.get("tags", ""))
     if op == "trigger":
@@ -108,6 +108,19 @@ def bulk(folder, op, params, paths=None, ext=".txt"):
     elif op == "delete":
         targets = {tag_key(t) for t in tags}
         fn, create, desc = (lambda ts: [t for t in ts if tag_key(t) not in targets]), False, f"Delete {', '.join(tags)}"
+    elif op == "prune":
+        # character LoRA clean-up: drop the tags the trigger should absorb, and put the trigger
+        # first, in one step so a single undo brings everything back
+        targets = {tag_key(t) for t in tags}
+        trig = (params.get("trigger") or "").strip()
+        tk = tag_key(trig) if trig else None
+        targets.discard(tk)
+
+        def fn(ts):
+            kept = [t for t in ts if tag_key(t) not in targets and tag_key(t) != tk]
+            return [trig] + kept if trig else kept
+        create = False
+        desc = f"Remove {len(targets)} character tag{'' if len(targets) == 1 else 's'}" + (f", “{trig}” first" if trig else "")
     elif op == "replace":
         dst = (params.get("replace_with") or "").strip()
         if not dst:
@@ -375,20 +388,29 @@ def start_batch_resize(**kw):
 
 # ---- autocomplete ------------------------------------------------------------
 
-_ac = {"path": None, "tags": [], "lower": []}
+_ac = {"path": None, "tags": [], "lower": [], "cat": {}}
 
 
 def _load_ac(csv_path):
     if _ac["path"] == csv_path:
         return
-    tags = []
+    tags, cat = [], {}
     if csv_path and os.path.exists(csv_path):
         csv.field_size_limit(10_000_000)
         with open(csv_path, "r", encoding="utf-8", errors="replace") as f:
             for row in csv.reader(f):
                 if row and row[0].strip():
                     tags.append(row[0].strip().replace("_", " "))
-    _ac.update(path=csv_path, tags=tags, lower=[t.lower() for t in tags])
+                    # danbooru-style csvs: tag,category,count,aliases (category 4 = character)
+                    if len(row) > 1 and row[1].strip().isdigit():
+                        cat[tag_key(row[0])] = int(row[1])
+    _ac.update(path=csv_path, tags=tags, lower=[t.lower() for t in tags], cat=cat)
+
+
+def tag_category(csv_path, tag):
+    """Danbooru category number of a tag from the autocomplete csv (4 = character), or None."""
+    _load_ac(csv_path)
+    return _ac["cat"].get(tag_key(tag))
 
 
 def autocomplete(csv_path, prefix, limit=12):
@@ -410,3 +432,106 @@ def autocomplete(csv_path, prefix, limit=12):
 def find_autocomplete_csvs(swarm_dir):
     d = Path(swarm_dir or "") / "Data" / "Autocompletions"
     return sorted(str(f).replace("\\", "/") for f in d.glob("*.csv")) if swarm_dir and d.is_dir() else []
+
+
+# ---- character tags ----------------------------------------------------------
+# For a character LoRA trained on one trigger word, tags that describe the character's fixed
+# look (hair, eyes, body features, default outfit) should be removed so the trigger learns
+# them. Tags that change between images (pose, expression, framing, background, held objects)
+# must stay. These word lists sort danbooru-style tags into those groups.
+
+_HAIR = ("hair", "bangs", "sidelocks", "ahoge", "ponytail", "twintails", "braid", "braids", "bun",
+         "drill", "drills", "hime cut", "bob cut", "pixie cut", "two side up", "one side up",
+         "hair intakes", "antenna hair", "bald", "undercut", "mohawk", "afro", "dreadlocks")
+_HAIR_ACCESSORY = ("hair ornament", "hair ribbon", "hair bow", "hair flower", "hairclip", "hairband",
+                   "hair bobbles", "hairpin", "hair tie", "hair scrunchie", "hair stick", "hair bun cover")
+_EYES = ("eyes", "pupils", "heterochromia", "eyelashes", "sclera", "tsurime", "tareme", "eyeshadow", "eyeliner")
+_BODY = ("skin", "ears", "tail", "horns", "horn", "wings", "halo", "fangs", "fang", "mole", "freckles",
+         "scar", "tattoo", "breasts", "flat chest", "muscular", "abs", "elf", "pointy ears", "facial mark",
+         "whisker markings", "makeup", "lipstick", "nail polish", "dark-skinned", "toned", "petite",
+         "mature female", "aged down", "tall female", "animal ear fluff", "third eye", "body markings")
+_OUTFIT = ("dress", "shirt", "skirt", "jacket", "coat", "hoodie", "sweater", "cardigan", "vest", "uniform",
+           "serafuku", "kimono", "yukata", "hakama", "gloves", "glove", "thighhighs", "thighhigh", "pantyhose",
+           "socks", "kneehighs", "legwear", "boots", "shoes", "sandals", "heels", "loafers", "sneakers",
+           "shorts", "pants", "jeans", "leotard", "bodysuit", "swimsuit", "bikini", "apron", "cape", "cloak",
+           "robe", "scarf", "necktie", "tie", "bowtie", "ribbon", "ribbons", "bow", "collar", "choker",
+           "belt", "sleeves", "sleeve", "sleeveless", "strapless", "off shoulder", "bare shoulders",
+           "cutout", "frills", "frilled", "buttons", "zipper", "armor", "armlet", "hat", "beret", "cap",
+           "hood", "headband", "headwear", "headgear", "earrings", "earring", "necklace", "jewelry",
+           "bracelet", "bracelets", "wristband", "glasses", "eyewear", "goggles", "headphones", "crown",
+           "tiara", "veil", "garter", "garters", "lingerie", "bra", "corset", "neckerchief", "sailor collar",
+           "midriff", "crop top", "tank top", "camisole", "blouse", "suit", "tuxedo", "overalls", "maid",
+           "nun", "habit", "witch", "pendant", "brooch", "gem", "wrist cuffs", "arm warmers",
+           "leg warmers", "detached collar", "pelvic curtain", "obi", "sash", "harness", "epaulettes",
+           "aiguillette", "shoulder armor", "gauntlets", "greaves", "clothes", "clothing", "outfit",
+           "costume", "leggings", "stockings", "tights", "tabard", "poncho", "parka", "blazer",
+           "turtleneck", "hairband", "kneepits") + _HAIR_ACCESSORY
+
+# tags that mention a feature but describe something that changes per image
+_VARIABLE = ("holding", "hand in", "hand on", "hands on", "adjusting", "playing with", "touching",
+             "tucking", "pulling", "lift", "lifted", "lifting", "tug", "grab", "grabbing", "removing",
+             "taking off", "unworn", "no ", "wet", "blowing", "floating", "flowing", "messy", "covering",
+             "closed eyes", "half-closed eyes", "one eye closed", "eyes visible", "wide-eyed", "rolling eyes",
+             "empty eyes", "crazy eyes", "glowing", "looking", "open clothes", "open jacket", "open shirt",
+             "open coat", "undressing", "torn", "wardrobe", "partially", "clothes down", "on head",
+             "on lap", "between", "in mouth", "biting", "licking", "spread", "showing", "lowered",
+             "upskirt", "pantyshot", "cleavage", "sideboob", "underboob", "see-through", "steam",
+             "sweat", "blush", "tears", "drool", "nude", "naked", "topless", "bottomless", "breast press",
+             "breast hold", "breast grab", "hug", "wagging", "raised", "crossed", "own hands", "shadow",
+             "silhouette", "multiple girls", "multiple boys", "other", "background", "artist",
+             "signature", "watermark", "username", "web address", "text")
+
+
+# fixed features that would otherwise trip a _VARIABLE word
+_FIXED = {"hair between eyes": "hair", "hair over one eye": "hair", "hair over eyes": "hair",
+          "crossed bangs": "hair", "multicolored eyes": "eyes"}
+
+
+def _has_phrase(key, phrases):
+    padded = f" {key} "
+    return any(f" {p} " in padded or (p.endswith("-") and f" {p}" in padded) for p in phrases)
+
+
+def classify_tag(tag):
+    """'hair' | 'eyes' | 'body' | 'outfit' for a tag describing the character's fixed look, else None."""
+    k = tag_key(tag)
+    if k in _FIXED:
+        return _FIXED[k]
+    padded = f" {k} "
+    if any(f" {v.strip()} " in padded if not v.endswith(" ") else padded.startswith(f" {v}") for v in _VARIABLE):
+        return None
+    if _has_phrase(k, _HAIR_ACCESSORY):
+        return "outfit"
+    if _has_phrase(k, _HAIR):
+        return "hair"
+    if _has_phrase(k, _EYES):
+        return "eyes"
+    if _has_phrase(k, _BODY):
+        return "body"
+    if _has_phrase(k, _OUTFIT):
+        return "outfit"
+    return None
+
+
+def character_tags(folder, trigger="", paths=None, csv_path=None, ext=".txt"):
+    """Tags in a dataset that describe the character's fixed look, with how many captions use them.
+    Returns {"total": n_captions, "tags": [{tag, count, group}]}, groups: name/hair/eyes/body/outfit."""
+    imgs = paths or [i["path"] for i in list_folder(folder, ext)["images"]]
+    tk = tag_key(trigger) if trigger else None
+    counts, spelling, total = {}, {}, 0
+    for img in imgs:
+        text = _read(cap_path(img, ext))
+        if text is None:
+            continue
+        total += 1
+        for t in parse_tags(text):
+            spelling.setdefault(tag_key(t), t)      # show the tag as it's written in the captions
+        for k in {tag_key(t) for t in parse_tags(text)} - {tk}:
+            counts[k] = counts.get(k, 0) + 1
+    out = []
+    for k, n in counts.items():
+        group = "name" if csv_path and tag_category(csv_path, k) == 4 else classify_tag(k)
+        if group:
+            out.append({"tag": spelling.get(k, k), "count": n, "group": group})
+    out.sort(key=lambda x: (-x["count"], tag_key(x["tag"])))
+    return {"total": total, "tags": out}
