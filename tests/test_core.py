@@ -396,8 +396,8 @@ def test_release_notes_come_from_the_pull_request():
     sys.path.insert(0, str(ROOT / ".github"))
     import release_notes as rn
     body = ("Intro\n\n## Testing\n- ok\n\n## Suggested release notes (v1.3.0)\n"
-            "> **Character tags.** One click.\n>\n> - Undo works\n\n## Other\nnot this")
-    assert rn.notes_section(body) == "**Character tags.** One click.\n\n- Undo works"
+            "> **Character tags.** One click.\n>\n> - Undo works\n\n## ✨ New\n- More")
+    assert rn.notes_section(body) == "**Character tags.** One click.\n\n- Undo works\n\n## ✨ New\n- More"
     tpl = "## Release notes\n<!-- hint -->\n**New thing.**\n"
     assert rn.notes_section(tpl) == "**New thing.**"
     assert rn.notes_section("## Release notes\n<!-- hint -->\n") is None

@@ -6,7 +6,8 @@ The notes come from the pull request's "Release notes" section, e.g.
     **Notifications stay out of the way.** They now stack into one small card...
 
 Any heading containing "release notes" works ("## Suggested release notes (v1.3.0)" too), and
-"> " quote markers are removed. Without that section the notes fall back to the PR's title.
+"> " quote markers are removed. The section runs to the end of the description (or a --- divider),
+so keep it last; it can have its own headings. Without that section the notes fall back to the PR's title.
 
 Usage: python .github/release_notes.py OUT_FILE   (reads PR_TITLE, PR_BODY, PR_NUMBER from the
 environment) — prints the version from studio/__init__.py.
@@ -25,24 +26,17 @@ def version():
 
 
 def notes_section(body):
-    """The text under the first heading that mentions release notes, up to the next heading of
-    the same or a higher level. None if there's no such heading or it's empty."""
+    """The text under the first heading that mentions release notes, to the end of the description
+    (or a --- divider), so the notes can have their own headings like "## ✨ New". Keep the
+    Release notes section last in the PR. None if there's no such heading or it's empty."""
     lines = (body or "").replace("\r\n", "\n").split("\n")
-    start = level = None
     for i, line in enumerate(lines):
-        m = re.match(r"^(#{1,6})\s+(.*)$", line.strip())
-        if not m:
-            continue
-        if start is None:
-            if "release notes" in m.group(2).lower():
-                start, level = i + 1, len(m.group(1))
-        elif len(m.group(1)) <= level:
-            lines = lines[start:i]
+        m = re.match(r"^#{1,6}\s+(.*)$", line.strip())
+        if m and "release notes" in m.group(1).lower():
+            lines = lines[i + 1:]
             break
     else:
-        if start is None:
-            return None
-        lines = lines[start:]
+        return None
     out = []
     for line in lines:
         if re.fullmatch(r"\s*(-{3,}|\*{3,}|_{3,})\s*", line):
