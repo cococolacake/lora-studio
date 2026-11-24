@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
+  - name: Questions and help
+    url: https://github.com/cococolacake/lora-studio/discussions
+    about: How do I…? Setting up sd-scripts, SwarmUI or ComfyUI? Ask here.
   - name: Security problem
     url: https://github.com/cococolacake/lora-studio/security/advisories/new
     about: Please report security issues privately, not as a public issue.
