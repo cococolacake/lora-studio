@@ -399,6 +399,15 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px;
 .theme-card:hover { transform: translateY(-2px); }
 .theme-card.on { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent); }
 .theme-card .tp { height: 74px; position: relative; }
+/* CSS themes: the drop zone in Settings > Appearance */
+.css-drop { display: flex; align-items: center; gap: 14px; padding: 16px 18px; border-radius: var(--r-md); cursor: pointer;
+  border: 2px dashed var(--line-strong); background: var(--surface-2); color: var(--text); transition: border-color .15s, background .15s, transform .15s; }
+.css-drop:hover, .css-drop:focus-visible { border-color: var(--accent); outline: none; }
+.css-drop.over { border-color: var(--accent); background: var(--accent-soft); transform: scale(1.01); }
+.css-drop-ic { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; flex: none; background: var(--accent-soft); color: var(--accent-text); }
+.css-drop-ic svg { width: 20px; height: 20px; }
+.css-rows:empty { display: none; }
+@media (prefers-reduced-motion: reduce) { .css-drop.over { transform: none; } }
 .theme-card .tp .mini { position: absolute; left: 10px; bottom: -14px; right: 10px; height: 34px; border-radius: 10px; display: flex; align-items: center; gap: 6px; padding: 0 8px; box-shadow: 0 2px 8px rgba(0,0,0,.12); }
 .theme-card .tp .mini i { width: 18px; height: 18px; border-radius: 6px; }
 .theme-card .tp .mini b { height: 6px; border-radius: 4px; flex: 1; opacity: .35; }

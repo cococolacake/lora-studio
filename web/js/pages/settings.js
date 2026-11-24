@@ -5,6 +5,7 @@ import { icon } from "../icons.js";
 import { seg, switchEl, rangeEl, pathInput } from "../components.js";
 import { applyTheme } from "../theme.js";
 import { updateNow } from "../selfupdate.js";
+import { cssThemes } from "../csstheme.js";
 
 const SECTIONS = [["appearance", "Appearance", "palette"], ["training", "Training", "wand"], ["paths", "Folders & backup", "folder"], ["about", "About", "info"]];
 
@@ -37,6 +38,10 @@ function appearance(ctx, root) {
 
   const body = h("div.stack");
   root.append(body);
+
+  // CSS themes: made once (it listens for drops on the whole page), refreshed on every redraw
+  const css = cssThemes(ctx, { getCurrent: () => theme.css || "", use: (name) => { theme.css = name; commit(); } });
+  const cssCard = card({ title: "CSS themes" }, css.el);
 
   // Glass theme previews: the family's background, a panel and its button colour.
   const FAMILY = {
@@ -92,8 +97,9 @@ function appearance(ctx, root) {
     const text = card({ title: "Text" }, h("div.field", h("label", "Font"),
       seg([["geist", "Geist"], ["system", "System"]], theme.font === "system" ? "system" : "geist", (v) => { theme.font = v; commit(); })));
 
-    clear(body, gallery, colours, effects, text,
-      h("div.notice", icon("info"), h("div", "Want to go further? ", h("span.mono", "web/css/custom.css"), " is yours to edit: change colours, corner roundness, anything. It's loaded last, so it wins.")));
+    css.refresh();
+    clear(body, gallery, cssCard, colours, effects, text,
+      h("div.notice", icon("info"), h("div", "Want to go further? ", h("span.mono", "web/css/custom.css"), " is yours to edit: change colours, corner roundness, anything. It's loaded last, so it wins over CSS themes too.")));
   }
   draw();
 }

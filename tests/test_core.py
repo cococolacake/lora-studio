@@ -343,6 +343,28 @@ def test_old_themes_move_to_glass(monkeypatch, tmp_path):
     assert settings.DEFAULT_THEME["glass"] == "efficient" and settings.DEFAULT_THEME["simpleWhileTraining"] is True
 
 
+def test_dropped_css_themes(monkeypatch, tmp_path):
+    """A dropped .css theme is saved in the data folder, can replace itself, and turning it off
+    happens on its own when the theme in use is deleted."""
+    from studio import paths, settings
+    from studio.api import Api
+    monkeypatch.setattr(paths, "data_dir", lambda: tmp_path)
+    api = Api()
+    r = api.add_css_theme("Starry Sky.css", "body { color: pink; }")
+    assert r["name"] == "Starry Sky" and [t["name"] for t in r["themes"]] == ["Starry Sky"]
+    assert api.add_css_theme("../../evil.css", "x")["name"] == "evil"            # no leaving the folder
+    assert (tmp_path / "css-themes" / "evil.css").exists()
+    api.add_css_theme("Starry Sky.css", "body { color: lilac; }")                   # same name replaces
+    assert api.css_theme("Starry Sky") == "body { color: lilac; }"
+    assert api.css_theme("missing") == ""
+    with pytest.raises(RuntimeError):
+        api.add_css_theme("big.css", "a" * (9 * 1024 * 1024))
+    settings.save({"theme": {**settings.load()["theme"], "css": "Starry Sky"}})
+    assert [t["name"] for t in api.delete_css_theme("Starry Sky")] == ["evil"]
+    assert settings.load()["theme"]["css"] == ""
+    assert api.bootstrap()["css_themes"][0]["name"] == "evil"
+
+
 def test_shortcut_helper_is_quiet_off_windows():
     from studio import winshortcut
     if os.name != "nt":

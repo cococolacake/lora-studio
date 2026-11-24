@@ -45,6 +45,7 @@ Everything about LoRA Studio in one place. For the short version, see the [READM
 **Looks**
 - **Glass themes:** Default, Cool Glass, Warm Glass, Lilac and Heart Glass, in light and dark (Lilac is light only).
 - **Glass effects:** Efficient (the default), Full or Off, and a simpler look while training if you want it.
+- **CSS themes:** drop a `.css` theme file onto **Settings → Appearance** and it's installed and switched on.
 - **Your own styles:** a `custom.css` file for anything else.
 
 ## Screenshots
@@ -139,6 +140,7 @@ Turn on **Save state** (Train → Output) before training. If a run is stopped o
 
 ### Making it yours
 - **Settings → Appearance:** pick a theme (Default, Cool Glass, Warm Glass, Lilac or Heart Glass), light or dark, how much glass effect you want, and the font. **Save as theme** keeps your mix.
+- **CSS themes:** drag a `.css` file anywhere onto **Settings → Appearance** (or click the drop zone to choose one). It's saved in LoRA Studio's data folder, so updates never touch it, and it's included in backups. Switch between your CSS themes, turn them off or delete them in the same card. Picking one of the built-in themes above turns the CSS theme off.
 - **`web/css/custom.css`:** loaded last, so anything you put there wins. It has a few examples to start from.
 
 ## For developers

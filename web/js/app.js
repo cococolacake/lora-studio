@@ -86,6 +86,9 @@ const ctx = {
   },
 };
 window.ctx = ctx; // handy in the dev tools console
+window.addEventListener("cssthemechange", () => syncTitlebar());
+// A file dropped outside a drop zone must not make the window open that file instead of the app.
+for (const ev of ["dragover", "drop"]) window.addEventListener(ev, (e) => { if ([...(e.dataTransfer?.types || [])].includes("Files")) e.preventDefault(); });
 
 // In the app window on Windows, tint the title bar to match the theme's background.
 function syncTitlebar() {
