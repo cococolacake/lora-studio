@@ -4,6 +4,9 @@
 #   - The notes come from the pull request's "## Release notes" section (see .github/release_notes.py).
 #   - If that version already has a release (the PR didn't bump the version), nothing is posted,
 #     so small fixes can be merged and released together later.
+#   - Roll-up: when a version bump is merged, the notes of every pull request merged since the last
+#     release are added under its own, so nothing merged in between is left out.
+#   - Actions > Release > Run workflow releases main by hand, with the same roll-up.
 #
 # The in-app updater offers the newest release, so users see the update right after the merge.
 name: Release
@@ -12,36 +15,49 @@ on:
   pull_request:
     types: [closed]
     branches: [main]
+  workflow_dispatch:
 
 permissions:
-  contents: write   # needed to create the tag and the release
+  contents: write        # needed to create the tag and the release
+  pull-requests: read    # to collect the notes of earlier merged pull requests
 
 jobs:
   release:
-    if: github.event.pull_request.merged == true
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SHA: ${{ github.event.pull_request.merge_commit_sha || github.sha }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          ref: ${{ env.SHA }}
+
+      - name: Is this a new version?
+        id: version
+        run: |
+          VERSION=$(python3 .github/release_notes.py --version)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if gh release view "v$VERSION" > /dev/null 2>&1; then
+            echo "v$VERSION already has a release, so nothing was posted. Bump the version in studio/__init__.py to release; this pull request's notes will be included then." >> "$GITHUB_STEP_SUMMARY"
+            echo "new=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "new=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Write the release notes
-        id: notes
+        if: steps.version.outputs.new == 'true'
         env:   # passed as environment variables so text in the PR can't run as a command
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_BODY: ${{ github.event.pull_request.body }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: echo "version=$(python3 .github/release_notes.py notes.md)" >> "$GITHUB_OUTPUT"
+          APP_NAME: LoRA Studio
+        run: python3 .github/release_notes.py notes.md
 
       - name: Post the release
+        if: steps.version.outputs.new == 'true'
         env:
-          GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ steps.notes.outputs.version }}
-          SHA: ${{ github.event.pull_request.merge_commit_sha }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          if gh release view "v$VERSION" > /dev/null 2>&1; then
-            echo "v$VERSION already has a release, so nothing was posted. Bump the version in studio/__init__.py to release." >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
           gh release create "v$VERSION" --target "$SHA" --title "LoRA Studio $VERSION" --notes-file notes.md
           { echo "Posted **LoRA Studio $VERSION**:"; echo; cat notes.md; } >> "$GITHUB_STEP_SUMMARY"
