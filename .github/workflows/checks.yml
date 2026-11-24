@@ -44,6 +44,9 @@ jobs:
       - name: Tests
         run: python -m pytest -q tests
 
+      - name: Shared files match the other app (warnings only)
+        run: python .github/check_shared.py
+
       - name: Browser smoke test (every page opens without errors)
         run: |
           # uses the Google Chrome that GitHub's machines already have, so no browser download

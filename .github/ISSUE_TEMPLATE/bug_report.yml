@@ -23,11 +23,24 @@ body:
         1. Open Train
         2. Pick anima_train_network.py
         3. …
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where in the app?
+      options:
+        - Training or the queue
+        - Runs and samples
+        - Dataset tools
+        - Downloading with gallery-dl
+        - SwarmUI or ComfyUI
+        - Installing or updating sd-scripts
+        - Installing, updating or starting the app
+        - Something else
   - type: textarea
     id: diagnostics
     attributes:
       label: Diagnostics
-      description: Paste from Settings → About → Copy diagnostics.
-      render: markdown
+      description: Paste from Settings → About → Copy diagnostics. If the app won't start, paste what the terminal or `LoRA Studio (debug).bat` shows.
+      render: text
     validations:
       required: true
