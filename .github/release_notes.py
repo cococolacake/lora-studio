@@ -7,7 +7,8 @@ The notes come from each pull request's "Release notes" section, e.g.
 
 Any heading containing "release notes" works ("## Suggested release notes (v1.3.0)" too), and
 "> " quote markers are removed. The section runs to the end of the description (or a --- divider),
-so keep it last; it can have its own headings. Without that section a pull request is listed by its title.
+so keep it last; it can have its own headings. Without that section a pull request is listed by its title;
+write "None" in it for behind-the-scenes changes users don't need to hear about.
 
 Roll-up: pull requests merged without bumping the version don't get a release of their own. The next
 release collects them: its notes are the merged pull request's notes first, then every pull request
@@ -64,6 +65,8 @@ def build(title, body, number, earlier=(), fallback=None, app="", ver=""):
     `earlier`: pull requests merged since the last release, newest first, as GitHub API dicts."""
     prs = ([{"title": title, "body": body, "number": number}] if (title or number) else []) + list(earlier)
     sections = [notes_section(p.get("body")) for p in prs]
+    keep = [(p, s) for p, s in zip(prs, sections) if (s or "").strip().strip(".").lower() not in ("none", "n/a", "-")]
+    prs, sections = [p for p, _ in keep], [s for _, s in keep]
     if not any(sections) and fallback:
         text = fallback.strip()
     elif prs:

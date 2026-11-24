@@ -414,6 +414,8 @@ def test_release_notes_roll_up_unreleased_pull_requests():
                {"number": 11, "title": "Big thing", "body": "## Release notes\n**Big thing.** Yay."}]
     notes = rn.build("Bump", "## Release notes\n**Newest.**", "13", earlier)
     assert notes == "**Newest.**\n\n- Quiet fix\n\n**Big thing.** Yay.\n\n<sub>From #13, #12, #11</sub>\n"
+    # "None" leaves a behind-the-scenes pull request out
+    assert rn.build("Bump", "## Release notes\n**Newest.**", "13", [{"number": 9, "title": "CI", "body": "## Release notes\nNone."}]) == "**Newest.**\n\n<sub>From #13</sub>\n"
     # a manual run has no pull request of its own
     assert rn.build("", "", "", earlier[1:]) == "**Big thing.** Yay.\n\n<sub>From #11</sub>\n"
     # nothing has notes, but docs/release-notes/<version>.md does
