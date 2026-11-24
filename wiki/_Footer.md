@@ -1,0 +1,1 @@
+This wiki is written in the [`wiki/` folder](https://github.com/cococolacake/lora-studio/tree/main/wiki) of the repository. Edits made here on the website are replaced the next time it's published, so change the files there with a pull request instead.
