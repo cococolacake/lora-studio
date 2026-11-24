@@ -11,11 +11,15 @@ venv/
 Thumbs.db
 desktop.ini
 
+# Logs and build output
+*.log
+dist/
+
+# Test tools (installed by the checks)
+node_modules/
+.pytest_cache/
+
 # Never commit your models or datasets by accident
 *.safetensors
 *.ckpt
 *.pt
-
-# test tools (installed by the checks)
-node_modules/
-.pytest_cache/
