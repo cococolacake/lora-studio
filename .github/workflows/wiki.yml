@@ -1,0 +1,39 @@
+# Publishes the wiki/ folder to the repository's Wiki tab whenever it changes on main.
+# The wiki is written here, in pull requests, so it's reviewed like everything else.
+# Edits made on the Wiki tab itself are replaced the next time this runs.
+name: Wiki
+
+on:
+  push:
+    branches: [main]
+    paths: ["wiki/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: write   # the wiki is part of the repository, so this lets the workflow push to it
+
+concurrency: wiki   # one publish at a time
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git clone --depth 1 "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.wiki.git" /tmp/wiki
+          rsync -a --delete --exclude .git wiki/ /tmp/wiki/
+          cd /tmp/wiki
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "The wiki is already up to date." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git commit -q -m "Update from ${GITHUB_SHA::7}"
+          git push -q
+          echo "Published the wiki from ${GITHUB_SHA::7}." >> "$GITHUB_STEP_SUMMARY"

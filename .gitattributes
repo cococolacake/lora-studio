@@ -4,3 +4,5 @@
 # Linux shell scripts must keep Linux line endings or they won't run.
 *.sh text eol=lf
 * text=auto
+# The wiki is published to the Wiki tab, so it's left out of download zips.
+wiki/ export-ignore

@@ -36,16 +36,16 @@ You need [Python 3.10 or newer](https://www.python.org/downloads/) (tick **Add p
 3. Double-click **`LoRA Studio.bat`** to start. `Create desktop shortcut.bat` adds a desktop and Start menu shortcut.
 4. Point it at your sd-scripts folder, or let it install sd-scripts for you.
 
-On Linux, run `./install.sh` and then `./lora-studio.sh`. See the [Linux setup](docs/guide.md#linux) for details.
+On Linux, run `./install.sh` and then `./lora-studio.sh`. See the [Linux setup](https://github.com/cococolacake/lora-studio/wiki/Getting-started#linux) for details.
 
 **Updating:** when a new version is out, a download button appears in the sidebar. Click it, then **Update now**.
 
 ## Learn more
 
-The [guide](docs/guide.md) covers every feature, each page, gallery-dl and site logins, SwarmUI and ComfyUI setup, backups, and notes for developers.
+The [wiki](https://github.com/cococolacake/lora-studio/wiki) covers every feature, each page, gallery-dl and site logins, SwarmUI and ComfyUI setup, themes and backups. Working on LoRA Studio itself? See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Credits
 
-Training is done by [kohya-ss/sd-scripts](https://github.com/kohya-ss/sd-scripts). LoRA Studio also works with [SwarmUI](https://github.com/mcmonkeyprojects/SwarmUI), [ComfyUI](https://github.com/comfyanonymous/ComfyUI) and [gallery-dl](https://github.com/mikf/gallery-dl), and isn't affiliated with any of them. [Full credits](docs/guide.md#credits).
+Training is done by [kohya-ss/sd-scripts](https://github.com/kohya-ss/sd-scripts). LoRA Studio also works with [SwarmUI](https://github.com/mcmonkeyprojects/SwarmUI), [ComfyUI](https://github.com/comfyanonymous/ComfyUI) and [gallery-dl](https://github.com/mikf/gallery-dl), and isn't affiliated with any of them. [Full credits](https://github.com/cococolacake/lora-studio/wiki#credits).
 
 [MIT license](LICENSE)
