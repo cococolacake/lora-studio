@@ -14,6 +14,8 @@
 - **[Updating and backups](Updating-and-backups)**: keeping LoRA Studio up to date, and backing up your settings and runs.
 - **[FAQ](FAQ)**: quick answers.
 
+How LoRA Studio was made, and where to ask me questions: see the [AI disclosure](AI-disclosure). LoRA Studio is free and open source, forever.
+
 Developing LoRA Studio? See [CONTRIBUTING.md](https://github.com/cococolacake/lora-studio/blob/main/CONTRIBUTING.md).
 
 ## Screenshots
