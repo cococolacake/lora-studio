@@ -406,6 +406,21 @@ def test_release_notes_come_from_the_pull_request():
     assert re.fullmatch(r"\d+\.\d+\.\d+", rn.version())
 
 
+def test_release_notes_roll_up_unreleased_pull_requests():
+    """Pull requests merged without a version bump are released with the next bump, newest first."""
+    sys.path.insert(0, str(ROOT / ".github"))
+    import release_notes as rn
+    earlier = [{"number": 12, "title": "Quiet fix", "body": "no section"},
+               {"number": 11, "title": "Big thing", "body": "## Release notes\n**Big thing.** Yay."}]
+    notes = rn.build("Bump", "## Release notes\n**Newest.**", "13", earlier)
+    assert notes == "**Newest.**\n\n- Quiet fix\n\n**Big thing.** Yay.\n\n<sub>From #13, #12, #11</sub>\n"
+    # a manual run has no pull request of its own
+    assert rn.build("", "", "", earlier[1:]) == "**Big thing.** Yay.\n\n<sub>From #11</sub>\n"
+    # nothing has notes, but docs/release-notes/<version>.md does
+    assert rn.build("Bump", "", "13", [], fallback="## Notes\n- x\n").startswith("## Notes\n- x\n\n<sub>From #13")
+    assert rn.build("", "", "", [], app="LoRA Studio", ver="1.5.0") == "LoRA Studio 1.5.0\n"
+
+
 def test_dataset_images_link_to_downloads_and_edits_never_touch_them(tmp_path):
     from studio import dataset_tools as dt
     dl, ds = tmp_path / "downloads", tmp_path / "dataset"
