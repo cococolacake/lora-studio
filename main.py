@@ -1,4 +1,4 @@
-"""LoRA Studio — a friendly front end for kohya-ss/sd-scripts.
+"""LoRA Studio: a friendly front end for kohya-ss/sd-scripts.
 
     python main.py            open the app window
     python main.py --browser  open in your web browser instead (no pywebview needed)
