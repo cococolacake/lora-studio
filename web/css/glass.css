@@ -50,9 +50,9 @@
 
 /* Full glass and page changes: a parent fading in (opacity) leaves backdrop-filter nothing to blur until the fade
    ends, so glass panels flash see-through on every page change. The page slides in without fading, and the glass
-   panels fade themselves instead: an element fading itself still blurs what's behind it. */
+   panels show from the first frame while what's inside them fades in, so the background never flashes through. */
 [data-style="glass"][data-glass="full"] .page { animation: pagein-glass .25s ease; }
-[data-style="glass"][data-glass="full"] .page :is(.card, .banner, .page-head, .today-card) { animation: fade .25s ease; }
+[data-style="glass"][data-glass="full"] .page :is(.card, .banner, .page-head, .today-card) > * { animation: fade .25s ease; }
 @keyframes pagein-glass { from { transform: translateY(6px); } }
 
 /* ---------- rail: a floating bar with labels ---------- */
