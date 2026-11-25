@@ -46,6 +46,8 @@ jobs:
 
       - name: Shared files match the other app (warnings only)
         run: python .github/check_shared.py
+        env:
+          OTHER_APP_REPO: ${{ vars.OTHER_APP_REPO }}
 
       - name: Browser smoke test (every page opens without errors)
         run: |
