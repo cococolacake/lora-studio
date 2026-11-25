@@ -3,6 +3,8 @@
 Two ways, depending on how LoRA Studio was installed:
 - a git folder (cloned, or GitHub Desktop): `git pull --ff-only`, so local work is never overwritten;
 - a zip download: the release zip is downloaded from GitHub and copied over this folder.
+With Settings > About > Update from set to main, a git folder pulls origin's main branch and a zip install
+downloads main's newest commit instead of the latest release.
 
 Never touched: the .venv (the app's own Python), .git, your custom.css, and your data
 (settings, runs, presets), which lives in a separate folder anyway.
@@ -19,7 +21,7 @@ import zipfile
 from pathlib import Path
 
 from . import appupdate
-from .util import CREATE_NO_WINDOW
+from .util import CREATE_NO_WINDOW, write_json
 
 ROOT = Path(__file__).resolve().parents[1]
 # Never copied over when updating from a zip.
@@ -60,14 +62,24 @@ def _download(url, dest):
         shutil.copyfileobj(r, f)
 
 
-def _zip_url(tag):
+def _zip_url(tag=None, sha=None):
+    if sha:
+        return f"https://github.com/{appupdate.REPO}/archive/{sha}.zip"
     return f"https://github.com/{appupdate.REPO}/archive/refs/tags/{tag}.zip"
 
 
 def update(task, tag=None):
-    """Bring this folder up to the latest release. Returns {"updated": bool, "restart": bool}."""
+    """Bring this folder up to the latest release (or main). Returns {"updated": bool, "restart": bool}."""
+    main = appupdate.channel() == "main"
     if method() == "git":
-        changed = _update_git(task)
+        changed = _update_git(task, main)
+    elif main:
+        try:
+            latest = appupdate._fetch_main()
+        except Exception:
+            raise RuntimeError("Couldn't find the newest changes on GitHub. Check your internet connection.") from None
+        changed = _update_zip(task, latest["tag"], sha=latest["sha"])
+        write_json(appupdate.installed_commit_file(), {"sha": latest["sha"], "updated": time.time()})
     else:
         if not tag:
             latest = (appupdate.check(force=True) or {}).get("latest")
@@ -80,7 +92,7 @@ def update(task, tag=None):
     return {"updated": changed, "restart": changed}
 
 
-def _update_git(task):
+def _update_git(task, main=False):
     task.log("This LoRA Studio folder uses git, so it's updated with git pull.")
     code, txt = _git("status", "--porcelain", "--untracked-files=no")
     if code == 0 and txt.strip():
@@ -88,7 +100,14 @@ def _update_git(task):
                            "automatically. Commit or discard them, or use Pull origin in GitHub Desktop.")
     _, before = _git("rev-parse", "HEAD")
     task.progress = {"n": 1, "total": 3, "msg": "Fetching the latest version…"}
-    code, out = _git("pull", "--ff-only", timeout=300)
+    if main:
+        _, br = _git("rev-parse", "--abbrev-ref", "HEAD")
+        if br.strip() != "main":
+            raise RuntimeError(f"This folder is on the branch {br.strip()!r}, not main, so it isn't updated from main. "
+                               "Switch to main first (in GitHub Desktop: Current branch, then main).")
+        code, out = _git("pull", "--ff-only", "origin", "main", timeout=300)
+    else:
+        code, out = _git("pull", "--ff-only", timeout=300)
     task.log(out.strip())
     if code != 0:
         raise RuntimeError("git pull didn't work (see the log). In GitHub Desktop, use Fetch origin, then Pull origin.")
@@ -96,13 +115,13 @@ def _update_git(task):
     return before.strip() != after.strip()
 
 
-def _update_zip(task, tag):
+def _update_zip(task, tag, sha=None):
     task.log(f"Downloading LoRA Studio {tag} from GitHub…")
     task.progress = {"n": 1, "total": 3, "msg": f"Downloading {tag}…"}
     tmp = Path(tempfile.mkdtemp(prefix="lorastudio_update_"))
     try:
         z = tmp / "release.zip"
-        _download(_zip_url(tag), z)
+        _download(_zip_url(tag, sha), z)
         with zipfile.ZipFile(z) as zf:
             for name in zf.namelist():             # refuse anything that would land outside the folder
                 if name.startswith("/") or ".." in Path(name).parts:
