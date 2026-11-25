@@ -163,7 +163,8 @@ async function checkUpdate() {
     const tag = ctx.update?.newer && ctx.update.latest.tag;
     if (tag && store.get("updateToast") !== tag) {
       store.set("updateToast", tag);
-      toast("A new LoRA Studio is out", `${tag} is ready to download.`, "good", "download", 9000);
+      if (ctx.update.latest.channel === "main") toast("New changes on main", ctx.update.latest.name, "good", "download", 9000);
+      else toast("A new LoRA Studio is out", `${tag} is ready to download.`, "good", "download", 9000);
     }
   } catch { /* offline: no notice */ }
 }

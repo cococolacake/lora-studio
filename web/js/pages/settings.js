@@ -176,7 +176,7 @@ function about(ctx, root) {
   const showUpd = (u) => {
     if (u && !u.off) ctx.update = u;
     clear(upd, !u || u.off ? null
-      : u.newer ? [h("span.small", h("b", `${u.latest.tag} is available.`)), btn("Update now", { icon: "download", kind: "primary", size: "sm", onclick: () => updateNow(ctx, u.latest) })]
+      : u.newer ? [h("span.small", h("b", u.latest.channel === "main" ? `New changes on main: ${u.latest.name}` : `${u.latest.tag} is available.`)), btn("Update now", { icon: "download", kind: "primary", size: "sm", onclick: () => updateNow(ctx, u.latest) })]
       : h("span.small.muted", u.latest ? `You're up to date (latest is ${u.latest.tag}).` : "Couldn't reach GitHub just now."));
   };
   if (ctx.update) showUpd(ctx.update);
@@ -188,6 +188,11 @@ function about(ctx, root) {
         h("div.row", { style: { gap: "12px", flexWrap: "wrap" } },
           switchEl(s.check_app_updates !== false, async (v) => { await ctx.saveSettings({ check_app_updates: v }); }, "Tell me when a new version is out"),
           btn("Check now", { icon: "refresh", onclick: async () => { clear(upd, h("span.small.muted", "Checking…")); try { showUpd(await api.app_update(true)); } catch (e) { toastError(e); } } })),
+        h("div.field", { style: { marginTop: "10px", maxWidth: "360px" } }, h("label", "Update from"),
+          h("select.select", { onchange: async (e) => { await ctx.saveSettings({ update_channel: e.target.value }); clear(upd, h("span.small.muted", "Checking…")); try { showUpd(await api.app_update(true)); } catch (err) { toastError(err); } } },
+            h("option", { value: "release", selected: s.update_channel !== "main" }, "Releases"),
+            h("option", { value: "main", selected: s.update_channel === "main" }, "Latest changes on main (not released yet)")),
+          h("div.help", "Main gets every change as soon as it's merged, before it's in a release. It's newer, but less tested.")),
         h("div", { style: { marginTop: "8px" } }, upd)),
       card({ title: "Something not working?" },
         h("p.small.muted", { style: { marginTop: 0 } }, "Copy diagnostics puts your LoRA Studio and sd-scripts versions, system, GPU and the end of the last failed run's log on your clipboard, ready to paste into a bug report. Your name is hidden from folder paths and site logins are never included."),

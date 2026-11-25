@@ -14,9 +14,10 @@ export async function updateNow(ctx, latest) {
     ? (info.local_changes
       ? h("div.notice.warn", icon("alert"), "This folder uses git and has changes of its own, so it can't be updated automatically. Use Pull origin in GitHub Desktop instead.")
       : h("p.small.muted", { style: { margin: 0 } }, "This LoRA Studio folder uses git, so it's updated with a git pull. Nothing you made locally is overwritten."))
-    : h("p.small.muted", { style: { margin: 0 } }, `The new version is downloaded from GitHub and copied over this folder. Your .venv, your custom.css and your settings, runs and presets are kept.`);
-  const go = await modal(latest ? `Update to LoRA Studio ${latest.tag}` : "Update LoRA Studio", h("div.stack.sm",
-    latest ? h("p", { style: { margin: 0 } }, `You have ${ctx.boot.version}; the newest is ${latest.tag}.`) : null,
+    : h("p.small.muted", { style: { margin: 0 } }, `${latest?.channel === "main" ? "The newest files on main are" : "The new version is"} downloaded from GitHub and copied over this folder. Your .venv, your custom.css and your settings, runs and presets are kept.`);
+  const go = await modal(latest?.channel === "main" ? "Update to the latest changes" : latest ? `Update to LoRA Studio ${latest.tag}` : "Update LoRA Studio", h("div.stack.sm",
+    latest?.channel === "main" ? h("p", { style: { margin: 0 } }, `The newest change on main: ${latest.name}`)
+      : latest ? h("p", { style: { margin: 0 } }, `You have ${ctx.boot.version}; the newest is ${latest.tag}.`) : null,
     how,
     h("p.small.muted", { style: { margin: 0 } }, "Afterwards LoRA Studio restarts by itself (one click).")),
     [{ label: "Cancel", kind: "ghost", value: false },
