@@ -7,17 +7,17 @@ How to run, test and lay out the code is in `CONTRIBUTING.md`, and its house rul
 Every change follows these steps. Coco is new to git: explain git and terminal steps simply, one at a time.
 
 1. **Issue.** Every change starts as a GitHub issue.
-   - Features: run `/grill-me` with Coco until the plan is settled, write the plan into the issue, and wait for Coco to approve it (label `ready`).
+   - Features: use the `grilling` skill to interview Coco until the plan is settled, write the plan into the issue, and wait for Coco to approve it (label `ready`).
    - Tiny fixes (a typo, a colour, a one-line bug): a two- or three-line plan in the issue is enough.
    - Issues opened by other people: label and summarize them. Build nothing until Coco picks one.
-2. **Build** on a branch named after the issue, e.g. `42-music-shuffle`. Add a test with every feature or bug fix (`python -m pytest -q tests`).
+2. **Build** on a branch named after the issue, e.g. `42-caption-search`. Add a test with every feature or bug fix.
 3. **Review.** A subagent that didn't write the code runs `code-review` on the branch, against the issue and "Keep it lean" below. Fix what it finds, or say why not.
-4. **Coco tests it.** Coco runs it from their local copy and tries it in the app. Push whenever you like; wait for Coco's OK before opening the PR.
-5. **PR.** Fill in the PR template with `Fixes #<issue>`. Release notes go last. Bump `__version__` only when Coco asks, once a batch of changes has built up.
+4. **Coco tests it.** Walk Coco through it: in GitHub Desktop, **Fetch origin**, then switch to the branch, then start the app and try it. Push whenever you like; wait for Coco's OK before opening the PR.
+5. **PR.** Fill in the PR template with `Fixes #<issue>`. Bump `__version__` in `studio/__init__.py` only when Coco asks, once a batch of changes has built up.
    - Commit as `Coco <183875663+cococolacake@users.noreply.github.com>`.
    - Commits and PRs carry no AI attribution lines and no session links.
    - Coco merges.
-6. **Wrap-up.** Comment on the issue with what's done and what's left, then run `/retro`. When something went wrong more than once, suggest a change to this file.
+6. **Wrap-up.** Comment on the issue with what's done and what's left, then ask Coco to run `/mattpocock-skills:retro`. When something went wrong more than once, suggest a change to this file.
 
 ## Keep it lean
 
