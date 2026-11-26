@@ -18,7 +18,6 @@ export default {
 
     const header = () => clear(headSlot, ctx.header({
       title: tab === "comfy" ? "ComfyUI" : "SwarmUI",
-      subtitle: tab === "comfy" ? "Build workflows with your new LoRAs, right next to your training." : "Your SwarmUI install, right next to your training.",
       icon: "hive",
       actions: [seg([["swarm", "SwarmUI", "hive"], ["comfy", "ComfyUI", "layers"]], tab, (v) => { tab = v; store.set("genTab", v); draw(); })],
     }));
@@ -47,7 +46,7 @@ function statusRow(st, { name, onStart, onOpen, onRefresh, notSet }) {
           await onStart();
           b.disabled = true;
           b.lastChild.textContent = "Starting…";
-          toast(`Starting ${name}`, "It opens in a minimized window. This page updates when it's ready.", "", "play", 8000);
+          toast(`Starting ${name}`, "Starting in a minimized window.", "", "play", 8000);
           for (let i = 0; i < 60; i++) {
             await new Promise((r) => setTimeout(r, 3000));
             if ((await onRefresh(true))?.running) { toast(`${name} is up`, "", "good", "circleCheck"); break; }
@@ -66,13 +65,12 @@ function embedCard(getStatus, label) {
     if (!st?.running) return clear(slot, h("p.small.muted", { style: { margin: 0 } }, `Start ${label} to use it inside LoRA Studio.`));
     if (!shown) {
       return clear(slot, h("div.row",
-        h("p.small.muted", { style: { margin: 0, flex: 1 } }, `Opens ${label} inside this window, so you can try your new LoRAs without switching apps.`),
         btn(`Show ${label}`, { icon: "hive", kind: "primary", onclick: () => { shown = true; draw(); } })));
     }
     const frame = h("iframe.swarm-frame", { src: st.url, title: label });
     clear(slot,
       h("div.row", { style: { marginBottom: "10px" } },
-        h("span.small.faint", "If this stays blank, use “Open in browser” instead."), h("div.spacer"),
+        h("span.small.faint", "Blank? Use “Open in browser”."), h("div.spacer"),
         btn("", { icon: "refresh", size: "sm", kind: "ghost", title: "Reload", onclick: () => { frame.src = st.url; } }),
         btn("Hide", { size: "sm", kind: "ghost", onclick: () => { shown = false; draw(); } })),
       frame);
@@ -86,7 +84,7 @@ function libraryCard(ctx, load, label) {
     let lib;
     try { lib = await load(); } catch { lib = { groups: [] }; }
     if (!lib.groups.length) {
-      clear(slot, empty("hive", "Nothing sent yet", `Choose “Copy into ${label}” on the Train page, or use the card on any run's page.`,
+      clear(slot, empty("hive", "Nothing sent yet", `Use “Copy into ${label}” on the Train page or a run's page.`,
         btn("Run history", { icon: "history", onclick: () => ctx.go("runs") })));
       return;
     }
@@ -120,24 +118,24 @@ function swarmTab(ctx, body) {
   async function refresh(quiet) {
     st = await api.swarm_status().catch(() => ({ configured: false }));
     if (quiet) return st;
-    clear(statusSlot, statusRow(st, { name: "SwarmUI", notSet: "Not set up yet. Choose your SwarmUI folder below.",
+    clear(statusSlot, statusRow(st, { name: "SwarmUI", notSet: "Not set up.",
       onStart: () => api.swarm_launch(), onOpen: () => api.swarm_open(), onRefresh: refresh }));
     embed.draw();
     if (st.valid && (await api.swarm_old_theme().catch(() => false))) {
       clear(leftover, h("div.notice", icon("info"), h("div", { style: { flex: 1 } },
-        "The LoRA Studio theme from an earlier version is still installed in SwarmUI. ",
+        "An old LoRA Studio theme is still installed in SwarmUI. ",
         btn("Remove it", { size: "sm", kind: "ghost", onclick: async () => {
-          if (!(await confirmBox("Remove the old theme?", "Switch SwarmUI to another theme first (User → User Settings → Theme), then restart SwarmUI after removing."))) return;
+          if (!(await confirmBox("Remove the old theme?", "Switch SwarmUI to another theme first (User → User Settings → Theme), and restart SwarmUI after."))) return;
           await api.swarm_remove_old_theme(); clear(leftover); toast("Theme removed", "Restart SwarmUI to finish.", "good", "check");
         } }))));
     } else clear(leftover);
     const ac = await api.autocomplete_sources().catch(() => ({ current: "", found: [] }));
     clear(acSlot, h("div.stack.sm",
-      h("p.small.muted", { style: { margin: 0 } }, "The tag editor suggests tags from a CSV list, the same files SwarmUI uses for its autocomplete."),
+      h("p.small.muted", { style: { margin: 0 } }, "Same CSV format as SwarmUI's autocomplete."),
       ac.found.length ? h("select.select", { onchange: (e) => save({ autocomplete_csv: e.target.value }) },
         ac.found.map((f) => h("option", { value: f, selected: f === ac.current }, f.split("/").pop()))) : null,
       pathInput(ctx.boot.settings.autocomplete_csv || "", (v) => save({ autocomplete_csv: v }), { kind: "any", placeholder: ac.current || (isWin(ctx) ? "C:/path/to/tags.csv" : "/home/you/path/to/tags.csv") }),
-      h("div.small.faint", ac.current ? `Using ${ac.current.split("/").pop()}` : "No list found yet. Set your SwarmUI folder, or pick a CSV.")));
+      h("div.small.faint", ac.current ? `Using ${ac.current.split("/").pop()}` : "No list found. Set your SwarmUI folder or pick a CSV.")));
     return st;
   }
 
@@ -148,12 +146,12 @@ function swarmTab(ctx, body) {
     libraryCard(ctx, () => api.swarm_library(), "SwarmUI"),
     card({ title: "Setup" }, h("div.stack",
       h("div.field", h("label", "SwarmUI folder"), pathInput(s.swarm_dir, (v) => save({ swarm_dir: v }), { folder: true, placeholder: isWin(ctx) ? "C:/Users/you/Desktop/Work/SwarmUI" : "/home/you/SwarmUI" }),
-        h("div.help", isWin(ctx) ? "The folder with launch-windows.bat in it." : "The folder with launch-linux.sh in it. Its output is saved to logs/swarmui.log in LoRA Studio's data folder.")),
+        h("div.help", isWin(ctx) ? "The folder with launch-windows.bat in it." : "The folder with launch-linux.sh in it.")),
       h("div.grid.c2",
         h("div.field", h("label", "Address"), h("input.input.mono", { value: s.swarm_url || "http://127.0.0.1:7801", onchange: (e) => save({ swarm_url: e.target.value.trim() }) }),
           h("div.help", "7801 is SwarmUI's default port.")),
         h("div.field", h("label", "LoRA folder (optional override)"), pathInput(s.swarm_lora_dir, (v) => save({ swarm_lora_dir: v }), { folder: true, placeholder: "Detected automatically" }),
-          h("div.help", "Leave empty to use the one in SwarmUI's settings. LoRAs are copied into a “LoRA Studio” subfolder."))))),
+          h("div.help", "Blank uses SwarmUI's setting. LoRAs go in a “LoRA Studio” subfolder."))))),
     card({ title: "Tag autocomplete" }, acSlot));
   refresh();
 }
@@ -174,7 +172,7 @@ function comfyTab(ctx, body) {
     const viaSwarm = st.mode === "swarm";
     clear(statusSlot, statusRow(st, {
       name: viaSwarm ? "SwarmUI" : "ComfyUI",
-      notSet: viaSwarm ? "Uses the ComfyUI inside SwarmUI. Set your SwarmUI folder on the SwarmUI tab first." : "Not set up yet. Choose your ComfyUI folder below.",
+      notSet: viaSwarm ? "Uses SwarmUI's ComfyUI. Set your SwarmUI folder first." : "Not set up.",
       onStart: () => api.comfy_launch(), onOpen: () => api.comfy_open(), onRefresh: refresh,
     }));
     embed.draw();
@@ -187,15 +185,15 @@ function comfyTab(ctx, body) {
       h("div.field", h("label", "Which ComfyUI?"),
         seg([["swarm", "The one inside SwarmUI"], ["standalone", "A separate ComfyUI install"]], mode, (v) => save({ comfy_mode: v }))),
       mode === "swarm"
-        ? h("p.small.muted", { style: { margin: 0 } }, "SwarmUI runs ComfyUI behind the scenes. This shows that same ComfyUI, so it shares SwarmUI's models and LoRA folder, and starting SwarmUI starts it too.")
+        ? h("p.small.muted", { style: { margin: 0 } }, "This is SwarmUI's built-in ComfyUI.")
         : [
           h("div.field", h("label", "ComfyUI folder"), pathInput(s.comfy_dir, (v) => save({ comfy_dir: v }), { folder: true, placeholder: isWin(ctx) ? "C:/AI/ComfyUI_windows_portable" : "/home/you/ComfyUI" }),
-            h("div.help", isWin(ctx) ? "The portable folder (with run_nvidia_gpu.bat) or a git install (with main.py)." : "Your ComfyUI git install (the folder with main.py). Its output is saved to logs/comfyui.log in LoRA Studio's data folder.")),
+            h("div.help", isWin(ctx) ? "Portable folder (run_nvidia_gpu.bat) or git install (main.py)." : "Your ComfyUI git install (the folder with main.py).")),
           h("div.grid.c2",
             h("div.field", h("label", "Address"), h("input.input.mono", { value: s.comfy_url || "http://127.0.0.1:8188", onchange: (e) => save({ comfy_url: e.target.value.trim() }) }),
               h("div.help", "8188 is ComfyUI's default port.")),
             h("div.field", h("label", "LoRA folder (optional override)"), pathInput(s.comfy_lora_dir, (v) => save({ comfy_lora_dir: v }), { folder: true, placeholder: "models/loras, detected automatically" }),
-              h("div.help", "LoRAs are copied into a “LoRA Studio” subfolder. ComfyUI picks them up when you refresh its LoRA list."))),
+              h("div.help", "LoRAs go in a “LoRA Studio” subfolder."))),
         ]));
   }
 

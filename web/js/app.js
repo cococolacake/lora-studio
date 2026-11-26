@@ -153,7 +153,7 @@ function simpleNote() {
   if (note) return;
   $main.prepend(h("div.simple-note", { role: "status" }, icon("cpu"),
     h("span.grow", h("b", "Simple look while training. "),
-      h("span.muted", "Glass effects are paused so the training gets all of your GPU. They come back when it finishes.")),
+      h("span.muted", "Glass effects are paused while training.")),
     btn("Keep glass on", { size: "sm", kind: "ghost", onclick: () => { keepGlass = true; simpleNote(); } })));
 }
 

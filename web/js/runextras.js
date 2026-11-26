@@ -192,7 +192,7 @@ export function swarmCard(ctx, r) {
     const run = await api.run_detail(r.id);
     const sent = run.comfy?.sent || [];
     const send = (which) => async () => {
-      try { const res = await api.comfy_send(r.id, which); toast("Copied to ComfyUI", `${res.copied.length} file(s). Refresh ComfyUI's LoRA list to see them.`, "good", "check"); drawComfy(); }
+      try { const res = await api.comfy_send(r.id, which); toast("Copied to ComfyUI", `${res.copied.length} file(s). Refresh ComfyUI's LoRA list.`, "good", "check"); drawComfy(); }
       catch (e) { toastError(e); }
     };
     clear(comfySlot, h("div.row", { style: { marginTop: "16px", paddingTop: "14px", borderTop: "1px solid var(--line)" } },
@@ -208,7 +208,7 @@ export function swarmCard(ctx, r) {
     let st;
     try { st = await api.swarm_status(); } catch (e) { st = { configured: false, error: e.message }; }
     if (!st.configured || !st.valid) {
-      clear(slot, h("div.notice", icon("info"), h("div", { style: { flex: 1 } }, "Connect your SwarmUI install to copy LoRAs into it and render test grids. ",
+      clear(slot, h("div.notice", icon("info"), h("div", { style: { flex: 1 } }, "SwarmUI isn't set up. ",
         btn("Set it up", { size: "sm", kind: "ghost", onclick: () => ctx.go("swarm") }))));
       return;
     }
@@ -278,7 +278,7 @@ export function swarmCard(ctx, r) {
       go.disabled = false;
     } });
     return h("div.stack.sm", { style: { marginTop: "18px", paddingTop: "16px", borderTop: "1px solid var(--line)" } },
-      h("div.row", h("b", "Test grid"), h("span.small.muted", "Each LoRA file × each strength, rendered by SwarmUI.")),
+      h("div.row", h("b", "Test grid"), h("span.small.muted", "Each LoRA file × each strength.")),
       h("div.grid.c2",
         h("div.field", h("label", "Base model"), modelSel),
         h("div.field", h("label", "Strengths"), inp("strengths"))),

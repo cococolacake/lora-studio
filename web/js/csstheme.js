@@ -22,7 +22,7 @@ export function cssThemes(ctx, { getCurrent, use }) {
     role: "button", tabindex: "0", title: "Add a CSS theme",
     onclick: pick, onkeydown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } },
   }, h("span.css-drop-ic", icon("upload")),
-    h("div", h("b", "Drop a .css theme here"), h("div.small.muted", "or click to choose a file. You can drop it anywhere on this page.")),
+    h("div", h("b", "Drop a .css theme here"), h("div.small.muted", "or click to choose a file.")),
     fileInput);
   const rows = h("div.css-rows");
   const el = h("div.stack", zone, rows);

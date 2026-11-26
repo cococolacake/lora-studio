@@ -45,13 +45,13 @@ export function viewer(ctx, params, root) {
     const n = data?.images.length ?? 0;
     clear(headSlot, ctx.header({
       title: view === "_deleted" ? "Deleted images" : "Images & tags",
-      subtitle: data ? `${folder.split(/[\\/]/).pop()} · ${n} image${n === 1 ? "" : "s"}` : "Pick a dataset folder to start.",
+      subtitle: data ? `${folder.split(/[\\/]/).pop()} · ${n} image${n === 1 ? "" : "s"}` : "No folder picked",
       icon: view === "_deleted" ? "trash" : "tag",
       actions: data && view === "dataset" ? [
         btn("Auto-tag", { icon: "sparkle", kind: panel === "autotag" ? "primary" : "", onclick: () => togglePanel("autotag") }),
         btn("Bulk edit", { icon: "list", kind: panel === "bulk" ? "primary" : "", onclick: () => togglePanel("bulk") }),
-        btn("Tags", { icon: "chart", title: "Tag overview: every tag and how often it\u2019s used", onclick: showStats }),
-        btn("Character tags", { icon: "wand", title: "Remove the tags your trigger word should learn (hair, eyes, outfit…)", onclick: characterTags }),
+        btn("Tags", { icon: "chart", title: "Tag overview", onclick: showStats }),
+        btn("Character tags", { icon: "wand", title: "Strip tags the trigger word should learn", onclick: characterTags }),
         btn("", { icon: "keyboard", title: "Keyboard shortcuts (?)", onclick: showKeys }),
         btn("", { icon: "rollback", title: "Undo last bulk edit", onclick: undo }),
       ] : data ? [btn("Back to dataset", { icon: "left", onclick: () => { view = "dataset"; load(); } })] : [],
@@ -101,14 +101,14 @@ export function viewer(ctx, params, root) {
         h("select.select", { style: { width: "130px" }, onchange: (e) => { filter.mode = e.target.value; applyFilter(); } },
           [["any", "Has any"], ["all", "Has all"], ["none", "Has none"]].map(([v, l]) => h("option", { value: v, selected: filter.mode === v }, l))),
         seg([["", "All"], ["nocap", "No caption"], ["cropped", "Edited"]], filter.special, (v) => { filter.special = v; applyFilter(); }),
-      ] : h("div.small.muted", { style: { flex: 1 } }, "Deleted images live in the _deleted folder inside your dataset. Restore any you want back."),
+      ] : h("div.small.muted", { style: { flex: 1 } }, "Deleted images are in the dataset's _deleted folder."),
       h("div.spacer"), listInfo,
       view === "dataset" && deleted ? btn(`Deleted (${deleted})`, { icon: "trash", size: "sm", kind: "ghost", onclick: () => { view = "_deleted"; load(); } }) : null,
       view === "_deleted" && data.images.length ? btn("Restore all", { icon: "rollback", size: "sm", onclick: async () => {
         await api.ds_restore(data.images.map((i) => i.path)); toast("Restored", `${data.images.length} images`, "good", "rollback"); view = "dataset"; load();
       } }) : null,
       view === "_deleted" && data.images.length ? btn("Delete permanently", { icon: "trash", size: "sm", kind: "danger", onclick: async () => {
-        if (!(await confirmBox(`Delete ${data.images.length} images for good?`, "This empties the _deleted folder, captions included. It can't be undone.", "Delete permanently", true))) return;
+        if (!(await confirmBox(`Delete ${data.images.length} images for good?`, "This empties _deleted, captions included. It can't be undone.", "Delete permanently", true))) return;
         const r = await api.ds_empty_bin(folder, "_deleted"); toast("Deleted", `${r.deleted} images removed for good`, "good", "trash"); view = "dataset"; load();
       } }) : null);
   }
@@ -296,7 +296,7 @@ export function viewer(ctx, params, root) {
     async function go() {
       const imgs = (o.scope === "filtered" ? shown : data.images).map((i) => i.path);
       if (o.mode === "overwrite" && data.images.some((i) => i.caption) &&
-        !(await confirmBox("Replace existing captions?", `Captions for ${imgs.length} images will be overwritten. You can't undo this one. Pick “Add to existing” to keep your tags.`, "Overwrite", true))) return;
+        !(await confirmBox("Replace existing captions?", `Captions for ${imgs.length} images will be overwritten. This can't be undone.`, "Overwrite", true))) return;
       run.disabled = true;
       clear(notes);
       try {
@@ -320,7 +320,7 @@ export function viewer(ctx, params, root) {
         h("div.field", h("label", "Images"), seg([["all", "All"], ["filtered", `Filtered (${shown.length})`]], o.scope, (v) => { o.scope = v; saveO(); })),
         h("div.spacer"), run),
       h("div", { style: { marginTop: "12px" } }, prog.el), notes,
-      h("p.tiny.faint", { style: { marginBottom: 0 } }, "Runs in your sd-scripts venv on the GPU. The model (~1 GB) downloads from Hugging Face the first time."));
+      h("p.tiny.faint", { style: { marginBottom: 0 } }, "The model (~1 GB) downloads on first use."));
   }
 
   function bulkPanel() {
@@ -381,7 +381,7 @@ export function viewer(ctx, params, root) {
           toast("Tag renamed", `${t} → ${to} in ${n} captions`, "good", "check");
         }) }, "rename"),
         h("button.linkish.danger", { onclick: () => act(async () => {
-          if (!(await confirmBox(`Remove “${t}”?`, `It's removed from ${n} captions. You can undo it.`, "Remove", true))) throw Object.assign(new Error(""), { quiet: true });
+          if (!(await confirmBox(`Remove “${t}”?`, `Removed from ${n} captions. You can undo this.`, "Remove", true))) throw Object.assign(new Error(""), { quiet: true });
           await api.ds_bulk(folder, "delete", { tags: t });
         }) }, "remove"))));
     draw();
@@ -410,7 +410,7 @@ export function viewer(ctx, params, root) {
       ["hair", "Hair", ""],
       ["eyes", "Eyes", ""],
       ["body", "Body & features", ""],
-      ["outfit", "Outfit & accessories", "Only tick the outfit the character nearly always wears."],
+      ["outfit", "Outfit & accessories", "Only the outfit they nearly always wear."],
     ];
     const list = h("div.stack.sm", { style: { maxHeight: "48vh", overflow: "auto", paddingRight: "6px" } });
     let goBtn = null;
@@ -422,7 +422,7 @@ export function viewer(ctx, params, root) {
     };
     const draw = () => {
       if (!found) return clear(list, h("p.small.muted", "Reading captions…"));
-      if (!found.tags.length) return clear(list, empty("check", "Nothing to remove", "No hair, eye, body or outfit tags were found in these captions."));
+      if (!found.tags.length) return clear(list, empty("check", "Nothing to remove", "No hair, eye, body or outfit tags found."));
       clear(list, groups.map(([g, label, hint]) => {
         const tags = found.tags.filter((t) => t.group === g);
         if (!tags.length) return null;
@@ -448,8 +448,8 @@ export function viewer(ctx, params, root) {
 
     const body = h("div.stack.sm",
       h("p.small.muted", { style: { margin: 0 } },
-        "With a single trigger word, leave the character\u2019s fixed look untagged (hair, eyes, body features, default outfit) so the trigger learns it. ",
-        "Pose, expression, framing, background, held objects and other people stay tagged."),
+        "Ticked tags are learned by the trigger word instead. ",
+        ""),
       h("div.row", { style: { gap: "10px", flexWrap: "wrap", alignItems: "flex-end" } },
         h("div.field", { style: { flex: 1, minWidth: "180px" } }, h("label", "Trigger word (put first)"),
           h("input.input", { value: trig, placeholder: "e.g. mychar", onchange: (e) => { trig = e.target.value.trim(); fetchTags(); } })),
@@ -459,7 +459,7 @@ export function viewer(ctx, params, root) {
           btn("None", { size: "sm", onclick: () => pick(() => false) }))),
       list,
       h("p.tiny.faint", { style: { margin: 0 } },
-        `${paths ? `Only the ${paths.length} filtered images. ` : ""}Ticked tags are removed from every caption; tags that only show up now and then (a second outfit, a hat in one shot) are left unticked so they stay tagged. You can undo it.`));
+        `${paths ? `Only the ${paths.length} filtered images. ` : ""}Ticked tags are removed from every caption. You can undo this.`));
 
     const p = modal("Clean up character tags", body,
       [{ label: "Cancel", kind: "ghost", value: false }, { label: "Remove tags", kind: "primary", icon: "wand", value: true }], { wide: true });
@@ -477,7 +477,7 @@ export function viewer(ctx, params, root) {
   }
 
   function showKeys() {
-    const keys = [["← →  or  ↑ ↓", "Previous / next image"], ["Delete", "Move the image to the _deleted bin (restorable)"],
+    const keys = [["← →  or  ↑ ↓", "Previous / next image"], ["Delete", "Move to _deleted"],
       ["C", "Crop the image"], ["Ctrl + S", "Save the tags"], ["?", "Show this list"]];
     return modal("Keyboard shortcuts", h("div.keys", keys.map(([k, what]) => [h("kbd", k), h("span", what)])), [{ label: "Close", kind: "primary" }]);
   }

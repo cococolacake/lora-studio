@@ -56,7 +56,7 @@ export function chip(text, kind = "", ic = null) {
 }
 
 export function empty(ic, title, text, ...actions) {
-  return h("div.empty", h("div.art", icon(ic)), h("h3", title), h("p", text), h("div.row", { style: { justifyContent: "center" } }, actions));
+  return h("div.empty", h("div.art", icon(ic)), h("h3", title), text ? h("p", text) : null, h("div.row", { style: { justifyContent: "center" } }, actions));
 }
 
 export function kv(rows) {
