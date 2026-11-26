@@ -10,14 +10,14 @@ Every change follows these steps. Coco is new to git: explain git and terminal s
    - Features: use the `grilling` skill to interview Coco until the plan is settled, write the plan into the issue, and wait for Coco to approve it (label `ready`).
    - Tiny fixes (a typo, a colour, a one-line bug): a two- or three-line plan in the issue is enough.
    - Issues opened by other people: label and summarize them. Build nothing until Coco picks one.
-2. **Build** on a branch named after the issue, e.g. `42-caption-search`. Add a test with every feature or bug fix.
+2. **Build** on a branch named after the issue, e.g. `42-caption-search`, starting from the latest `main` on GitHub rather than Coco's local folder. Add a test with every feature or bug fix. Check every changed JS file with `node --input-type=module --check < file`.
 3. **Review.** A subagent that didn't write the code runs `code-review` on the branch, against the issue and "Keep it lean" below. Fix what it finds, or say why not.
 4. **Coco tests it.** Wait for Coco's OK before opening the PR.
 5. **PR.** Fill in the PR template with `Fixes #<issue>`. Bump `__version__` in `studio/__init__.py` only when Coco asks, once a batch of changes has built up.
    - Commit as `Coco <183875663+cococolacake@users.noreply.github.com>`.
    - Commits and PRs carry no AI attribution lines and no session links.
    - Coco merges.
-6. **Wrap-up.** Comment on the issue with what's done and what's left, then ask Coco to run `/mattpocock-skills:retro`. When something went wrong more than once, suggest a change to this file.
+6. **Wrap-up.** Comment on the issue with what's done and what's left, plus a short retro: what went wrong and what would prevent it. When something went wrong more than once, suggest a change to this file.
 
 ## Keep it lean
 
