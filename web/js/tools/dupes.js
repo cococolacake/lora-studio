@@ -15,7 +15,7 @@ export function dupes(ctx, params, root) {
   const thrLbl = h("b.nums", o.threshold.toFixed(2));
   const runBtn = btn("Find duplicates", { icon: "search", kind: "primary", onclick: run });
 
-  root.append(ctx.header({ title: "Duplicates", subtitle: "Finds near-identical images with CLIP. Nothing moves until you say so.", icon: "dup" }),
+  root.append(ctx.header({ title: "Duplicates", icon: "dup" }),
     h("div.stack",
       card({ title: "Scan" },
         folderBar(ctx, folder, (f) => { folder = f; drawBin(); }, { button: "Use", icon: "check" }),
@@ -36,13 +36,13 @@ export function dupes(ctx, params, root) {
     clear(binSlot, card(null, h("div.row",
       h("div.ic", { style: { width: "40px", height: "40px", borderRadius: "12px", display: "grid", placeItems: "center", background: "var(--warn-soft)", color: "var(--warn)" } }, icon("dup")),
       h("div", { style: { flex: 1 } }, h("b", `${b._duplicates} image${b._duplicates === 1 ? "" : "s"} in _duplicates`),
-        h("div.small.muted", "Moved there earlier. Happy with them gone? Delete the folder for good.")),
+        h("div.small.muted", "Moved there earlier.")),
       btn("Open folder", { icon: "folder", kind: "ghost", onclick: () => api.open_folder(`${f}/_duplicates`) }),
       btn("Delete permanently", { icon: "trash", kind: "danger solid", onclick: () => emptyDupes(f, b._duplicates) }))));
   }
 
   async function emptyDupes(f, n) {
-    if (!(await confirmBox(`Delete ${n} duplicate images for good?`, "This removes the _duplicates folder and the captions inside it. It can't be undone.", "Delete permanently", true))) return;
+    if (!(await confirmBox(`Delete ${n} duplicate images for good?`, "The _duplicates folder and its captions are deleted. This can't be undone.", "Delete permanently", true))) return;
     try {
       const r = await api.ds_empty_bin(f, "_duplicates");
       toast("Deleted", `${r.deleted} duplicate images removed`, "good", "trash");
@@ -98,7 +98,7 @@ export function dupes(ctx, params, root) {
     };
     clear(results,
       card({ title: `${groups.length} group${groups.length === 1 ? "" : "s"} of look-alikes`, actions: h("div.row", countLbl, moveBtn) },
-        h("p.small.muted", { style: { marginTop: 0 } }, "The first image in each row is kept. Click a picture to see it big; untick anything you want to leave alone."),
+        h("p.small.muted", { style: { marginTop: 0 } }, "The first image in each row is kept. Untick anything to leave alone."),
         h("div.stack", groups.map((g) => h("div.dgroup",
           tile(g.keep, g.keep.split("/").pop(), true),
           g.dupes.map((d) => tile(d.path, `${d.path.split("/").pop()} · ${(d.score * 100).toFixed(1)}%`, false)))))));

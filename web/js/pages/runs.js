@@ -37,9 +37,9 @@ export default {
     if (params.run) return detail(ctx, root, params.run);
 
     const list = runs.filter((r) => match(filter, r));
-    root.append(ctx.header({ title: "Run history", subtitle: `${runs.length} run${runs.length === 1 ? "" : "s"} so far`, icon: "history" }));
+    root.append(ctx.header({ title: "Run history", subtitle: `${runs.length} run${runs.length === 1 ? "" : "s"}`, icon: "history" }));
     if (!list.length) {
-      root.append(card(null, empty("history", filter === "all" ? "No runs yet" : "Nothing here", filter === "all" ? "Every training you start is saved here with its settings, loss curve and log." : "No runs match this filter.",
+      root.append(card(null, empty("history", filter === "all" ? "No runs yet" : "Nothing here", filter === "all" ? "" : "No runs match this filter.",
         btn("New training", { icon: "wand", kind: "primary", onclick: () => ctx.go("train") }))));
       return;
     }
@@ -88,7 +88,7 @@ async function detail(ctx, root, runId) {
       h("div.main-col", h("div.title.mono", { style: { fontSize: "13px" } }, o.name), h("div.meta", fmtSize(o.size))),
       starButton(r, o, () => ctx.go("runs", { run: runId })),
       btn("Info", { icon: "tag", size: "sm", kind: "ghost", title: "View & edit the metadata saved in this file", onclick: () => metaModal(o.path, r) }))))
-      : h("p.muted.small", { style: { margin: 0 } }, "No .safetensors files found in the output folder yet."));
+      : h("p.muted.small", { style: { margin: 0 } }, "No .safetensors files yet."));
 
   const canResume = ["stopped", "failed", "interrupted", "done"].includes(r.status);
   const resume = card({ title: "Resume" },
@@ -98,7 +98,7 @@ async function detail(ctx, root, runId) {
         onclick: async () => {
           try { await api.run_resume(runId, st.path, true); toast("Resuming", st.name, "good", "play"); ctx.go("queue"); } catch (e) { toastError(e); }
         } }))))
-      : h("div.notice", icon("info"), h("div", r.config?.save_state ? "No saved states yet. They appear after each saved epoch." : "This run didn't save training states. Turn on “Save state” on the Train page to be able to resume runs.")));
+      : h("div.notice", icon("info"), h("div", r.config?.save_state ? "No saved states yet." : "This run didn't save states. Turn on “Save state” to make runs resumable.")));
 
   let tab = "log";
   const code = h("div");
@@ -110,13 +110,13 @@ async function detail(ctx, root, runId) {
     h("p.tiny.faint", { style: { marginBottom: 0 } }, `sd-scripts ${r.sd_branch || ""} @ ${r.sd_commit || "?"}${r.extra_args ? " · extra: " + r.extra_args : ""}${r.resume_from ? " · resumed from " + r.resume_from : ""}`));
 
   const danger = h("div.row", h("div.spacer"), btn("Delete run", { icon: "trash", kind: "ghost danger", size: "sm", disabled: isLive, onclick: async () => {
-    if (!(await confirmBox("Delete this run?", "Its log, loss history and saved config are removed from LoRA Studio. Your trained .safetensors files are not touched.", "Delete", true))) return;
+    if (!(await confirmBox("Delete this run?", "Your .safetensors files aren't touched.", "Delete", true))) return;
     try { await api.run_delete(runId); ctx.go("runs"); } catch (e) { toastError(e); }
   } }));
 
   root.append(h("div.stack", tiles,
     card({ title: "Loss" }, isLive ? h("div", { style: { marginBottom: "14px" } }, live.bar) : null, live.chart),
-    r.best ? h("div.notice.good", icon("star"), h("div", { style: { flex: 1 } }, h("b", `Best epoch: ${r.best.epoch ?? "final"}`), ` saved as ${r.best.path.split("/").pop()}. Copy it to SwarmUI or ComfyUI from the card below.`)) : null,
+    r.best ? h("div.notice.good", icon("star"), h("div", { style: { flex: 1 } }, h("b", `Best epoch: ${r.best.epoch ?? "final"}`), ` saved as ${r.best.path.split("/").pop()}.`)) : null,
     r.sample_grid?.cells?.length ? samplesCard(r, () => ctx.go("runs", { run: runId })) : null,
     h("div.grid.c2", outputs, resume),
     swarmCard(ctx, r),

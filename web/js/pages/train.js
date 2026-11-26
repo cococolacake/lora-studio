@@ -93,7 +93,7 @@ export default {
 
     async function load() {
       side();
-      clear(body, h("div.loading", h("span.spin.lg"), h("div", h("b", "Reading the script's options…"), h("div.small.muted", "The first time, this imports sd-scripts in its venv and can take 10–30 seconds."))));
+      clear(body, h("div.loading", h("span.spin.lg"), h("div", h("b", "Reading the script's options…"), h("div.small.muted", "The first load can take 10 to 30 seconds."))));
       try {
         schema = schemaCache[draft.script] ||= await api.schema(draft.script, false);
       } catch (e) {
@@ -120,7 +120,7 @@ export default {
 
     async function updateEstimate() {
       if (!schema || !(draft.dataset?.subsets || []).some((x) => (x.image_dir || "").trim())) {
-        clear(estSlot, h("div.small.muted", "Add an image folder to see how long this will take."));
+        clear(estSlot, h("div.small.muted", "Add an image folder for an estimate."));
         return;
       }
       let e;
@@ -133,8 +133,8 @@ export default {
           h("div.big", e.seconds ? `about ${fmt(e.seconds)}` : `${e.total_steps.toLocaleString()} steps`),
           h("div.small.muted", `${e.images} images · ${e.steps_per_epoch.toLocaleString()} steps per epoch × ${e.epochs} epochs = ${e.total_steps.toLocaleString()} steps`)),
         h("div.small.faint", { style: { textAlign: "right", maxWidth: "260px" } }, e.seconds
-          ? `Based on ${e.based_on} past run${e.based_on === 1 ? "" : "s"} of ${e.basis}, adjusted for resolution and batch size.`
-          : "Finish a run or two and LoRA Studio will learn how fast your GPU is.")));
+          ? `From ${e.based_on} past run${e.based_on === 1 ? "" : "s"} of ${e.basis}.`
+          : "No estimate until a run finishes.")));
     }
     const setArg = (k, v) => {
       if (v === null || v === undefined || v === "") delete draft.args[k]; else draft.args[k] = v;
@@ -180,8 +180,8 @@ export default {
         const go = await modal(errors.length ? "This would stop sd-scripts" : "Worth a look before training",
           h("div.stack.sm",
             h("p.small.muted", { style: { margin: 0 } }, errors.length
-              ? "These would make the training fail after the model loads. Fixing them first saves a wait."
-              : "Training can go ahead; these are just things to double-check."),
+              ? "These will make training fail after the model loads."
+              : "Worth a second look:"),
             issues.map((x) => h(x.level === "error" ? "div.notice.bad" : "div.notice.warn", icon("alert"), x.msg))),
           errors.length
             ? [{ label: "Train anyway", kind: "ghost", value: true }, { label: "Go back and fix", kind: "primary", value: false }]
@@ -234,8 +234,8 @@ export default {
     async function newSession() {
       const ok = await modal("Start a new session?", h("p.small.muted", { style: { margin: 0 } },
         presets.find((p) => p.default)
-          ? `The form is reset to your default preset (${presets.find((p) => p.default).name}). Image folders, the output name, run name, LoRA title and trigger word start empty.`
-          : "The form is reset to the script's own defaults. Tip: pick a default preset under “Default preset…” to start from your favourite settings instead."),
+          ? `Reset to your default preset (${presets.find((p) => p.default).name}).`
+          : "Reset to the script's defaults."),
         [{ label: "Cancel", kind: "ghost", value: false }, { label: "Start new", kind: "primary", value: true }]);
       if (!ok) return;
       const d = await api.preset_default().catch(() => null);
@@ -251,7 +251,7 @@ export default {
         h("option", { value: "", selected: !pick }, "None (the script's own defaults)"),
         presets.map((p) => h("option", { value: p.name, selected: p.name === pick }, p.name)));
       const choice = await modal("Default preset", h("div.stack.sm",
-        h("p.small.muted", { style: { margin: 0 } }, "New sessions start from this preset: all its training settings, with empty image folders, output name, LoRA title and trigger word."),
+        h("p.small.muted", { style: { margin: 0 } }, "New trainings start from this preset."),
         h("div.field", h("label", "Start new sessions from"), sel)),
         [{ label: "Cancel", kind: "ghost", value: false },
          { label: "Save current as default…", kind: "ghost", value: "current" },
@@ -274,7 +274,7 @@ export default {
     async function sharePresets() {
       let pick = presets[0]?.name || "", folder = "", file = "";
       const choice = await modal("Share presets", h("div.stack",
-        h("p.small.muted", { style: { margin: 0 } }, "Share your training settings as a small file, e.g. with friends or on Civitai. Paths that only exist on your PC (models, VAE, output and image folders) and the output name, title and trigger word are left out; whoever loads it keeps their own."),
+        h("p.small.muted", { style: { margin: 0 } }, "Local paths, output name, title and trigger word are left out."),
         h("div.stack.sm",
           h("h4", { style: { margin: 0 } }, "Export"),
           presets.length
@@ -301,7 +301,7 @@ export default {
           const r = await api.preset_import(file);
           presets = r.presets;
           side();
-          toast("Preset imported", `Added as “${r.name}”. Click it to load it.`, "good", "download", 8000);
+          toast("Preset imported", `Added as “${r.name}”.`, "good", "download", 8000);
         }
       } catch (e) { toastError(e); }
     }
@@ -309,7 +309,7 @@ export default {
     async function importToml() {
       let tp = "", dp = "";
       const ok = await modal("Import .toml files", h("div.stack.sm",
-        h("p.small.muted", { style: { margin: 0 } }, "Bring in a training.toml and/or dataset_config.toml, e.g. from an older setup or someone else's preset. Values for the current script are filled in."),
+        h("p.small.muted", { style: { margin: 0 } }, "A training.toml and/or dataset_config.toml."),
         h("div.field", h("label", "training.toml"), pathInput("", (v) => { tp = v; }, { kind: "toml" })),
         h("div.field", h("label", "dataset_config.toml"), pathInput("", (v) => { dp = v; }, { kind: "toml" }))),
         [{ label: "Cancel", kind: "ghost", value: false }, { label: "Import", kind: "primary", value: true }]);
@@ -334,7 +334,7 @@ export default {
             if (r.args.sample_at_first) draft.samples.at_first = true;
           }
           if (skipped.length) toast("Some options were skipped", `${draft.script} doesn't accept: ${skipped.join(", ")}`, "", "info", 10000);
-          if (hadSamples) toast("Sample prompts not imported", "The file had sample settings. Type your prompts into Sample images and turn on “Make previews while training” if you want them.", "", "info", 10000);
+          if (hadSamples) toast("Sample prompts not imported", "The file had sample settings. Add prompts under Sample images to use them.", "", "info", 10000);
         }
         if (r.dataset) draft.dataset = r.dataset;
         save();
@@ -401,7 +401,7 @@ export default {
             checkEl(sc.use_trigger, (v) => set("use_trigger", v), "Add the trigger word"),
             checkEl(sc.at_first, (v) => set("at_first", v), "Also before training starts")));
         return card({ title: "Sample images", actions: switchEl(sc.enabled, (v) => { set("enabled", v); body.classList.toggle("dim", !v); }, "Make previews while training") },
-          h("p.small.muted", { style: { marginTop: 0 } }, "sd-scripts renders these during training. They show up as an epoch-by-prompt grid on the run's page."),
+          h("p.small.muted", { style: { marginTop: 0 } }, "Rendered during training, shown as a grid on the run's page."),
           body);
       }
 
@@ -423,8 +423,8 @@ export default {
             h("div.field", h("label", "Thumbnail"), seg([["sample", "Latest sample"], ["none", "None"]], li.thumbnail || "sample", (v) => set("thumbnail", v))),
             h("div.field", h("label", "Copy into SwarmUI"), seg([["", "No"], ["final", "Final LoRA"], ["all", "Every epoch"]], draft.send_to_swarm || "", (v) => { draft.send_to_swarm = v || null; save(); })),
             comfyOwn ? h("div.field", h("label", "Copy into ComfyUI"), seg([["", "No"], ["final", "Final LoRA"], ["all", "Every epoch"]], draft.send_to_comfy || "", (v) => { draft.send_to_comfy = v || null; save(); })) : null,
-            swarmOk || comfyOwn ? null : h("span.small.faint", { style: { paddingBottom: "8px" } }, "Set up SwarmUI or ComfyUI on its page in the sidebar first.")),
-          h("p.tiny.faint", { style: { marginBottom: 0 } }, "The title, trigger word, description and thumbnail are saved inside the .safetensors files, where SwarmUI's model browser shows them."));
+            swarmOk || comfyOwn ? null : h("span.small.faint", { style: { paddingBottom: "8px" } }, "Set up SwarmUI or ComfyUI first.")),
+          h("p.tiny.faint", { style: { marginBottom: 0 } }, "Saved inside the .safetensors files for SwarmUI's model browser."));
       }
 
       function drawSections() {
@@ -434,7 +434,7 @@ export default {
             const fields = sec.keys.map((k) => fieldFor(byKey[k]));
             cards.push(card({ title: sec.title }, h("div.grid.c2", fields)));
           }
-          cards.push(h("div.notice", icon("info"), h("div", `Showing the essentials. “All options” lists every one of the ${schema.args.length} settings ${draft.script} accepts, read directly from the script, so new options appear automatically after an sd-scripts update.`)));
+          cards.push(h("div.notice", icon("info")));
         } else {
           const groups = {};
           for (const a of schema.args) {
@@ -457,7 +457,7 @@ export default {
         cards.push(card({ title: "Extra command-line arguments" },
           h("input.input.mono", { value: draft.extra_args, placeholder: "--timestep_sampling shift --discrete_flow_shift 0.85",
             onchange: (e) => { draft.extra_args = e.target.value; save(); } }),
-          h("div.help.small.faint", { style: { marginTop: "8px" } }, "Added after the config file, so they override anything above.")));
+          h("div.help.small.faint", { style: { marginTop: "8px" } }, "Overrides anything above.")));
         clear(sections, cards);
       }
       drawSections();

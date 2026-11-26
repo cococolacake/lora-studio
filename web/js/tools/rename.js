@@ -11,7 +11,7 @@ export function rename(ctx, params, root) {
   const save = () => store.set("rename", o);
   const preview = h("div");
 
-  root.append(ctx.header({ title: "Rename", subtitle: "Give every image a clean, numbered name. Captions follow their images.", icon: "rename" }),
+  root.append(ctx.header({ title: "Rename", icon: "rename" }),
     h("div.stack",
       card({ title: "Settings" },
         folderBar(ctx, folder, (f) => { folder = f; show(); }, { button: "Preview", icon: "eye" }),
@@ -41,7 +41,7 @@ export function rename(ctx, params, root) {
   }
 
   async function apply() {
-    if (!(await confirmBox("Rename images?", "Images and their captions are renamed in place. Nothing is overwritten. Folders with name clashes are skipped."))) return;
+    if (!(await confirmBox("Rename images?", "Renamed in place with their captions. Folders with name clashes are skipped."))) return;
     try {
       const r = await api.ds_rename(folder, o.prefix, o.start, o.recursive);
       toast("Renamed", `${r.renamed} images${r.skipped_folders.length ? `, ${r.skipped_folders.length} folder(s) skipped` : ""}`, "good", "rename");

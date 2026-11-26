@@ -61,7 +61,7 @@ function appearance(ctx, root) {
   }
 
   function draw() {
-    clear(headSlot, ctx.header({ title: "Appearance", subtitle: "Changes apply right away.", icon: "palette",
+    clear(headSlot, ctx.header({ title: "Appearance", icon: "palette",
       actions: [btn("Save as theme", { icon: "save", onclick: async () => {
         const name = await promptBox("Save theme", "Theme name", theme.name && !themes.find((t) => !t.user && t.name === theme.name) ? theme.name : "My theme");
         if (!name) return;
@@ -82,24 +82,18 @@ function appearance(ctx, root) {
 
     const colours = card({ title: "Mode" }, h("div.stack",
       seg([["light", "Light", "sun"], ["dark", "Dark", "moon"]], theme.base, (v) => { theme.base = v; commit(); }),
-      theme.family === "lilac" && theme.base === "dark" ? h("p.small.faint", { style: { margin: 0 } }, "Lilac is a light theme, so dark mode uses Cool Glass dark.") : null));
+      theme.family === "lilac" && theme.base === "dark" ? h("p.small.faint", { style: { margin: 0 } }, "Lilac has no dark version, so this uses Cool Glass dark.") : null));
 
     const effects = card({ title: "Glass effects" }, h("div.stack",
-      seg([["efficient", "Efficient"], ["full", "Full"], ["off", "Off"]], theme.glass || "efficient", (v) => { theme.glass = v; commit(); }),
-      h("p.small.muted", { style: { margin: 0 } }, ({
-        efficient: "See-through panels over a still background. It looks almost the same as Full and is very light on your GPU. Recommended.",
-        full: "Real live blur behind every panel. It's the prettiest, and it uses the most GPU power, so it suits a strong graphics card.",
-        off: "Solid panels, no see-through or blur. The colours and layout stay the same.",
-      })[theme.glass || "efficient"]),
-      theme.glass === "off" ? null : switchEl(theme.simpleWhileTraining !== false, (v) => { theme.simpleWhileTraining = v; commit(false); }, "Simpler look while training"),
-      theme.glass === "off" ? null : h("p.small.faint", { style: { margin: 0 } }, "While a LoRA trains, panels turn solid so the training gets the whole GPU. They go back when it finishes.")));
+      seg([["efficient", "Efficient"], ["full", "Full blur"], ["off", "Off"]], theme.glass || "efficient", (v) => { theme.glass = v; commit(); }),
+      theme.glass === "off" ? null : switchEl(theme.simpleWhileTraining !== false, (v) => { theme.simpleWhileTraining = v; commit(false); }, "Solid panels while training")));
 
     const text = card({ title: "Text" }, h("div.field", h("label", "Font"),
       seg([["geist", "Geist"], ["system", "System"]], theme.font === "system" ? "system" : "geist", (v) => { theme.font = v; commit(); })));
 
     css.refresh();
     clear(body, gallery, cssCard, colours, effects, text,
-      h("div.notice", icon("info"), h("div", "Want to go further? ", h("span.mono", "web/css/custom.css"), " is yours to edit: change colours, corner roundness, anything. It's loaded last, so it wins over CSS themes too.")));
+      h("div.notice", icon("info"), h("div", "Your own CSS goes in ", h("span.mono", "web/css/custom.css"), ". It loads last, after CSS themes.")));
   }
   draw();
 }
@@ -108,24 +102,18 @@ function appearance(ctx, root) {
 function training(ctx, root) {
   const s = ctx.boot.settings;
   const saveKey = (k) => (v) => ctx.saveSettings({ [k]: v }).then(() => toast("Saved", "", "good", "check", 1500)).catch(toastError);
-  root.append(ctx.header({ title: "Training", subtitle: "How LoRA Studio launches sd-scripts.", icon: "wand" }),
+  root.append(ctx.header({ title: "Training", icon: "wand" }),
     h("div.stack",
       card({ title: "Launcher" }, h("div.stack",
-        h("div.field", h("label", "Start training with"), seg([["accelerate", "accelerate launch"], ["python", "plain python"]], s.launcher, saveKey("launcher")),
-          h("div.help", "accelerate is what sd-scripts recommends. Plain python is handy if accelerate gives you trouble on a single GPU.")),
+        h("div.field", h("label", "Start training with"), seg([["accelerate", "accelerate launch"], ["python", "plain python"]], s.launcher, saveKey("launcher"))),
         h("div.field", h("label", "accelerate arguments"), h("input.input.mono", { value: s.accelerate_args, onchange: (e) => saveKey("accelerate_args")(e.target.value) }),
-          h("div.help", "Inserted between “accelerate launch” and the script. --num_cpu_threads_per_process 4 is a good default.")))),
+          h("div.help", "Default: --num_cpu_threads_per_process 4")))),
       card({ title: "Output folders" },
-        switchEl(s.run_folders !== false, saveKey("run_folders"), "Give each run its own folder"),
-        h("p.small.muted", { style: { margin: "6px 0 0" } },
-          "Each training saves into a folder named after it inside your output folder, e.g. …/model/shion_anima_v1. If that folder already has files from an earlier run, the new one becomes “shion_anima_v1 (2)”, so nothing is ever overwritten.")),
+        switchEl(s.run_folders !== false, saveKey("run_folders"), "Give each run its own folder")),
       card({ title: "Notifications" }, h("div.row",
-        h("div", { style: { flex: 1 } }, switchEl(s.notify_on_finish !== false, saveKey("notify_on_finish"), "Notification when a training finishes or fails"),
-          h("p.small.muted", { style: { margin: "6px 0 0" } }, ctx.boot.platform === "windows"
-            ? "Shows up in the corner of your screen (sent by “Windows PowerShell”, which is how Windows lets small apps do this)."
-            : "Shows up as a desktop notification (uses notify-send, which most Linux desktops have).")),
-        btn("Send a test", { icon: "bell", onclick: () => api.test_notification().then(() => toast("Sent", "Check the corner of your screen.", "", "bell")).catch(toastError) }))),
-      card({ title: "Installs" }, h("div.field", h("label", "PyTorch download index (for fresh installs)"),
+        h("div", { style: { flex: 1 } }, switchEl(s.notify_on_finish !== false, saveKey("notify_on_finish"), "Notify me when a training finishes or fails")),
+        btn("Send a test", { icon: "bell", onclick: () => api.test_notification().then(() => toast("Sent", "", "", "bell")).catch(toastError) }))),
+      card({ title: "Installs" }, h("div.field", h("label", "PyTorch index URL"),
         h("input.input.mono", { value: s.torch_index_url, onchange: (e) => saveKey("torch_index_url")(e.target.value) })))));
 }
 
@@ -134,7 +122,7 @@ function paths(ctx, root) {
   root.append(ctx.header({ title: "Folders & backup", icon: "folder" }),
     h("div.stack",
       card({ title: "sd-scripts" }, h("p.mono.small", { style: { marginTop: 0 } }, s.sd_scripts_dir || "Not set"), btn("Manage sd-scripts", { icon: "branch", onclick: () => ctx.go("sdscripts") })),
-      card({ title: "SwarmUI & ComfyUI" }, h("p.mono.small", { style: { marginTop: 0 } }, s.swarm_dir || s.comfy_dir || "Not set"), btn("Open the SwarmUI & ComfyUI page", { icon: "hive", onclick: () => ctx.go("swarm") })),
+      card({ title: "SwarmUI & ComfyUI" }, h("p.mono.small", { style: { marginTop: 0 } }, s.swarm_dir || s.comfy_dir || "Not set"), btn("Open SwarmUI & ComfyUI", { icon: "hive", onclick: () => ctx.go("swarm") })),
       card({ title: "LoRA Studio data" }, h("p.mono.small", { style: { marginTop: 0 } }, ctx.boot.data_dir),
         btn("Open folder", { icon: "folder", onclick: () => api.open_folder(ctx.boot.data_dir) })),
       backupCard(ctx)));
@@ -144,7 +132,7 @@ function backupCard(ctx) {
   let restorePath = "";
   const last = h("div");
   return card({ title: "Backup & restore" }, h("div.stack",
-    h("p.small.muted", { style: { margin: 0 } }, "Your settings, presets, themes and run history in one .zip, handy before reinstalling your system or moving to a new PC. Your datasets and trained LoRAs aren't included (they're your own files), and neither are site logins."),
+    h("p.small.muted", { style: { margin: 0 } }, "Settings, presets, themes and run history. Datasets, LoRAs and site logins aren't included."),
     h("div.row",
       btn("Create backup", { icon: "save", kind: "primary", onclick: async () => {
         try {
@@ -154,17 +142,17 @@ function backupCard(ctx) {
             btn("Show", { size: "sm", kind: "ghost", onclick: () => api.open_folder(r.path.split("/").slice(0, -1).join("/")) })));
         } catch (e) { toastError(e); }
       } }),
-      h("span.small.faint", ctx.boot.native ? "You'll be asked where to save it." : "Saved in LoRA Studio's backups folder.")),
+      ctx.boot.native ? null : h("span.small.faint", "Saves to the backups folder")),
     last,
     h("hr.soft"),
     h("div.field", h("label", "Restore from a backup"), h("div.row.nowrap",
       h("div", { style: { flex: 1 } }, pathInput("", (v) => { restorePath = v; }, { kind: "zip", placeholder: "C:/path/to/LoRA Studio backup.zip" })),
       btn("Restore", { icon: "rollback", onclick: async () => {
         if (!restorePath) return toast("Choose a backup file first", "", "", "folder");
-        if (!(await confirmBox("Restore this backup?", "Settings, presets, themes and runs from the backup are added back; anything with the same name is replaced. A safety backup of what's here now is made first."))) return;
+        if (!(await confirmBox("Restore this backup?", "Items with the same name are replaced. A backup of your current data is made first."))) return;
         try {
           const r = await api.backup_restore(restorePath);
-          toast("Restored", `${r.restored} files. Restarting the page…`, "good", "rollback");
+          toast("Restored", `${r.restored} files. Reloading…`, "good", "rollback");
           setTimeout(() => location.reload(), 1200);
         } catch (e) { toastError(e); }
       } })))));
@@ -177,13 +165,12 @@ function about(ctx, root) {
     if (u && !u.off) ctx.update = u;
     clear(upd, !u || u.off ? null
       : u.newer ? [h("span.small", h("b", u.latest.channel === "main" ? `New changes on main: ${u.latest.name}` : `${u.latest.tag} is available.`)), btn("Update now", { icon: "download", kind: "primary", size: "sm", onclick: () => updateNow(ctx, u.latest) })]
-      : h("span.small.muted", u.latest ? `You're up to date (latest is ${u.latest.tag}).` : "Couldn't reach GitHub just now."));
+      : h("span.small.muted", u.latest ? `You're up to date (latest is ${u.latest.tag}).` : "Couldn't reach GitHub."));
   };
   if (ctx.update) showUpd(ctx.update);
   root.append(ctx.header({ title: "LoRA Studio", subtitle: `Version ${ctx.boot.version}`, icon: "sparkle" }),
     h("div.stack",
-      card(null, h("p", { style: { marginTop: 0 } }, "A friendly front end for kohya-ss/sd-scripts. Your sd-scripts install does the training; LoRA Studio builds the configs, queues runs, and keeps the history."),
-        h("p.small.muted", { style: { marginBottom: 0 } }, ctx.boot.native ? "Running in the app window." : "Running in browser mode.")),
+      card(null, h("p", { style: { margin: 0 } }, "A front end for kohya-ss/sd-scripts.")),
       card({ title: "Updates" },
         h("div.row", { style: { gap: "12px", flexWrap: "wrap" } },
           switchEl(s.check_app_updates !== false, async (v) => { await ctx.saveSettings({ check_app_updates: v }); }, "Tell me when a new version is out"),
@@ -191,14 +178,13 @@ function about(ctx, root) {
         h("div.field", { style: { marginTop: "10px", maxWidth: "360px" } }, h("label", "Update from"),
           h("select.select", { onchange: async (e) => { await ctx.saveSettings({ update_channel: e.target.value }); clear(upd, h("span.small.muted", "Checking…")); try { showUpd(await api.app_update(true)); } catch (err) { toastError(err); } } },
             h("option", { value: "release", selected: s.update_channel !== "main" }, "Releases"),
-            h("option", { value: "main", selected: s.update_channel === "main" }, "Latest changes on main (not released yet)")),
-          h("div.help", "Main gets every change as soon as it's merged, before it's in a release. It's newer, but less tested.")),
+            h("option", { value: "main", selected: s.update_channel === "main" }, "Main branch (unreleased, less tested)"))),
         h("div", { style: { marginTop: "8px" } }, upd)),
-      card({ title: "Something not working?" },
-        h("p.small.muted", { style: { marginTop: 0 } }, "Copy diagnostics puts your LoRA Studio and sd-scripts versions, system, GPU and the end of the last failed run's log on your clipboard, ready to paste into a bug report. Your name is hidden from folder paths and site logins are never included."),
+      card({ title: "Report a problem" },
+        h("p.small.muted", { style: { marginTop: 0 } }, "Your setup info and the last failed run's log, for a bug report. Your name is hidden from paths and site logins are never included."),
         h("div.row", { style: { gap: "10px", flexWrap: "wrap" } },
           btn("Copy diagnostics", { icon: "copy", kind: "primary", onclick: () => copyDiagnostics() }),
-          btn("Report a problem", { icon: "alert", onclick: () => api.open_url("https://github.com/cococolacake/lora-studio/issues/new/choose").catch(toastError) })))));
+          btn("Report a bug", { icon: "alert", onclick: () => api.open_url("https://github.com/cococolacake/lora-studio/issues/new/choose").catch(toastError) })))));
 }
 
 export async function copyDiagnostics() {
@@ -206,11 +192,11 @@ export async function copyDiagnostics() {
   try { text = await api.diagnostics(); } catch (e) { return toastError(e); }
   try {
     await navigator.clipboard.writeText(text);
-    toast("Diagnostics copied", "Paste them into your bug report.", "good", "copy");
+    toast("Diagnostics copied", "", "good", "copy");
   } catch {
     // Some windows don't allow clipboard access: show it so it can be copied by hand.
     const ta = h("textarea.textarea.mono", { rows: 14, readonly: true, style: { width: "100%" } });
     ta.value = text;
-    await modal("Diagnostics", h("div.stack.sm", h("p.small.muted", { style: { margin: 0 } }, "Select all (Ctrl+A) and copy (Ctrl+C):"), ta), [{ label: "Done", kind: "primary" }]);
+    await modal("Diagnostics", h("div.stack.sm", h("p.small.muted", { style: { margin: 0 } }, "Copy this into your bug report:"), ta), [{ label: "Done", kind: "primary" }]);
   }
 }

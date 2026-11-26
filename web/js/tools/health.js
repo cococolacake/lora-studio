@@ -6,19 +6,19 @@ import { datasetEditor } from "../components.js";
 import { thumbUrl } from "../media.js";
 
 const ISSUES = {
-  unreadable: ["Unreadable images", "These files couldn't be opened. sd-scripts will crash on them, so remove or re-save them."],
-  shared_caption: ["Two images share one caption", "Files like a.png and a.jpg both read a.txt. Rename one so each image gets its own caption."],
-  missing_caption: ["Missing captions", "No caption file was found, so these images train with an empty caption."],
-  empty_caption: ["Empty captions", "The caption file exists but has nothing in it."],
-  no_trigger: ["Trigger word missing", "These captions don't contain your trigger word."],
-  too_small: ["Small images", "Smaller than the minimum side length, so they get upscaled and may look soft."],
-  extreme_aspect: ["Very wide or tall", "Extreme aspect ratios land in edge buckets and can train poorly."],
-  orphan_caption: ["Captions without images", "Leftover caption files. They're ignored, but worth tidying."],
+  unreadable: ["Unreadable images", "Unreadable. sd-scripts will crash on these."],
+  shared_caption: ["Two images share one caption", "Images like a.png and a.jpg share a.txt."],
+  missing_caption: ["Missing captions", "No caption file."],
+  empty_caption: ["Empty captions", "Empty caption file."],
+  no_trigger: ["Trigger word missing", "Trigger word missing."],
+  too_small: ["Small images", "Below the minimum size, so they get upscaled."],
+  extreme_aspect: ["Very wide or tall", "Extreme aspect ratios can train poorly."],
+  orphan_caption: ["Captions without images", "Captions with no image. They're ignored."],
 };
 const SEV_ICON = { error: "circleX", warn: "alert", info: "info" };
 
 export function health(ctx, params, root) {
-    root.append(ctx.header({ title: "Dataset health check", subtitle: "Catch caption and image problems before a long run does.", icon: "image" }));
+    root.append(ctx.header({ title: "Dataset health check", icon: "image" }));
 
     const draft = ctx.draft || {};
     const ds = draft.dataset || { subsets: [{ image_dir: "", num_repeats: 1 }], resolution: [1024, 1024], batch_size: 2, enable_bucket: true, min_bucket_reso: 512, max_bucket_reso: 2048, bucket_reso_steps: 64, caption_extension: ".txt" };
@@ -102,7 +102,7 @@ export function health(ctx, params, root) {
         tiles,
         card({ title: "Issues", actions: issues.length ? null : chip("All clear", "good", "circleCheck") },
           issues.length ? h("div.stack.sm", issueCards)
-            : h("div.notice.good", icon("circleCheck"), "No problems found. Every image has a readable caption.")),
+            : h("div.notice.good", icon("circleCheck"), "No problems found.")),
         h("div.grid.c2",
           card({ title: "Buckets" }, r.buckets.length ? h("div.bars", r.buckets.slice(0, 14).map((b) =>
             h("div.bar-row", h("span.mono.small", `${b.w}×${b.h}`), h("div.b", h("i", { style: { width: `${(b.count / maxB) * 100}%` } })), h("span.nums.small", String(b.count)))))

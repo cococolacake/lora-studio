@@ -24,7 +24,7 @@ export function newDataset(ctx, params, root) {
   const go = btn("Make dataset", { icon: "sparkle", kind: "primary", onclick: run });
 
   root.append(
-    ctx.header({ title: "New dataset", subtitle: "Download with gallery-dl or start from a folder; get a clean, captioned dataset in one go.", icon: "download" }),
+    ctx.header({ title: "New dataset", icon: "download" }),
     h("div.stack",
       card({ title: "Where the images come from" }, srcSlot),
       card({ title: "The dataset" }, dsSlot),
@@ -43,12 +43,12 @@ export function newDataset(ctx, params, root) {
     if (o.source === "folder") {
       clear(srcSlot, h("div.stack", choose,
         h("div.field", h("label", "Folder to import"), pathInput(o.folder, (v) => { o.folder = v; }, { folder: true, placeholder: "C:/Users/you/gallery-dl/danbooru/some_tag" }),
-          h("div.help", "Sub-folders are included. If the images came from gallery-dl with --write-metadata, their tags become captions."))));
+          h("div.help", "Includes sub-folders. gallery-dl metadata tags become captions."))));
       return;
     }
     if (!gdl.installed) {
       clear(srcSlot, h("div.stack", choose, h("div.notice", icon("info"), h("div", { style: { flex: 1 } },
-        h("b", "gallery-dl isn't installed yet."), h("div.small", "It's a small download tool that works with hundreds of sites. It installs into LoRA Studio's own folder."),
+        h("b", "gallery-dl isn't installed yet."), h("div.small", "Installs into LoRA Studio's folder."),
         h("div", { style: { marginTop: "8px" } }, btn("Install gallery-dl", { icon: "download", size: "sm", kind: "primary", onclick: async (e) => {
           e.currentTarget.disabled = true; e.currentTarget.lastChild.textContent = "Installing…";
           const t = await watchTask(await api.gdl_install());
@@ -66,7 +66,7 @@ export function newDataset(ctx, params, root) {
         h("div.field.span2", h("label", isUrl ? "Link" : "Tags"),
           h("input.input" + (isUrl ? ".mono" : ""), { value: isUrl ? o.url : o.tags, placeholder: isUrl ? "https://www.pixiv.net/en/users/12345" : "hatsune_miku solo rating:general",
             oninput: (e) => { if (isUrl) o.url = e.target.value; else o.tags = e.target.value; save(); } }),
-          h("div.help", isUrl ? "Any page gallery-dl supports: a pixiv artist, a booru search, a single post…" : "Same syntax as the site's own search. Danbooru allows 2 tags without an account."))),
+          h("div.help", isUrl ? "Any page gallery-dl supports" : "Same syntax as the site's search. Danbooru allows 2 tags without an account."))),
       h("div.grid.c3",
         h("div.field", h("label", "How many (at most)"), h("input.input.nums", { type: "number", min: 1, value: o.limit, onchange: (e) => { o.limit = Number(e.target.value) || null; save(); } })),
         h("div.field.span2", h("label", "Download into"), pathInput(o.folder, (v) => { o.folder = v; }, { folder: true, placeholder: "Inside LoRA Studio's downloads folder" })))));
@@ -138,7 +138,7 @@ export function newDataset(ctx, params, root) {
     try { a = await api.gdl_accounts(); } catch (e) { return toastError(e); }
     const vals = structuredClone(a.values);
     const body = h("div.stack",
-      h("p.small.muted", { style: { margin: 0 } }, "Saved on this PC only, in LoRA Studio's data folder. They're never included in backups or uploaded anywhere."),
+      h("p.small.muted", { style: { margin: 0 } }, "Stored on this PC only, never in backups."),
       Object.entries(a.sites).map(([site, meta]) => h("div.issue", h("div.stack.sm",
         h("div.row", h("b", meta.label), h("div.spacer"),
           site === "pixiv" ? btn("Get token", { icon: "key", size: "sm", kind: "ghost", onclick: () => api.gdl_pixiv_token().catch(toastError) }) : null),
@@ -149,7 +149,7 @@ export function newDataset(ctx, params, root) {
         h("div.field", h("label", "Use the cookies from this browser"),
           h("select.select", { onchange: (e) => { vals.cookies_browser = e.target.value; } },
             [["", "Don't use browser cookies"], ["firefox", "Firefox"], ["chrome", "Chrome"], ["edge", "Edge"]].map(([v, l]) => h("option", { value: v, selected: v === vals.cookies_browser }, l)))),
-        h("div.help", "Log into the site in that browser first. Firefox works most reliably; newer Chrome and Edge versions often block this."))));
+        h("div.help", "Log into the site in that browser first. Firefox works best; Chrome and Edge often block this."))));
     const ok = await modal("Site logins for gallery-dl", body, [{ label: "Cancel", kind: "ghost", value: false }, { label: "Save", kind: "primary", value: true }]);
     if (!ok) return;
     try {

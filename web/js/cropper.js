@@ -156,7 +156,7 @@ export function openCropper(item) {
       } }) : null,
       h("div.row.nowrap", btn("Reset", { kind: "ghost", onclick: () => { rect = { x: 0, y: 0, w: natW, h: natH }; aspect = "free"; setExact(false); } }),
         h("div.spacer"), btn("Cancel", { onclick: close }), btn("Save crop", { icon: "check", kind: "primary", onclick: save })),
-      h("p.tiny.faint", { style: { margin: 0 } }, "The original is kept in _originals/ the first time you edit an image."));
+      h("p.tiny.faint", { style: { margin: 0 } }, "Originals are kept in _originals/."));
 
     const scrim = h("div.scrim", h("div.modal.crop-modal",
       h("div.m-head", h("div.chip-icon.sm", icon("crop")), h("h3", item.name), h("span.small.faint", `${natW}×${natH}`), h("div.spacer"),

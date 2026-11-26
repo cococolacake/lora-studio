@@ -20,7 +20,7 @@ export function folderBar(ctx, value, onLoad, { button = "Load", icon: ic = "fol
     try {
       const u = await api.ds_in_use(f);
       if (u.running) clear(busy, h("div.notice.warn", icon("alert"),
-        `The training that's running (${u.running}) uses this folder. Moving, renaming, cropping or resizing its images is paused until it finishes. Caption edits are fine; they apply to the next training.`));
+        `${u.running} is training on this folder. Moving, renaming, cropping and resizing are paused. Caption edits apply to the next training.`));
       else if (u.queued.length) clear(busy, h("div.notice", icon("info"),
         `A queued training (${u.queued.join(", ")}) uses this folder; it will train on the folder as it is when it starts.`));
     } catch { /* no notice */ }
@@ -80,7 +80,7 @@ export function missingNotice(pkg, onInstalled) {
   const allowed = ["timm", "transformers", "huggingface-hub", "numpy", "pillow"];
   const note = h("div.notice.warn", icon("alert"), h("div", { style: { flex: 1 } },
     h("b", `Your sd-scripts venv is missing “${pkg}”.`),
-    h("div.small", allowed.includes(pkg) ? "LoRA Studio can install it there for you (it doesn't affect training)." : "That's a core package, so this may be the wrong venv. Check the sd-scripts page."),
+    h("div.small", allowed.includes(pkg) ? "It doesn't affect training." : "That's a core package, so this may be the wrong venv. Check the sd-scripts page."),
     allowed.includes(pkg) ? h("div", { style: { marginTop: "8px" } }, btn(`Install ${pkg}`, { icon: "download", size: "sm", onclick: async (e) => {
       e.currentTarget.disabled = true;
       e.currentTarget.textContent = "Installing…";

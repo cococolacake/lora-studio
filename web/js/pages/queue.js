@@ -27,7 +27,7 @@ export default {
         try {
           await api.power_set(v);
           if (v !== "none") toast(v === "sleep" ? "Sleep when done" : "Shut down when done",
-            "After the last training there's a 1-minute countdown you can cancel. This is a one-time setting.", "good", "moon");
+            "After a 1-minute countdown you can cancel. Applies once.", "good", "moon");
           refresh();
         } catch (e) { toastError(e); }
       };
@@ -35,8 +35,8 @@ export default {
         h("div.row", { style: { gap: "14px", flexWrap: "wrap" } },
           seg([["none", "Do nothing", "check"], ["sleep", "Sleep", "moon"], ["shutdown", "Shut down", "power"]], pw.action, set),
           h("div.small.muted", { style: { flex: 1, minWidth: "220px" } }, pw.action === "none"
-            ? "Handy for overnight batches: put the PC to sleep or shut it down after the last training."
-            : `After the last training finishes there's a 1-minute countdown you can cancel, then the PC will ${pw.action === "sleep" ? "go to sleep" : "shut down"}. Pressing Stop yourself won't trigger it. Resets to “Do nothing” afterwards.`))));
+            ? ""
+            : `1-minute countdown after the last training. Stopping by hand won't trigger it. Applies once.`))));
     }
 
     let live = null, liveId = null, lastQueueKey = "", lastRunning = null;
@@ -60,8 +60,8 @@ export default {
       if (!cur) {
         live?.stop(); live = null; liveId = null;
         clear(currentSlot, card(null, empty("sparkle", "Nothing is training", st.queue.length
-          ? (st.running ? "Starting the next run…" : "Your queue is paused. Start it when you're ready.")
-          : "Set up a run on the Train page and press Train now, or add a few to the queue for an overnight batch.",
+          ? (st.running ? "Starting the next run…" : "The queue is paused.")
+          : "",
         btn("New training", { icon: "wand", kind: "primary", onclick: () => ctx.go("train") }),
         btn("Run history", { icon: "history", onclick: () => ctx.go("runs") }))));
         return;
@@ -77,7 +77,7 @@ export default {
             h("div.spacer"),
             btn("Details", { icon: "chart", kind: "ghost", onclick: () => ctx.go("runs", { run: cur.id }) }),
             btn("Stop", { icon: "stop", kind: "danger", onclick: async () => {
-              if (await confirmBox("Stop this training?", "The process is stopped right away and the queue pauses. If save_state is on, you can resume from the last saved epoch on the Runs page.", "Stop", true)) {
+              if (await confirmBox("Stop this training?", "The queue pauses. With save_state on, you can resume from the last saved epoch.", "Stop", true)) {
                 api.stop_current().catch(toastError);
               }
             } })),
@@ -101,7 +101,7 @@ export default {
             btn("", { icon: "up", kind: "ghost", size: "sm", title: "Move up", disabled: i === 0, onclick: () => api.queue_move(q.id, -1).then(apply) }),
             btn("", { icon: "down", kind: "ghost", size: "sm", title: "Move down", disabled: i === st.queue.length - 1, onclick: () => api.queue_move(q.id, 1).then(apply) }),
             btn("", { icon: "trash", kind: "ghost", size: "sm", title: "Remove", onclick: () => api.queue_remove(q.id).then(apply) }))))
-          : h("p.muted.small", { style: { margin: 0 } }, "Queued runs wait here and start one after another.")));
+          : null));
     }
 
     function apply(st) {

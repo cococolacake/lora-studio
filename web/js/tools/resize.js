@@ -21,7 +21,7 @@ export function resize(ctx, params, root) {
   const summary = h("div.small.muted");
   const gridSlot = h("div");
 
-  root.append(ctx.header({ title: "Crop & resize", subtitle: "Resize a whole folder to a set size, or click any image to crop it by hand.", icon: "crop" }),
+  root.append(ctx.header({ title: "Crop & resize", icon: "crop" }),
     h("div.stack",
       card({ title: "Folder" }, folderBar(ctx, folder, (f) => { folder = f; load(); })),
       card({ title: "Batch resize" }, optsSlot, h("div", { style: { marginTop: "14px" } }, prog.el)),
@@ -45,9 +45,9 @@ export function resize(ctx, params, root) {
         h("input.input.nums", { value: o.height, style: { width: "90px" }, onchange: (e) => { o.height = Number(e.target.value) || 1024; save(); drawOpts(); } }))
       : h("input.input.nums", { value: o.width, style: { width: "100px" }, onchange: (e) => { o.width = Number(e.target.value) || 1024; save(); drawOpts(); } });
     const explain = {
-      long: `The longer side becomes ${o.width}px; the other side scales to keep the shape.`,
-      short: `The shorter side becomes ${o.width}px; the other side scales to keep the shape.`,
-      exact: `Every image becomes exactly ${o.width}×${o.height}: scaled to fill, then cropped ${o.anchor === "top" ? "from the top (keeps faces in portraits)" : "around the centre"}.`,
+      long: `Longer side: ${o.width}px.`,
+      short: `Shorter side: ${o.width}px.`,
+      exact: `Exactly ${o.width}×${o.height}, cropped ${o.anchor === "top" ? "from the top" : "around the centre"}.`,
     }[o.mode];
     clear(optsSlot, h("div.stack",
       h("div.row", { style: { gap: "22px", alignItems: "flex-end" } },
@@ -64,7 +64,7 @@ export function resize(ctx, params, root) {
 
   async function run() {
     const n = images.filter(wouldChange).length;
-    if (!(await confirmBox(`Resize ${n} images?`, "Each original is copied to an _originals folder the first time it's changed, so you can always restore it."))) return;
+    if (!(await confirmBox(`Resize ${n} images?`, "Originals are kept in _originals/."))) return;
     try {
       const id = await api.ds_batch_resize({ folder, mode: o.mode, width: o.width, height: o.height, anchor: o.anchor, upscale: o.upscale });
       const t = await watchTask(id, (s) => prog.set(s));

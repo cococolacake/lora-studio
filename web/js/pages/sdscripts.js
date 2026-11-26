@@ -57,7 +57,7 @@ export default {
         st.fetch_error ? h("div.notice.warn", icon("alert"), h("div", "Couldn't reach GitHub: ", h("span.mono", st.fetch_error))) : null,
         behind == null ? h("p.muted", "This branch doesn't track a remote branch, so updates can't be checked.")
           : behind === 0 ? h("div.row", { style: { gap: "14px" } }, h("div.sev.ok", { style: { width: "44px", height: "44px", borderRadius: "14px", display: "grid", placeItems: "center" } }, icon("circleCheck")),
-              h("div", h("b", "You're up to date"), h("div.small.muted", fetch ? "Just checked GitHub." : "Press “Check for updates” to look for new commits.")))
+              h("div", h("b", "You're up to date"), h("div.small.muted", fetch ? "Just checked GitHub." : "Not checked yet.")))
             : h("div.stack.sm",
               h("div.row", h("b", { style: { fontSize: "16px" } }, `${behind} new commit${behind === 1 ? "" : "s"} on ${st.branch}`), h("div.spacer"),
                 checkEl(installDeps, (v) => { installDeps = v; }, "Reinstall requirements"),
@@ -65,7 +65,7 @@ export default {
                   if (busy) return;
                   try { runTask(await api.sd_update(installDeps), "sd-scripts updated"); } catch (e) { toastError(e); }
                 } })),
-              st.dirty ? h("div.notice.warn", icon("alert"), "You've edited files inside sd-scripts. Stash or revert them before updating so nothing gets overwritten.") : null,
+              st.dirty ? h("div.notice.warn", icon("alert"), "sd-scripts has local edits. Stash or revert them before updating.") : null,
               h("div.list", { style: { maxHeight: "300px", overflow: "auto" } }, changelog)));
       updates.classList.add("span2");
 
@@ -74,18 +74,18 @@ export default {
         clear(branchSel, bs.map((b) => h("option", { value: b.name, selected: b.name === st.branch }, `${b.name}  ·  ${b.age}`)));
       }).catch(() => clear(branchSel, h("option", st.branch)));
       const branch = card({ title: "Branch" },
-        h("p.small.muted", { style: { marginTop: 0 } }, "Newer model families sometimes live on a development branch before they reach main."),
+        h("p.small.muted", { style: { marginTop: 0 } }, ""),
         h("div.row.nowrap", branchSel, btn("Switch", { icon: "branch", onclick: async () => {
           const b = branchSel.value;
           if (!b || b === st.branch) return;
-          if (!(await confirmBox(`Switch to ${b}?`, "sd-scripts will check out that branch and reinstall its requirements. You can roll back afterwards."))) return;
+          if (!(await confirmBox(`Switch to ${b}?`, "Requirements are reinstalled. You can roll back afterwards."))) return;
           try { runTask(await api.sd_switch_branch(b, installDeps), `Now on ${b}`); } catch (e) { toastError(e); }
         } })));
 
       const rollback = card({ title: "Roll back" },
-        h("p.small.muted", { style: { marginTop: 0 } }, "Go back to the version you had before the last update or branch switch."),
+        h("p.small.muted", { style: { marginTop: 0 } }, "Back to the version before the last update or branch switch."),
         btn("Roll back", { icon: "rollback", disabled: !st.can_rollback, onclick: async () => {
-          if (!(await confirmBox("Roll back sd-scripts?", "This returns to the previous commit and reinstalls its requirements."))) return;
+          if (!(await confirmBox("Roll back sd-scripts?", "Requirements are reinstalled."))) return;
           try { runTask(await api.sd_rollback(installDeps), "Rolled back"); } catch (e) { toastError(e); }
         } }));
 
@@ -112,12 +112,12 @@ export default {
 
 function setup(ctx, root) {
   const sd = ctx.boot.sd;
-  root.append(ctx.header({ title: "Let's connect sd-scripts", subtitle: "LoRA Studio drives your own copy of kohya-ss/sd-scripts.", icon: "branch" }));
+  root.append(ctx.header({ title: "Connect sd-scripts", icon: "branch" }));
 
   let path = sd.path || ctx.boot.guesses[0] || "";
   const msg = h("div");
   const connect = card({ title: "I already have sd-scripts" },
-    h("p.muted.small", { style: { marginTop: 0 } }, "Pick the folder that contains train_network.py. Its venv is used for training, so nothing heavy gets installed twice."),
+    h("p.muted.small", { style: { marginTop: 0 } }, "The folder with train_network.py in it."),
     h("div.stack.sm",
       pathInput(path, (v) => { path = v; }, { folder: true, placeholder: "C:/Users/you/Desktop/Work/sd-scripts" }),
       ctx.boot.guesses.length ? h("div.row", h("span.small.faint", "Found:"), ctx.boot.guesses.map((g) => h("button.chip.accent", { style: { border: 0, cursor: "pointer" }, onclick: () => { path = g; root.querySelector(".input").value = g; } }, g))) : null,
@@ -142,14 +142,14 @@ function setup(ctx, root) {
   const logCard = card({ title: "Install log" }, log.el);
   logCard.classList.add("hidden");
   const install = card({ title: "Install a fresh copy" },
-    h("p.muted.small", { style: { marginTop: 0 } }, "Clones sd-scripts from GitHub, creates its venv, and installs PyTorch and the requirements. It's a few GB, so expect it to take a while."),
+    h("p.muted.small", { style: { marginTop: 0 } }, "Clones sd-scripts, makes its venv and installs PyTorch (a few GB)."),
     h("div.stack.sm",
       h("div.field", h("label", "Install into (an empty folder)"), pathInput("", (v) => { inst.dest = v; }, { folder: true, placeholder: "C:/AI/sd-scripts" })),
       h("div.grid.c2",
         h("div.field", h("label", "Branch"), h("input.input", { value: "main", onchange: (e) => { inst.branch = e.target.value.trim() || "main"; } })),
         h("div.field", h("label", "Python to use"), h("input.input.mono", { placeholder: ctx.boot.platform === "windows" ? "py -3.10" : "python3.10", onchange: (e) => { inst.python = e.target.value.trim(); } }))),
       h("div.field", h("label", "PyTorch download index"), h("input.input.mono", { value: inst.torch, onchange: (e) => { inst.torch = e.target.value.trim(); } }),
-        h("div.help", "cu128 suits RTX 20/30/40/50-series cards. Use cu126 or cu124 for older drivers.")),
+        h("div.help", "cu128 for RTX 20 to 50 series. cu126 or cu124 for older drivers.")),
       h("div", btn("Install", { icon: "download", onclick: async (e) => {
         if (!inst.dest) return toast("Pick a folder first", "", "", "folder");
         e.currentTarget.disabled = true;
@@ -164,6 +164,6 @@ function setup(ctx, root) {
       } }))));
 
   root.append(h("div.stack", h("div.grid.c2", connect, install), logCard,
-    h("div.notice", icon("info"), h("div", "Your settings, run history and presets live in ", h("span.mono", ctx.boot.data_dir), ", separate from sd-scripts, so updating or reinstalling sd-scripts never touches them."))));
+    h("div.notice", icon("info"), h("div", "Settings, runs and presets are in ", h("span.mono", ctx.boot.data_dir), ", separate from sd-scripts."))));
 }
 

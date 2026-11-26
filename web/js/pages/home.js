@@ -41,7 +41,7 @@ export default {
         h("div.main-col", h("div.title", r.name), h("div.meta", `${r.family || r.script} · ${fmtAgo(r.started || r.created)}${r.duration ? " · " + fmtDuration(r.duration) : ""}`)),
         h("div.nums.small", { style: { minWidth: "64px", textAlign: "right" } }, fmtLoss(r.loss)),
         statusChip(r.status))))
-        : h("p.muted.small", { style: { margin: 0 } }, "Finished trainings show up here with their final loss."));
+        : h("p.muted.small", { style: { margin: 0 } }, "No finished trainings yet."));
 
     const tools = card({ title: "Shortcuts" }, h("div.stack.sm",
       [["wand", "New training", "train", {}], ["tag", "Tag & tidy a dataset", "dataset", {}], ["palette", "Change the look", "settings", { section: "appearance" }]].map(([ic, label, page, p]) =>
@@ -49,11 +49,11 @@ export default {
 
     // First time? A short guide that ticks itself off, then gets out of the way.
     const steps = [
-      { done: !!sd.valid, title: "Connect sd-scripts", text: "Point LoRA Studio at your kohya-ss/sd-scripts folder, or let it install a fresh copy.",
+      { done: !!sd.valid, title: "Connect sd-scripts", text: "Pick your sd-scripts folder or install a fresh copy.",
         action: btn("Set up", { size: "sm", onclick: () => ctx.go("sdscripts") }) },
-      { done: !!store.get("dsFolder"), title: "Make a dataset", text: "Download images with gallery-dl or pick a folder; LoRA Studio captions, numbers and checks them.",
+      { done: !!store.get("dsFolder"), title: "Make a dataset", text: "Download images or pick a folder.",
         action: btn("New dataset", { size: "sm", onclick: () => ctx.go("dataset", { tool: "new" }) }) },
-      { done: runs.some((r) => r.status === "done"), title: "Train your first LoRA", text: "Pick a training script, check the settings, and press Train now. Samples and the loss graph show up live.",
+      { done: runs.some((r) => r.status === "done"), title: "Train your first LoRA", text: "Pick a script, check the settings, press Train now.",
         action: btn("Train", { size: "sm", onclick: () => ctx.go("train") }) },
     ];
     const guideSlot = h("div.home-guide");
@@ -110,7 +110,7 @@ export default {
         lastKey = key;
         const n = st.queue.length;
         const banner = ctx.header({ title: st.current ? "Training in progress" : greeting(), icon: "sparkle",
-          subtitle: st.current ? `Training “${st.current.name}”${n ? `, ${n} more waiting` : ""}.` : n ? `${n} run${n === 1 ? "" : "s"} waiting in the queue.` : "Nothing training right now. Ready when you are.",
+          subtitle: st.current ? `Training “${st.current.name}”${n ? `, ${n} more waiting` : ""}` : n ? `${n} run${n === 1 ? "" : "s"} in the queue` : "Nothing training.",
           actions: [st.current
             ? btn("Add to queue", { icon: "layers", kind: "primary", onclick: () => ctx.go("train") })
             : btn("New training", { icon: "wand", kind: "primary", onclick: () => ctx.go("train") })] });
@@ -127,7 +127,7 @@ export default {
           live?.stop(); live = null; liveId = null;
           clear(nowSlot, card({ title: "" }, h("div.guide-line",
             h("div.list-row", { style: { padding: 0, border: 0 } }, h("div.ic", icon("sparkle"))),
-            h("div.main-col", h("div.title", "Nothing is training"), h("div.small.muted", "Press New training to pick a script and point it at your images.")))));
+            h("div.main-col", h("div.title", "Nothing is training")))));
         }
         return;
       }
