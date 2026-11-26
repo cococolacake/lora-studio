@@ -11,7 +11,6 @@ export function lossChart({ height = 220, smoothing = 0.9 } = {}) {
   root.append(tip, emptyMsg);
   let points = [];
   let svg = null;
-  let geo = null;
 
   function ema(arr) {
     const out = [];
@@ -37,7 +36,6 @@ export function lossChart({ height = 220, smoothing = 0.9 } = {}) {
     lo -= span * 0.08; hi += span * 0.08;
     const X = (v) => pad.l + ((v - minX) / (maxX - minX || 1)) * (W - pad.l - pad.r);
     const Y = (v) => pad.t + (1 - (v - lo) / (hi - lo)) * (H - pad.t - pad.b);
-    geo = { X, Y, pad, W, H, sm };
 
     svg = s("svg", { viewBox: `0 0 ${W} ${H}`, preserveAspectRatio: "none" });
     const defs = s("defs");

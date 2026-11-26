@@ -1,6 +1,6 @@
 // App shell: rail navigation, side panel, header banner, routing, background polling.
 import { api } from "./api.js";
-import { h, clear, toast, toastError, store, btn, modal } from "./dom.js";
+import { h, clear, toast, toastError, store, btn } from "./dom.js";
 import { icon, logo } from "./icons.js";
 import { applyTheme, paintBanner, setTrainingLook } from "./theme.js";
 import { setNative } from "./components.js";

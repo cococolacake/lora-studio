@@ -29,14 +29,16 @@ jobs:
 
       - name: Install
         run: |
-          pip install Pillow tomli pytest
+          pip install Pillow tomli pytest ruff
 
       - name: Python files compile
         run: python -m compileall -q main.py studio
 
-      - name: JavaScript files are valid
+      - name: No leftover code (unused imports and variables)
         run: |
-          for f in $(find web/js -name '*.js'); do node --check "$f" || exit 1; done
+          ruff check .
+          npm install --no-save eslint@9
+          npx eslint .
 
       - name: Shell scripts are valid
         run: for f in *.sh; do bash -n "$f" || exit 1; done

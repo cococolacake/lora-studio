@@ -30,6 +30,8 @@ SHARED = [
     ".github/workflows/wiki.yml",
     ".github/ISSUE_TEMPLATE/feature_request.yml",
     "Install.bat",
+    "eslint.config.mjs",
+    "ruff.toml",
     "{app}.sh",
     "LICENSE",
     "studio/appupdate.py",

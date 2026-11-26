@@ -5,10 +5,9 @@ API keys and the like are never included.
 """
 import os
 import platform
-import sys
 from pathlib import Path
 
-from . import __version__, gpu, runs, sdscripts, settings, trainer
+from . import __version__, gpu, runs, sdscripts, settings
 
 
 def _mask(text):

@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 from . import paths, settings
-from .util import Task, read_json, run, write_json
+from .util import read_json, run, write_json
 
 REPO_URL = "https://github.com/kohya-ss/sd-scripts.git"
 
