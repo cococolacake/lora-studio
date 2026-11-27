@@ -38,6 +38,18 @@ python main.py --browser --port 8765 &
 SMOKE_URL=http://127.0.0.1:8765 SMOKE_DATASET=/path/to/images node tests/smoke.mjs
 ```
 
+## Screenshots
+
+The screenshots in `docs/screenshots/` (used by the README and the wiki) come from a script. It starts LoRA Studio in a temporary data folder with a made-up dataset, and a fake trainer stands in for sd-scripts, so no GPU or sd-scripts install is needed. To retake all of them after a UI change, close LoRA Studio and run:
+
+```
+python -m pip install playwright pillow
+python -m playwright install chromium
+python docs/screenshots/take.py
+```
+
+It takes about two minutes, most of it waiting for the fake training runs.
+
 ## How the code is laid out
 
 The app is plain Python plus HTML/CSS/JS with **no build step**.
