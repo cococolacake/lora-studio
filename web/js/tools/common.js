@@ -81,7 +81,7 @@ export function missingNotice(pkg, onInstalled) {
   const note = h("div.notice.warn", icon("alert"), h("div", { style: { flex: 1 } },
     h("b", `Your sd-scripts venv is missing “${pkg}”.`),
     h("div.small", allowed.includes(pkg) ? "It doesn't affect training." : "That's a core package, so this may be the wrong venv. Check the sd-scripts page."),
-    allowed.includes(pkg) ? h("div", { style: { marginTop: "8px" } }, btn(`Install ${pkg}`, { icon: "download", size: "sm", onclick: async (e) => {
+    allowed.includes(pkg) ? h("div", { style: { marginTop: "var(--s2)" } }, btn(`Install ${pkg}`, { icon: "download", size: "sm", onclick: async (e) => {
       e.currentTarget.disabled = true;
       e.currentTarget.textContent = "Installing…";
       const t = await watchTask(await api.install_package(pkg));

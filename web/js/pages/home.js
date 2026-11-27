@@ -119,7 +119,7 @@ export default {
         clear(queueSlot, card({ title: "Queue", actions: btn("Open", { size: "sm", kind: "ghost", onclick: () => ctx.go("queue") }) },
           h("div.row", h("div", { style: { fontFamily: "var(--font-display)", fontSize: "34px", fontWeight: 600, lineHeight: 1 } }, String(n)),
             h("div.small.muted", n === 1 ? "run waiting" : "runs waiting", h("br"), st.running ? "Queue is on" : "Queue is paused")),
-          n ? h("div.list", { style: { marginTop: "10px" } }, st.queue.slice(0, 3).map((q) => h("div.list-row", h("div.main-col", h("div.title.small", q.name), h("div.meta", q.script))))) : null));
+          n ? h("div.list", { style: { marginTop: "var(--s3)" } }, st.queue.slice(0, 3).map((q) => h("div.list-row", h("div.main-col", h("div.title.small", q.name), h("div.meta", q.script))))) : null));
       }
       const cur = st.current;
       if (!cur) {
@@ -136,8 +136,8 @@ export default {
         live = liveRun(cur.id, { chartHeight: 170 });
         liveId = cur.id;
         clear(nowSlot, card({ title: "Now training", actions: btn("Open", { size: "sm", kind: "ghost", onclick: () => ctx.go("queue") }) },
-          h("div.row", { style: { marginBottom: "12px" } }, h("b", { style: { fontSize: "16px" } }, cur.name), chip("Training", "accent live", "dot"), h("div.spacer"), h("span.small.faint", cur.script)),
-          live.bar, h("div", { style: { margin: "14px 0" } }, live.stats), live.chart));
+          h("div.row", { style: { marginBottom: "var(--s3)" } }, h("b", { style: { fontSize: "16px" } }, cur.name), chip("Training", "accent live", "dot"), h("div.spacer"), h("span.small.faint", cur.script)),
+          live.bar, h("div", { style: { margin: "var(--s4) 0" } }, live.stats), live.chart));
       }
       live.update(cur.progress);
     });

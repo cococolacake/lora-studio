@@ -32,7 +32,7 @@ export default {
         } catch (e) { toastError(e); }
       };
       clear(powerSlot, card({ title: "When the queue is done" },
-        h("div.row", { style: { gap: "14px", flexWrap: "wrap" } },
+        h("div.row", { style: { gap: "var(--s4)", flexWrap: "wrap" } },
           seg([["none", "Do nothing", "check"], ["sleep", "Sleep", "moon"], ["shutdown", "Shut down", "power"]], pw.action, set),
           h("div.small.muted", { style: { flex: 1, minWidth: "220px" } }, pw.action === "none"
             ? ""
@@ -71,7 +71,7 @@ export default {
         live = liveRun(cur.id);
         liveId = cur.id;
         clear(currentSlot, card(null,
-          h("div.row", { style: { marginBottom: "16px" } },
+          h("div.row", { style: { marginBottom: "var(--s4)" } },
             h("div", h("div.row", h("h3", { style: { margin: 0, fontSize: "18px", fontFamily: "var(--font-display)" } }, cur.name), chip("Training", "accent live", "dot")),
               h("div.small.faint", { style: { marginTop: "2px" } }, `${cur.script}`)),
             h("div.spacer"),
@@ -81,9 +81,9 @@ export default {
                 api.stop_current().catch(toastError);
               }
             } })),
-          live.stats, h("div", { style: { margin: "16px 0 6px" } }, live.bar),
-          h("div.card-head", { style: { marginTop: "18px" } }, h("h3.card-title", "Loss")), live.chart,
-          h("div.card-head", { style: { marginTop: "18px" } }, h("h3.card-title", "Log")), live.log));
+          live.stats, h("div", { style: { margin: "var(--s4) 0 var(--s2)" } }, live.bar),
+          h("div.card-head", { style: { marginTop: "20px" } }, h("h3.card-title", "Loss")), live.chart,
+          h("div.card-head", { style: { marginTop: "20px" } }, h("h3.card-title", "Log")), live.log));
       }
       live.update(cur.progress);
     }

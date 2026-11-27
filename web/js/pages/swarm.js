@@ -69,7 +69,7 @@ function embedCard(getStatus, label) {
     }
     const frame = h("iframe.swarm-frame", { src: st.url, title: label });
     clear(slot,
-      h("div.row", { style: { marginBottom: "10px" } },
+      h("div.row", { style: { marginBottom: "var(--s3)" } },
         h("span.small.faint", "Blank? Use “Open in browser”."), h("div.spacer"),
         btn("", { icon: "refresh", size: "sm", kind: "ghost", title: "Reload", onclick: () => { frame.src = st.url; } }),
         btn("Hide", { size: "sm", kind: "ghost", onclick: () => { shown = false; draw(); } })),
@@ -93,7 +93,7 @@ function libraryCard(ctx, load, label) {
       h("div.main-col",
         h("div.title", g.name),
         h("div.meta", `${g.files.length} file${g.files.length === 1 ? "" : "s"} · updated ${fmtAgo(g.modified)}`),
-        h("div.row", { style: { marginTop: "8px", gap: "6px" } }, g.files.map((f) =>
+        h("div.row", { style: { marginTop: "var(--s2)", gap: "var(--s2)" } }, g.files.map((f) =>
           h("button.tag", { style: { cursor: "pointer" }, title: `${fmtSize(f.size)} · click to view or edit its info`, onclick: () => metaModal(f.path, null) },
             f.name.replace(".safetensors", ""))))),
       btn("", { icon: "folder", size: "sm", kind: "ghost", title: "Open folder", onclick: () => api.open_folder(g.folder) })))));

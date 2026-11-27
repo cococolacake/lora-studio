@@ -77,7 +77,7 @@ async function detail(ctx, root, runId) {
   else live.update(r.progress);
 
   const tiles = h("div.grid.c5",
-    h("div.stat", h("div.k", "Status"), h("div.v", { style: { fontSize: "15px", paddingTop: "6px" } }, statusChip(r.status))),
+    h("div.stat", h("div.k", "Status"), h("div.v", { style: { fontSize: "15px", paddingTop: "var(--s2)" } }, statusChip(r.status))),
     stat("Duration", fmtDuration(s.duration)),
     stat("Final loss", fmtLoss(s.loss)),
     stat("Steps", s.total ? `${s.step}` : "—", s.total ? `/ ${s.total}` : ""),
@@ -105,7 +105,7 @@ async function detail(ctx, root, runId) {
   const showTab = () => clear(code, tab === "log" ? live.log : h("pre.code", tab === "training" ? r.training_toml : r.dataset_toml));
   showTab();
   const files = card({ title: "Details", actions: btn("Run folder", { icon: "folder", size: "sm", kind: "ghost", onclick: () => api.open_folder(r.folder) }) },
-    h("div", { style: { marginBottom: "12px" } }, seg([["log", "Log", "terminal"], ["training", "training.toml", "file"], ["dataset", "dataset.toml", "image"]], tab, (v) => { tab = v; showTab(); })),
+    h("div", { style: { marginBottom: "var(--s3)" } }, seg([["log", "Log", "terminal"], ["training", "training.toml", "file"], ["dataset", "dataset.toml", "image"]], tab, (v) => { tab = v; showTab(); })),
     code,
     h("p.tiny.faint", { style: { marginBottom: 0 } }, `sd-scripts ${r.sd_branch || ""} @ ${r.sd_commit || "?"}${r.extra_args ? " · extra: " + r.extra_args : ""}${r.resume_from ? " · resumed from " + r.resume_from : ""}`));
 
@@ -115,7 +115,7 @@ async function detail(ctx, root, runId) {
   } }));
 
   root.append(h("div.stack", tiles,
-    card({ title: "Loss" }, isLive ? h("div", { style: { marginBottom: "14px" } }, live.bar) : null, live.chart),
+    card({ title: "Loss" }, isLive ? h("div", { style: { marginBottom: "var(--s4)" } }, live.bar) : null, live.chart),
     r.best ? h("div.notice.good", icon("star"), h("div", { style: { flex: 1 } }, h("b", `Best epoch: ${r.best.epoch ?? "final"}`), ` saved as ${r.best.path.split("/").pop()}.`)) : null,
     r.sample_grid?.cells?.length ? samplesCard(r, () => ctx.go("runs", { run: runId })) : null,
     h("div.grid.c2", outputs, resume),

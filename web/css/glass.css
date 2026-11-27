@@ -57,16 +57,16 @@
 
 /* ---------- rail: a floating bar with labels ---------- */
 [data-style="glass"] .rail {
-  border-radius: 26px; padding: 14px 0; gap: 2px; min-height: 0; overflow: hidden;
+  border-radius: 26px; padding: var(--s4) 0; gap: 2px; min-height: 0; overflow: hidden;
 }
 [data-style="glass"] .rail .logo { width: 52px; height: 52px; margin: 0; color: var(--text); }
 [data-style="glass"] .rail .logo svg { width: 40px; height: 40px; }
 [data-style="glass"] .rail .nav { justify-content: flex-start; gap: 2px; flex: 0 1 auto; min-height: 0; overflow-y: auto; width: 100%; }
 [data-style="glass"] .rail .bottom { gap: 2px; margin-top: auto; }
-[data-style="glass"] .rail-div { display: block; width: 44px; height: 1px; margin: 10px 0; flex: none; background: linear-gradient(90deg, transparent, var(--line-strong), transparent); }
+[data-style="glass"] .rail-div { display: block; width: 44px; height: 1px; margin: var(--s3) 0; flex: none; background: linear-gradient(90deg, transparent, var(--line-strong), transparent); }
 [data-style="glass"] .rail-btn {
-  width: 66px; height: auto; padding: 8px 0 6px; border-radius: 16px; color: var(--text-2);
-  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  width: 66px; height: auto; padding: var(--s2) 0 var(--s2); border-radius: 16px; color: var(--text-2);
+  display: flex; flex-direction: column; align-items: center; gap: var(--s1);
 }
 [data-style="glass"] .rail-btn svg { width: 20px; height: 20px; }
 [data-style="glass"] .rail-btn .lbl { display: block; font-size: 12px; font-weight: 500; line-height: 1.2; white-space: nowrap; }
@@ -77,16 +77,16 @@
   box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 10px 22px -8px var(--glow);
 }
 [data-style="glass"] .rail-btn.active::after { display: none; }
-[data-style="glass"] .rail-btn .badge-dot { top: 6px; right: 14px; box-shadow: 0 0 0 2px var(--surface); }
+[data-style="glass"] .rail-btn .badge-dot { top: var(--s2); right: var(--s4); box-shadow: 0 0 0 2px var(--surface); }
 [data-style="glass"] .rail-btn.update-btn { color: var(--accent-text); }
 
 /* ---------- side panel ---------- */
 [data-style="glass"] .side {
-  margin-left: 0; padding: 20px 12px; border-radius: 24px; width: 240px;
+  margin-left: 0; padding: 20px var(--s3); border-radius: 24px; width: 240px;
 }
-[data-style="glass"] .side h2 { font-size: 20px; margin: 0 10px 12px; }
+[data-style="glass"] .side h2 { font-size: 20px; margin: 0 var(--s3) var(--s3); }
 [data-style="glass"] .side .sep { background: linear-gradient(90deg, transparent, var(--line-strong), transparent); }
-[data-style="glass"] .side-item { border-radius: 12px; padding: 8px 12px; }
+[data-style="glass"] .side-item { border-radius: 12px; padding: var(--s2) var(--s3); }
 [data-style="glass"] .side-item:hover { background: var(--surface-3); }
 [data-style="glass"] .side-item.active { background: var(--surface-2); box-shadow: var(--highlight), 0 0 0 1px var(--edge), var(--shadow-sm); }
 [data-style="glass"] .side-item .sub { font-size: 12px; }
@@ -109,7 +109,7 @@
 [data-style="glass"] .sticker p { font-size: 14px; margin-top: 2px; }
 [data-style="glass"] .banner .banner-actions { position: relative; right: auto; bottom: auto; margin: 0; }
 /* the big greeting on Home */
-[data-style="glass"] .banner.hero { min-height: 120px; padding: 28px 32px; border-radius: 26px; }
+[data-style="glass"] .banner.hero { min-height: 120px; padding: 28px var(--s6); border-radius: 26px; }
 [data-style="glass"] .banner.hero .sticker h1 { font-size: 26px; letter-spacing: -.02em; }
 
 /* ---------- cards ---------- */
@@ -184,7 +184,7 @@
 [data-style="glass"] .tabs button.on::after { background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
 
 /* the "Simple look while training" banner */
-.simple-note { display: flex; align-items: center; gap: var(--s3); padding: 10px 12px 10px 16px; border-radius: 16px; margin-bottom: var(--s4); }
+.simple-note { display: flex; align-items: center; gap: var(--s3); padding: var(--s3) var(--s3) var(--s3) var(--s4); border-radius: 16px; margin-bottom: var(--s4); }
 .simple-note svg { color: var(--accent-text); }
 [data-style="glass"] .simple-note { background: var(--surface); border: 1px solid var(--edge); box-shadow: var(--highlight), var(--shadow-sm); }
 
@@ -210,7 +210,7 @@
 [data-style="glass"] :is(.side, .main) { --pane-thumb: transparent; }
 [data-style="glass"] :is(.side, .main):hover { --pane-thumb: var(--line-strong); }
 [data-style="glass"] :is(.side, .main)::-webkit-scrollbar { width: 10px; }
-[data-style="glass"] :is(.side, .main)::-webkit-scrollbar-track { background: transparent; margin: 22px 0; }
+[data-style="glass"] :is(.side, .main)::-webkit-scrollbar-track { background: transparent; margin: var(--s5) 0; }
 [data-style="glass"] :is(.side, .main)::-webkit-scrollbar-thumb { background: var(--pane-thumb); border: 3px solid transparent; background-clip: content-box; border-radius: 99px; }
 [data-style="glass"] :is(.side, .main)::-webkit-scrollbar-thumb:hover { background-color: var(--text-3); }
 
@@ -221,6 +221,6 @@
    hidden next to the row under the mouse */
 [data-style="glass"] .list-row.click { border-top-color: transparent; position: relative; }
 [data-style="glass"] .list-row.click + .list-row.click::before {
-  content: ""; position: absolute; left: 12px; right: 12px; top: -1px; height: 1px; background: var(--line); pointer-events: none;
+  content: ""; position: absolute; left: var(--s3); right: var(--s3); top: -1px; height: 1px; background: var(--line); pointer-events: none;
 }
 [data-style="glass"] .list-row.click:hover::before, [data-style="glass"] .list-row.click:hover + .list-row.click::before { opacity: 0; }

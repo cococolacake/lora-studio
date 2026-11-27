@@ -32,16 +32,16 @@ export function gpuCard(ctx, { compact = false } = {}) {
     const memPct = g.mem_total ? (g.mem_used / g.mem_total) * 100 : 0;
     history.push(g.mem_used); if (history.length > 90) history.shift();
     const gb = (mb) => (mb / 1024).toFixed(1);
-    const tile = (k, v, sub, pct, warn) => h("div.stat", h("div.k", k), h("div.v", { style: { fontSize: "19px" } }, v, sub ? h("small", " " + sub) : null), pct != null ? h("div", { style: { marginTop: "8px" } }, bar(pct, warn)) : null);
+    const tile = (k, v, sub, pct, warn) => h("div.stat", h("div.k", k), h("div.v", { style: { fontSize: "19px" } }, v, sub ? h("small", " " + sub) : null), pct != null ? h("div", { style: { marginTop: "var(--s2)" } }, bar(pct, warn)) : null);
     clear(body,
-      h("div.row", { style: { marginBottom: "10px" } }, h("b.small", g.name), st.gpus.length > 1 ? h("span.small.faint", `+${st.gpus.length - 1} more`) : null),
+      h("div.row", { style: { marginBottom: "var(--s3)" } }, h("b.small", g.name), st.gpus.length > 1 ? h("span.small.faint", `+${st.gpus.length - 1} more`) : null),
       h(compact ? "div.grid.c2" : "div.grid.c4",
         tile("VRAM", gb(g.mem_used), `/ ${gb(g.mem_total)} GB`, memPct, memPct > 95),
         tile("Load", g.util != null ? `${g.util}%` : "—", "", g.util),
         compact ? null : tile("Temperature", g.temp != null ? `${g.temp}°` : "—", "C", g.temp, g.temp > 83),
         compact ? null : tile("Power", g.power != null ? `${Math.round(g.power)}` : "—", g.power_limit ? `/ ${Math.round(g.power_limit)} W` : "W", g.power_limit ? (g.power / g.power_limit) * 100 : null)),
-      compact ? null : h("div", { style: { marginTop: "12px" } }, h("div.tiny.faint", { style: { marginBottom: "4px" } }, "VRAM over the last few minutes"), spark(history, g.mem_total || 1)),
-      memPct > 97 ? h("div.notice.warn", { style: { marginTop: "12px" } }, "VRAM is almost full. If training crashes with “out of memory”, try a smaller batch, gradient checkpointing, or block swap.") : null);
+      compact ? null : h("div", { style: { marginTop: "var(--s3)" } }, h("div.tiny.faint", { style: { marginBottom: "var(--s1)" } }, "VRAM over the last few minutes"), spark(history, g.mem_total || 1)),
+      memPct > 97 ? h("div.notice.warn", { style: { marginTop: "var(--s3)" } }, "VRAM is almost full. If training crashes with “out of memory”, try a smaller batch, gradient checkpointing, or block swap.") : null);
     timer = setTimeout(tick, 2000);
   }
   tick();

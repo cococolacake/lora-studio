@@ -29,7 +29,7 @@ export async function updateNow(ctx, latest) {
   // progress window
   const prog = taskProgress();
   const log = h("pre.code", { style: { maxHeight: "180px", overflow: "auto", margin: 0 } });
-  const foot = h("div.row", { style: { justifyContent: "flex-end", gap: "10px" } });
+  const foot = h("div.row", { style: { justifyContent: "flex-end", gap: "var(--s3)" } });
   const body = h("div.stack.sm", prog.el, log, foot);
   const scrimClose = () => document.querySelectorAll(".scrim").forEach((s) => s.remove());
   modal("Updating LoRA Studio", body, []);

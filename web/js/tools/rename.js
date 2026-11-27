@@ -15,7 +15,7 @@ export function rename(ctx, params, root) {
     h("div.stack",
       card({ title: "Settings" },
         folderBar(ctx, folder, (f) => { folder = f; show(); }, { button: "Preview", icon: "eye" }),
-        h("div.grid.c3", { style: { marginTop: "16px", alignItems: "end" } },
+        h("div.grid.c3", { style: { marginTop: "var(--s4)", alignItems: "end" } },
           h("div.field", h("label", "Name prefix"), h("input.input.mono", { value: o.prefix, oninput: (e) => { o.prefix = e.target.value; save(); } })),
           h("div.field", h("label", "Start at"), h("input.input.nums", { type: "number", min: 0, value: o.start, oninput: (e) => { o.start = Number(e.target.value) || 0; save(); } })),
           h("div.field", checkEl(o.recursive, (v) => { o.recursive = v; save(); }, "Include subfolders")))),
@@ -30,7 +30,7 @@ export function rename(ctx, params, root) {
       if (!total) return clear(preview, card(null, empty("image", "No images here", "Pick a folder that has images in it.")));
       const conflicts = plans.filter((p) => p.conflicts.length);
       clear(preview, card({ title: `Preview · ${total} images`, actions: btn(`Rename ${total} images`, { icon: "rename", kind: "primary", onclick: apply }) },
-        conflicts.length ? h("div.notice.warn", { style: { marginBottom: "12px" } }, icon("alert"),
+        conflicts.length ? h("div.notice.warn", { style: { marginBottom: "var(--s3)" } }, icon("alert"),
           h("div", "These folders will be skipped because a file already uses a target name: ",
             h("span.mono", conflicts.map((c) => `${c.folder} (${c.conflicts.slice(0, 3).join(", ")}…)`).join("; ")))) : null,
         h("div.rename-list", plans.flatMap((p) => p.items.slice(0, 60).map((it) =>

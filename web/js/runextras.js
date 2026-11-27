@@ -50,7 +50,7 @@ export function samplesCard(r, onChange) {
         return c ? h("button.sc", { class: isBest ? "best" : "", onclick: () => lightbox(order, order.findIndex((o) => o.path === c.path)) }, h("img", { src: thumbUrl(c.path, 320), loading: "lazy" })) : h("div");
       }),
     ]));
-  return card({ title: "Samples", actions: h("div.row", { style: { gap: "10px" } },
+  return card({ title: "Samples", actions: h("div.row", { style: { gap: "var(--s3)" } },
       h("span.small.faint", `${g.cells.length} images · ☆ marks your best epoch`),
       order.length > 1 ? btn("Compare", { icon: "columns", size: "sm", onclick: () => compareModal(order) }) : null) },
     h("div", { style: { overflowX: "auto" } }, grid));
@@ -98,7 +98,7 @@ export function compareModal(items) {
   return modal("Compare samples", h("div.stack.sm",
     h("div.grid.c2", h("div.field", h("label", "Left / first"), pick(A, (v) => { A = v; })), h("div.field", h("label", "Right / second"), pick(B, (v) => { B = v; }))),
     stage,
-    h("div.row", { style: { gap: "14px" } }, modeSeg, range)),
+    h("div.row", { style: { gap: "var(--s4)" } }, modeSeg, range)),
     [{ label: "Close", kind: "ghost" }], { wide: true });
 }
 
@@ -138,7 +138,7 @@ export async function metaModal(path, run) {
   } });
 
   const body = h("div.stack",
-    h("div.row", { style: { alignItems: "flex-start", gap: "18px" } },
+    h("div.row", { style: { alignItems: "flex-start", gap: "20px" } },
       h("div.stack.sm", thumbEl, upload, btn("Upload", { icon: "upload", size: "sm", kind: "ghost", onclick: () => upload.click() }),
         ed["modelspec.thumbnail"] ? btn("Remove", { size: "sm", kind: "ghost", onclick: () => { ed["modelspec.thumbnail"] = ""; thumbImage = null; thumbEl.style.visibility = "hidden"; } }) : null),
       h("div.stack.sm", { style: { flex: 1 } },
@@ -148,9 +148,9 @@ export async function metaModal(path, run) {
         field("modelspec.usage_hint", "Usage hint", "e.g. use at 0.8 strength"))),
     cells.length ? h("div.field", h("label", "Use a sample as the thumbnail"), picks) : null,
     h("div.grid.c2",
-      h("div", h("div.card-title", { style: { marginBottom: "8px" } }, "Training info"), kv(Object.entries(m.summary))),
-      h("div", h("div.card-title", { style: { marginBottom: "8px" } }, "Most common training tags"),
-        h("div.row", { style: { gap: "6px" } }, m.top_tags.slice(0, 24).map(([t, n]) => h("span.tag", t, h("b", String(n))))))),
+      h("div", h("div.card-title", { style: { marginBottom: "var(--s2)" } }, "Training info"), kv(Object.entries(m.summary))),
+      h("div", h("div.card-title", { style: { marginBottom: "var(--s2)" } }, "Most common training tags"),
+        h("div.row", { style: { gap: "var(--s2)" } }, m.top_tags.slice(0, 24).map(([t, n]) => h("span.tag", t, h("b", String(n))))))),
     h("p.tiny.faint", { style: { margin: 0 } }, `${m.name} · ${m.tensors} tensors. Only the header is rewritten; the weights aren't touched.`));
 
   const res = await modal("LoRA info", body, [{ label: "Cancel", kind: "ghost", value: false }, { label: "Save into file", kind: "primary", icon: "save", value: true }]);
@@ -195,7 +195,7 @@ export function swarmCard(ctx, r) {
       try { const res = await api.comfy_send(r.id, which); toast("Copied to ComfyUI", `${res.copied.length} file(s). Refresh ComfyUI's LoRA list.`, "good", "check"); drawComfy(); }
       catch (e) { toastError(e); }
     };
-    clear(comfySlot, h("div.row", { style: { marginTop: "16px", paddingTop: "14px", borderTop: "1px solid var(--line)" } },
+    clear(comfySlot, h("div.row", { style: { marginTop: "var(--s4)", paddingTop: "var(--s4)", borderTop: "1px solid var(--line)" } },
       h("b.small", "ComfyUI"),
       sent.length ? h("span.small", `${sent.length} file(s) copied`) : h("span.small.muted", "Not copied yet."),
       h("div.spacer"),
@@ -229,7 +229,7 @@ export function swarmCard(ctx, r) {
         draw();
       } catch (e) { toastError(e); }
     };
-    const sendRow = h("div.row", { style: { marginTop: "12px" } },
+    const sendRow = h("div.row", { style: { marginTop: "var(--s3)" } },
       sent.length ? h("span.small", icon("circleCheck"), ` ${sent.length} file(s) in SwarmUI → `, h("span.mono.small", sent[0].split("/").slice(-2, -1)[0])) : h("span.small.muted", "Not copied to SwarmUI yet."),
       h("div.spacer"),
       run.best ? btn("Copy best epoch", { icon: "star", size: "sm", kind: "primary", onclick: send("best") }) : null,
@@ -277,12 +277,12 @@ export function swarmCard(ctx, r) {
       } catch (e) { toastError(e); }
       go.disabled = false;
     } });
-    return h("div.stack.sm", { style: { marginTop: "18px", paddingTop: "16px", borderTop: "1px solid var(--line)" } },
+    return h("div.stack.sm", { style: { marginTop: "20px", paddingTop: "var(--s4)", borderTop: "1px solid var(--line)" } },
       h("div.row", h("b", "Test grid"), h("span.small.muted", "Each LoRA file × each strength.")),
       h("div.grid.c2",
         h("div.field", h("label", "Base model"), modelSel),
         h("div.field", h("label", "Strengths"), inp("strengths"))),
-      h("div.field", h("label", "LoRA files"), h("div.row", { style: { gap: "16px" } }, sent.map((f) => h("label.check",
+      h("div.field", h("label", "LoRA files"), h("div.row", { style: { gap: "var(--s4)" } }, sent.map((f) => h("label.check",
         h("input", { type: "checkbox", checked: files.has(f), onchange: (e) => { e.target.checked ? files.add(f) : files.delete(f); } }), f.split("/").pop().replace(".safetensors", ""))))),
       h("div.grid.c2",
         h("div.field", h("label", "Prompts (one per line)"), h("textarea.input", { rows: 3, value: o.prompts, oninput: (e) => { o.prompts = e.target.value; } })),
@@ -297,7 +297,7 @@ export function swarmCard(ctx, r) {
     const items = [];
     const at = {};
     for (const c of g.cells) if (c.path) at[`${c.p}|${c.l}|${c.s}`] = c;
-    return h("div.stack", { style: { marginTop: "18px" } }, g.prompts.map((p, pi) => {
+    return h("div.stack", { style: { marginTop: "20px" } }, g.prompts.map((p, pi) => {
       const grid = h("div.sgrid", { style: { gridTemplateColumns: `minmax(140px, 200px) repeat(${g.strengths.length}, minmax(96px, 200px))` } },
         h("div.sp", h("b", "Prompt ", pi + 1), h("br"), p), g.strengths.map((s) => h("div.sh", `Strength ${s}`)),
         g.loras.map((l, li) => [

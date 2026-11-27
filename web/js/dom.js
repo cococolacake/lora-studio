@@ -159,7 +159,7 @@ export function modal(title, body, actions = [], opts = {}) {
 }
 
 export async function confirmBox(title, text, okLabel = "Continue", danger = false) {
-  const r = await modal(title, h("p.muted", { style: { margin: "0 0 6px" } }, text),
+  const r = await modal(title, h("p.muted", { style: { margin: "0 0 var(--s2)" } }, text),
     [{ label: "Cancel", kind: "ghost", value: false }, { label: okLabel, kind: danger ? "danger solid" : "primary", value: true }]);
   return r === true;
 }

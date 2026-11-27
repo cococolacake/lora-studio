@@ -23,7 +23,7 @@ export function resize(ctx, params, root) {
   root.append(ctx.header({ title: "Crop & resize", icon: "crop" }),
     h("div.stack",
       card({ title: "Folder" }, folderBar(ctx, folder, (f) => { folder = f; load(); })),
-      card({ title: "Batch resize" }, optsSlot, h("div", { style: { marginTop: "14px" } }, prog.el)),
+      card({ title: "Batch resize" }, optsSlot, h("div", { style: { marginTop: "var(--s4)" } }, prog.el)),
       gridSlot));
 
   function wouldChange(img) {
@@ -49,7 +49,7 @@ export function resize(ctx, params, root) {
       exact: `Exactly ${o.width}×${o.height}, cropped ${o.anchor === "top" ? "from the top" : "around the centre"}.`,
     }[o.mode];
     clear(optsSlot, h("div.stack",
-      h("div.row", { style: { gap: "22px", alignItems: "flex-end" } },
+      h("div.row", { style: { gap: "var(--s5)", alignItems: "flex-end" } },
         h("div.field", h("label", "Mode"), seg([["long", "Long side"], ["short", "Short side"], ["exact", "Exact size (crop)"]], o.mode, (v) => {
           o.mode = v; if (v === "exact" && !o.height) o.height = o.width; save(); drawOpts(); })),
         h("div.field", h("label", o.mode === "exact" ? "Size" : "Pixels"), custom),
@@ -84,7 +84,7 @@ export function resize(ctx, params, root) {
     const sizes = {};
     for (const i of images) if (i.w) sizes[`${i.w}×${i.h}`] = (sizes[`${i.w}×${i.h}`] || 0) + 1;
     clear(gridSlot, card({ title: "Images", actions: h("span.small.faint", "Click to crop one image") },
-      h("div.row", { style: { marginBottom: "12px", gap: "6px" } }, Object.entries(sizes).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([s, c]) => h("span.tag", s, h("b", String(c))))),
+      h("div.row", { style: { marginBottom: "var(--s3)", gap: "var(--s2)" } }, Object.entries(sizes).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([s, c]) => h("span.tag", s, h("b", String(c))))),
       images.length ? h("div.vgrid.small-tiles", images.map((img) => h("button.vtile", { onclick: async () => {
         if (await openCropper(img)) { bust[img.path] = Date.now(); load(); }
       }, title: `${img.name} · ${img.w}×${img.h}` },

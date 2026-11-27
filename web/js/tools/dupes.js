@@ -19,12 +19,12 @@ export function dupes(ctx, params, root) {
     h("div.stack",
       card({ title: "Scan" },
         folderBar(ctx, folder, (f) => { folder = f; drawBin(); }, { button: "Use", icon: "check" }),
-        h("div.grid.c3", { style: { marginTop: "16px", alignItems: "end" } },
+        h("div.grid.c3", { style: { marginTop: "var(--s4)", alignItems: "end" } },
           h("div.field", h("label", "Similarity ", thrLbl, h("span.faint.small", " higher = stricter")),
             rangeEl(o.threshold, 0.8, 0.99, 0.01, (v) => { o.threshold = v; thrLbl.textContent = v.toFixed(2); store.set("dupes", o); })),
           h("div.field", checkEl(o.recursive, (v) => { o.recursive = v; store.set("dupes", o); }, "Include subfolders")),
           h("div.row", h("div.spacer"), runBtn)),
-        h("div", { style: { marginTop: "14px" } }, prog.el)),
+        h("div", { style: { marginTop: "var(--s4)" } }, prog.el)),
       binSlot,
       results));
 
