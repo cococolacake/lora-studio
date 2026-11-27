@@ -9,6 +9,7 @@ Every change follows these steps. Coco is new to git: explain git and terminal s
 1. **Issue.** Every change starts as a GitHub issue.
    - Features: use the `grilling` skill to interview Coco until the plan is settled, write the plan into the issue, and wait for Coco to approve it (label `ready`).
    - Tiny fixes (a typo, a colour, a one-line bug): a two- or three-line plan in the issue is enough.
+   - Before posting a plan, check each worked example in it (a rounding, a before and after) against the rule it illustrates.
    - Issues opened by other people: label and summarize them. Build nothing until Coco picks one.
 2. **Build** on a branch named after the issue, e.g. `42-caption-search`, starting from the latest `main` on GitHub rather than Coco's local folder. Add a test with every feature or bug fix. Run the lint checks from `CONTRIBUTING.md` before review.
 3. **Review.** A subagent that didn't write the code runs `code-review` on the branch, against the issue and "Keep it lean" below. Fix what it finds, or say why not.
