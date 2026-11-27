@@ -29,7 +29,6 @@ export function viewer(ctx, params, root) {
   const gridEl = h("div.vgrid");
   const listInfo = h("span.small.faint");
   const editor = h("div.stack.sm");
-  const binBtn = h("div");
   const filterRow = h("div.row");
 
   root.append(headSlot,

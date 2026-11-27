@@ -18,7 +18,6 @@ export function resize(ctx, params, root) {
   const save = () => store.set("resize", o);
   const prog = taskProgress();
   const optsSlot = h("div");
-  const summary = h("div.small.muted");
   const gridSlot = h("div");
 
   root.append(ctx.header({ title: "Crop & resize", icon: "crop" }),

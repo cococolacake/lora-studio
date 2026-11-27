@@ -1,0 +1,5 @@
+# Leftover checks only: unused imports and variables, and names defined twice.
+target-version = "py310"
+
+[lint]
+select = ["F401", "F841", "F811"]

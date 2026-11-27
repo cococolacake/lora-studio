@@ -19,7 +19,18 @@ Python 3.10 or newer. `--browser` opens LoRA Studio in a normal browser tab with
 python -m pytest -q tests
 ```
 
-No GPU or sd-scripts needed. There's also a browser smoke test that opens every page and dataset tool and fails on any JavaScript error (it's what CI runs):
+No GPU or sd-scripts needed.
+
+Check for leftover code (unused imports and variables, names defined twice, unreachable code). CI runs the same. `npm install --no-save` removes whatever it installed before, so install ESLint again after the smoke test's Playwright install:
+
+```
+python -m pip install ruff
+ruff check .
+npm install --no-save eslint@9
+npx eslint .
+```
+
+There's also a browser smoke test that opens every page and dataset tool and fails on any JavaScript error (it's what CI runs):
 
 ```
 npm install --no-save playwright@1 && npx playwright install chromium

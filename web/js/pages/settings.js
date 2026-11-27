@@ -2,7 +2,7 @@
 import { api } from "../api.js";
 import { h, btn, card, toast, toastError, promptBox, confirmBox, clear, modal } from "../dom.js";
 import { icon } from "../icons.js";
-import { seg, switchEl, rangeEl, pathInput } from "../components.js";
+import { seg, switchEl, pathInput } from "../components.js";
 import { applyTheme } from "../theme.js";
 import { updateNow } from "../selfupdate.js";
 import { cssThemes } from "../csstheme.js";
