@@ -27,11 +27,13 @@ SCRIPTS = ["anima_train_network.py", "flux_train_network.py", "sdxl_train_networ
 CAPTIONS = ["1girl, solo, smile, looking at viewer, upper body", "1girl, full body, standing, outdoors",
             "1girl, sitting, reading a book, window light", "1girl, portrait, close-up, soft lighting"]
 PROMPTS = "1girl, solo, smile, looking at viewer, upper body\n1girl, full body, standing, outdoors\n1girl, sitting, reading a book, window light"
-HIDE_PATHS_JS = """(pairs) => {
+HIDE_PATHS_JS = r"""(pairs) => {
   const swap = (s) => pairs.reduce((t, [from, to]) => t.split(from).join(to), s);
   const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-  for (let n; (n = walk.nextNode());) n.nodeValue = swap(n.nodeValue);
-  for (const el of document.querySelectorAll("input, textarea")) { el.value = swap(el.value); el.placeholder = swap(el.placeholder); }
+  // a Windows path keeps its backslashes after the swap: /home/you\datasets becomes /home/you/datasets
+  const tidy = (s) => swap(s).replace(/\/home\/you[^\s"'<>]*/g, (p) => p.split("\\").join("/"));
+  for (let n; (n = walk.nextNode());) n.nodeValue = tidy(n.nodeValue);
+  for (const el of document.querySelectorAll("input, textarea")) { el.value = tidy(el.value); el.placeholder = tidy(el.placeholder); }
 }"""
 
 
@@ -74,7 +76,7 @@ def main():
         return reply.get("result")
 
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
-        tmp = Path(tmp)
+        tmp = Path(tmp).resolve()   # the long form, in case Windows handed out a short C:\Users\COCO~1 path
         make_sd_scripts(tmp / "sd-scripts")
         make_dataset(tmp / "datasets" / "my_character")
         # Shown in place of the temporary folder, so no temp path or username appears.
@@ -97,11 +99,16 @@ def main():
                                   "theme": {**theme, "simpleWhileTraining": False}})
             take(api, base, tmp, swaps)
         finally:
+            # the server doesn't stop a training when it's closed this way, so stop it first
+            try:
+                api("stop_current")
+            except OSError:
+                pass
             server.terminate()
             server.wait(10)
 
 
-def run_job(api, tmp, name, delay):
+def job_for(api, tmp, name, delay):
     script = "anima_train_network.py"
     schema = api("schema", script)
     return {
@@ -116,12 +123,23 @@ def run_job(api, tmp, name, delay):
     }
 
 
+def wait_for(api, run_id, ready):
+    while True:
+        status = next(r["status"] for r in api("runs") if r["id"] == run_id)
+        if ready(status):
+            if status not in ("running", "done"):
+                sys.exit(f"A fake training run ended as {status!r}. Its log is on the Runs page.")
+            return
+        if status not in ("queued", "running"):
+            sys.exit(f"A fake training run ended as {status!r} too early.")
+        time.sleep(0.5)
+
+
 def take(api, base, tmp, swaps):
     # Two finished runs for the history and the sample grid, then one that's still training during the shots.
     for name in ("my_character v0", "my_character v1"):
-        done = api("enqueue", run_job(api, tmp, name, 0.01), True)
-        while next(r["status"] for r in api("runs") if r["id"] == done) != "done":
-            time.sleep(0.5)
+        finished = api("enqueue", job_for(api, tmp, name, 0.01), True)
+        wait_for(api, finished, lambda status: status not in ("queued", "running"))
 
     with sync_playwright() as p:
         browser = p.chromium.launch()
@@ -149,7 +167,7 @@ def take(api, base, tmp, swaps):
         page.click('#main button:has-text("Crop")')
         shot("crop")
         page.keyboard.press("Escape")
-        page.evaluate(f'ctx.go("runs", {{ run: "{done}" }})')
+        page.evaluate(f'ctx.go("runs", {{ run: "{finished}" }})')
         page.wait_for_timeout(1200)
         page.evaluate("""() => {
           const c = [...document.querySelectorAll(".card")].find((el) => el.querySelector(".card-title")?.textContent === "Samples");
@@ -157,11 +175,19 @@ def take(api, base, tmp, swaps):
           c.scrollIntoView({ block: "start" });
         }""")
         shot("samples")
+        # back to the default for this one shot, since this page shows the setting itself
+        theme = api("bootstrap")["settings"]["theme"]
+        api("save_settings", {"theme": {**theme, "simpleWhileTraining": True}})
+        page.reload()
+        page.wait_for_function("window.ctx && window.ctx.boot")
         shot("appearance", 'ctx.go("settings", { section: "appearance" })')
+        api("save_settings", {"theme": {**theme, "simpleWhileTraining": False}})
+        page.reload()
+        page.wait_for_function("window.ctx && window.ctx.boot")
 
-        live = api("enqueue", run_job(api, tmp, "my_character v2", 0.05), True)
-        while api("run_metrics", live)["total"] < 350:   # partway into epoch 3, so the loss chart has a shape
-            time.sleep(0.5)
+        live = api("enqueue", job_for(api, tmp, "my_character v2", 0.05), True)
+        # partway into epoch 3, so the loss chart has a shape
+        wait_for(api, live, lambda status: status == "running" and api("run_metrics", live)["total"] >= 350)
         shot("home", 'ctx.go("home")')
         shot("queue", 'ctx.go("queue")')
         page.click('.rail-btn:has-text("Dark")')
