@@ -57,7 +57,7 @@ export default {
           h("div.group-label", fam),
           list.map((s) => h("button.side-item", { class: s.file === draft.script ? "active" : "", onclick: () => pick(s.file) },
             icon(s.kind.startsWith("LoRA") ? "sparkle" : s.kind === "Full fine-tune" ? "box" : "wand"),
-            h("span.grow", h("span", s.kind.startsWith("LoRA") ? "LoRA" : s.kind), h("span.sub", s.file)))),
+            h("span.grow", h("span", s.kind.startsWith("LoRA") ? "LoRA" : s.kind), h("span.sub", { title: s.file }, s.file)))),
         ]),
         h("div.sep"),
         h("div.group-label", "Presets"),
