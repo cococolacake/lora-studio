@@ -447,7 +447,8 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px;
   .grid.c5 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
-.stack > .banner { margin-bottom: var(--s2); }
+/* in a stack the gap spaces the header; a margin as well doubled it */
+.stack > .banner { margin-bottom: 0; }
 .kv { display: flex; flex-direction: column; }
 .kv-row { display: flex; justify-content: space-between; gap: var(--s4); padding: var(--s2) 0; border-top: 1px solid var(--line); font-size: 13.5px; }
 .kv-row:first-child { border-top: 0; padding-top: 0; }
