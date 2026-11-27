@@ -160,7 +160,7 @@ function backupCard(ctx) {
 
 function about(ctx, root) {
   const s = ctx.boot.settings;
-  const upd = h("div.row", { style: { gap: "10px", flexWrap: "wrap" } });
+  const upd = h("div.row", { style: { gap: "var(--s3)", flexWrap: "wrap" } });
   const showUpd = (u) => {
     if (u && !u.off) ctx.update = u;
     clear(upd, !u || u.off ? null
@@ -172,17 +172,17 @@ function about(ctx, root) {
     h("div.stack",
       card(null, h("p", { style: { margin: 0 } }, "A front end for kohya-ss/sd-scripts.")),
       card({ title: "Updates" },
-        h("div.row", { style: { gap: "12px", flexWrap: "wrap" } },
+        h("div.row", { style: { gap: "var(--s3)", flexWrap: "wrap" } },
           switchEl(s.check_app_updates !== false, async (v) => { await ctx.saveSettings({ check_app_updates: v }); }, "Tell me when a new version is out"),
           btn("Check now", { icon: "refresh", onclick: async () => { clear(upd, h("span.small.muted", "Checking…")); try { showUpd(await api.app_update(true)); } catch (e) { toastError(e); } } })),
-        h("div.field", { style: { marginTop: "10px", maxWidth: "360px" } }, h("label", "Update from"),
+        h("div.field", { style: { marginTop: "var(--s3)", maxWidth: "360px" } }, h("label", "Update from"),
           h("select.select", { onchange: async (e) => { await ctx.saveSettings({ update_channel: e.target.value }); clear(upd, h("span.small.muted", "Checking…")); try { showUpd(await api.app_update(true)); } catch (err) { toastError(err); } } },
             h("option", { value: "release", selected: s.update_channel !== "main" }, "Releases"),
             h("option", { value: "main", selected: s.update_channel === "main" }, "Main branch (unreleased, less tested)"))),
-        h("div", { style: { marginTop: "8px" } }, upd)),
+        h("div", { style: { marginTop: "var(--s2)" } }, upd)),
       card({ title: "Report a problem" },
         h("p.small.muted", { style: { marginTop: 0 } }, "Your setup info and the last failed run's log, for a bug report. Your name is hidden from paths and site logins are never included."),
-        h("div.row", { style: { gap: "10px", flexWrap: "wrap" } },
+        h("div.row", { style: { gap: "var(--s3)", flexWrap: "wrap" } },
           btn("Copy diagnostics", { icon: "copy", kind: "primary", onclick: () => copyDiagnostics() }),
           btn("Report a bug", { icon: "alert", onclick: () => api.open_url("https://github.com/cococolacake/lora-studio/issues/new/choose").catch(toastError) })))));
 }

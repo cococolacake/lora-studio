@@ -314,11 +314,11 @@ export function viewer(ctx, params, root) {
         h("div.field", h("label", "Character threshold"), num("char_threshold", 0.01)),
         h("div.field", h("label", "Trigger word (put first)"), h("input.input", { value: o.trigger, placeholder: "optional", onchange: (e) => { o.trigger = e.target.value; saveO(); } })),
         h("div.field", h("label", "Never add these tags"), h("input.input", { value: o.blacklist, placeholder: "e.g. simple background", onchange: (e) => { o.blacklist = e.target.value; saveO(); } }))),
-      h("div.row", { style: { marginTop: "14px", gap: "18px" } },
+      h("div.row", { style: { marginTop: "var(--s4)", gap: "20px" } },
         h("div.field", h("label", "Existing captions"), seg([["overwrite", "Replace"], ["merge", "Add to existing"], ["skip", "Only untagged"]], o.mode, (v) => { o.mode = v; saveO(); })),
         h("div.field", h("label", "Images"), seg([["all", "All"], ["filtered", `Filtered (${shown.length})`]], o.scope, (v) => { o.scope = v; saveO(); })),
         h("div.spacer"), run),
-      h("div", { style: { marginTop: "12px" } }, prog.el), notes,
+      h("div", { style: { marginTop: "var(--s3)" } }, prog.el), notes,
       h("p.tiny.faint", { style: { marginBottom: 0 } }, "The model (~1 GB) downloads on first use."));
   }
 
@@ -342,7 +342,7 @@ export function viewer(ctx, params, root) {
         h("div.field", h("label", "Tags (comma separated)"), h("div.row.nowrap", inp("tags", "smile, hat"),
           btn("Add", { onclick: () => run("add") }), btn("Remove", { kind: "danger", onclick: () => run("delete") }))),
         h("div.field", h("label", "Replace those tags with"), h("div.row.nowrap", inp("replace_with", "grin"), btn("Replace", { onclick: () => run("replace") })))),
-      h("div.row", { style: { marginTop: "12px" } },
+      h("div.row", { style: { marginTop: "var(--s3)" } },
         checkEl(onlyFiltered, (x) => { onlyFiltered = x; }, `Only the filtered images (${shown.length})`), h("div.spacer"),
         h("span.small.faint", "Undo with the ↺ button in the header.")));
   }
@@ -366,7 +366,7 @@ export function viewer(ctx, params, root) {
       az: (a, b) => a[0].localeCompare(b[0]),
     };
     let close;
-    const list = h("div.bars", { style: { maxHeight: "52vh", overflow: "auto", paddingRight: "6px" } });
+    const list = h("div.bars", { style: { maxHeight: "52vh", overflow: "auto", paddingRight: "var(--s2)" } });
     const act = async (fn) => { try { await fn(); close(); load(); } catch (e) { if (!e.quiet) toastError(e); } };
     const draw = () => clear(list, all.filter(([t]) => t.includes(q)).sort(sorters[sort]).slice(0, 500).map(([t, n]) =>
       h("div.bar-row.stat-row", { style: { gridTemplateColumns: "1fr 110px 74px auto auto" } },
@@ -386,7 +386,7 @@ export function viewer(ctx, params, root) {
     draw();
     const p = modal(`Tag overview · ${all.length} tags`, h("div.stack.sm",
       h("p.small.muted", { style: { margin: 0 } }, `${data.images.length} images${nocap ? `, ${nocap} without a caption` : ""}. Click a tag to see its images; “Rarest” is handy for spotting typos and junk tags.`),
-      h("div.row", { style: { gap: "10px", flexWrap: "wrap" } },
+      h("div.row", { style: { gap: "var(--s3)", flexWrap: "wrap" } },
         h("div.search", { style: { flex: 1, minWidth: "200px" } }, icon("search"), h("input.input", { placeholder: "Search tags", oninput: (e) => { q = e.target.value.toLowerCase(); draw(); } })),
         seg([["most", "Most used"], ["rare", "Rarest"], ["az", "A–Z"]], sort, (v) => { sort = v; draw(); })),
       list),
@@ -411,7 +411,7 @@ export function viewer(ctx, params, root) {
       ["body", "Body & features", ""],
       ["outfit", "Outfit & accessories", "Only the outfit they nearly always wear."],
     ];
-    const list = h("div.stack.sm", { style: { maxHeight: "48vh", overflow: "auto", paddingRight: "6px" } });
+    const list = h("div.stack.sm", { style: { maxHeight: "48vh", overflow: "auto", paddingRight: "var(--s2)" } });
     let goBtn = null;
     const common = (t) => t.group === "name" || t.count / found.total >= 0.5;
     const refreshBtn = () => {
@@ -449,7 +449,7 @@ export function viewer(ctx, params, root) {
       h("p.small.muted", { style: { margin: 0 } },
         "Ticked tags are learned by the trigger word instead. ",
         ""),
-      h("div.row", { style: { gap: "10px", flexWrap: "wrap", alignItems: "flex-end" } },
+      h("div.row", { style: { gap: "var(--s3)", flexWrap: "wrap", alignItems: "flex-end" } },
         h("div.field", { style: { flex: 1, minWidth: "180px" } }, h("label", "Trigger word (put first)"),
           h("input.input", { value: trig, placeholder: "e.g. mychar", onchange: (e) => { trig = e.target.value.trim(); fetchTags(); } })),
         h("div.row.nowrap",

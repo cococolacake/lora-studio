@@ -147,7 +147,7 @@ export function datasetEditor(ds, onchange, { compact = false } = {}) {
         h("div.field", h("label", "Max bucket"), num("max_bucket_reso", "2048")),
         h("div.field", h("label", "Bucket step"), num("bucket_reso_steps", "64")),
       ] : null);
-    const flags = h("div.row", { style: { gap: "22px" } },
+    const flags = h("div.row", { style: { gap: "var(--s5)" } },
       checkEl(ds.shuffle_caption, (v) => set("shuffle_caption", v), "Shuffle captions"),
       checkEl(ds.flip_aug, (v) => set("flip_aug", v), "Flip augmentation"));
     clear(wrap, subsets, compact ? null : h("hr.soft"), opts, compact ? null : bucket, compact ? null : flags);

@@ -57,7 +57,7 @@ export default {
           h("div.group-label", fam),
           list.map((s) => h("button.side-item", { class: s.file === draft.script ? "active" : "", onclick: () => pick(s.file) },
             icon(s.kind.startsWith("LoRA") ? "sparkle" : s.kind === "Full fine-tune" ? "box" : "wand"),
-            h("span.grow", h("span", s.kind.startsWith("LoRA") ? "LoRA" : s.kind), h("span.sub", s.file)))),
+            h("span.grow", h("span", s.kind.startsWith("LoRA") ? "LoRA" : s.kind), h("span.sub", { title: s.file }, s.file)))),
         ]),
         h("div.sep"),
         h("div.group-label", "Presets"),
@@ -362,12 +362,12 @@ export default {
       const sections = h("div.stack");
 
       const runCard = card(null,
-        h("div.row", { style: { gap: "14px" } },
+        h("div.row", { style: { gap: "var(--s4)" } },
           h("div.field", { style: { flex: "1", minWidth: "220px" } }, h("label", "Run name"),
             h("input.input", { value: draft.name || "", placeholder: draft.args.output_name || "My character v1", onchange: (e) => { draft.name = e.target.value; save(); } })),
           h("div.field", h("label", "View"), seg([["simple", "Simple", "sparkle"], ["advanced", "All options", "sliders"]], draft.mode, (v) => { draft.mode = v; save(); drawSections(); toggleSearch(); })),
         ));
-      const searchRow = h("div.row", { style: { marginTop: "14px" } },
+      const searchRow = h("div.row", { style: { marginTop: "var(--s4)" } },
         h("div.search", { style: { flex: 1 } }, icon("search"), h("input.input", { placeholder: `Search ${schema.args.length} options…`, oninput: (e) => { search = e.target.value.toLowerCase(); drawSections(); } })),
         switchEl(false, (v) => { onlyChanged = v; drawSections(); }, "Only changed"));
       const toggleSearch = () => searchRow.classList.toggle("hidden", draft.mode !== "advanced");
@@ -397,7 +397,7 @@ export default {
             byKey.discrete_flow_shift ? h("div.field", h("label", "Flow shift"), num("flow_shift")) : null,
             h("div.field", h("label", "Every N epochs"), num("every_n_epochs")),
             h("div.field", h("label", "Quality tags go"), seg([["start", "First"], ["end", "Last"]], sc.quality_at, (v) => set("quality_at", v)))),
-          h("div.row", { style: { gap: "22px" } },
+          h("div.row", { style: { gap: "var(--s5)" } },
             checkEl(sc.use_trigger, (v) => set("use_trigger", v), "Add the trigger word"),
             checkEl(sc.at_first, (v) => set("at_first", v), "Also before training starts")));
         return card({ title: "Sample images", actions: switchEl(sc.enabled, (v) => { set("enabled", v); body.classList.toggle("dim", !v); }, "Make previews while training") },
@@ -416,14 +416,14 @@ export default {
             h("div.field", h("label", "LoRA title"), inp("title", draft.args.output_name || "My character")),
             h("div.field", h("label", "Trigger word"), inp("trigger", "mychar")),
             h("div.field", h("label", "Author"), inp("author", "you"))),
-          h("div.grid.c2", { style: { marginTop: "14px" } },
+          h("div.grid.c2", { style: { marginTop: "var(--s4)" } },
             h("div.field", h("label", "Description"), inp("description", "What it's for, recommended strength…")),
             h("div.field", h("label", "Tags"), inp("tags", "character, anime"))),
-          h("div.row", { style: { marginTop: "16px", gap: "26px", alignItems: "flex-end" } },
+          h("div.row", { style: { marginTop: "var(--s4)", gap: "28px", alignItems: "flex-end" } },
             h("div.field", h("label", "Thumbnail"), seg([["sample", "Latest sample"], ["none", "None"]], li.thumbnail || "sample", (v) => set("thumbnail", v))),
             h("div.field", h("label", "Copy into SwarmUI"), seg([["", "No"], ["final", "Final LoRA"], ["all", "Every epoch"]], draft.send_to_swarm || "", (v) => { draft.send_to_swarm = v || null; save(); })),
             comfyOwn ? h("div.field", h("label", "Copy into ComfyUI"), seg([["", "No"], ["final", "Final LoRA"], ["all", "Every epoch"]], draft.send_to_comfy || "", (v) => { draft.send_to_comfy = v || null; save(); })) : null,
-            swarmOk || comfyOwn ? null : h("span.small.faint", { style: { paddingBottom: "8px" } }, "Set up SwarmUI or ComfyUI first.")),
+            swarmOk || comfyOwn ? null : h("span.small.faint", { style: { paddingBottom: "var(--s2)" } }, "Set up SwarmUI or ComfyUI first.")),
           h("p.tiny.faint", { style: { marginBottom: 0 } }, "Saved inside the .safetensors files for SwarmUI's model browser."));
       }
 
@@ -457,7 +457,7 @@ export default {
         cards.push(card({ title: "Extra command-line arguments" },
           h("input.input.mono", { value: draft.extra_args, placeholder: "--timestep_sampling shift --discrete_flow_shift 0.85",
             onchange: (e) => { draft.extra_args = e.target.value; save(); } }),
-          h("div.help.small.faint", { style: { marginTop: "8px" } }, "Overrides anything above.")));
+          h("div.help.small.faint", { style: { marginTop: "var(--s2)" } }, "Overrides anything above.")));
         clear(sections, cards);
       }
       drawSections();

@@ -39,12 +39,12 @@ export function health(ctx, params, root) {
     root.append(h("div.stack",
       card({ title: "What to check", actions: ctx.draft ? chip("Shared with the Train page", "accent", "wand") : null },
         datasetEditor(ds, sync, { compact: true }),
-        h("div.grid.c4", { style: { marginTop: "16px" } },
+        h("div.grid.c4", { style: { marginTop: "var(--s4)" } },
           h("div.field", h("label", "Trigger word"), inp("trigger", "e.g. mychar")),
           h("div.field", h("label", "Smallest OK side (px)"), inp("min_side", "512", "number")),
           h("div.field", h("label", "Epochs"), inp("epochs", "10", "number")),
           h("div.field", h("label", "Gradient accumulation"), inp("grad", "1", "number"))),
-        h("div.row", { style: { marginTop: "16px" } }, h("div.spacer"), runBtn)),
+        h("div.row", { style: { marginTop: "var(--s4)" } }, h("div.spacer"), runBtn)),
       results));
 
     async function run() {
@@ -107,7 +107,7 @@ export function health(ctx, params, root) {
           card({ title: "Buckets" }, r.buckets.length ? h("div.bars", r.buckets.slice(0, 14).map((b) =>
             h("div.bar-row", h("span.mono.small", `${b.w}×${b.h}`), h("div.b", h("i", { style: { width: `${(b.count / maxB) * 100}%` } })), h("span.nums.small", String(b.count)))))
             : h("p.muted.small", "No images.")),
-          card({ title: "Most common tags" }, h("div.row", { style: { gap: "6px" } },
+          card({ title: "Most common tags" }, h("div.row", { style: { gap: "var(--s2)" } },
             r.top_tags.map(([t, n]) => h("span.tag", t, h("b", String(n))))))),
         card({ title: "Folders" }, h("div.list", r.folders.map((f) => h("div.list-row",
           h("div.ic", icon("folder")),

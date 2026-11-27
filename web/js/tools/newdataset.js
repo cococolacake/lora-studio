@@ -33,7 +33,7 @@ export function newDataset(ctx, params, root) {
         h("div.stepc", h("b", "Filter"), "skips tiny images"),
         h("div.stepc", h("b", "Name & caption"), "DATA_1, DATA_2… with tags as captions"),
         h("div.stepc", h("b", "Check"), "finds look-alikes for you to review")), go),
-      h("div", { style: { marginTop: "14px" } }, prog.el)),
+      h("div", { style: { marginTop: "var(--s4)" } }, prog.el)),
       resultSlot));
 
   // ---- source ----
@@ -49,7 +49,7 @@ export function newDataset(ctx, params, root) {
     if (!gdl.installed) {
       clear(srcSlot, h("div.stack", choose, h("div.notice", icon("info"), h("div", { style: { flex: 1 } },
         h("b", "gallery-dl isn't installed yet."), h("div.small", "Installs into LoRA Studio's folder."),
-        h("div", { style: { marginTop: "8px" } }, btn("Install gallery-dl", { icon: "download", size: "sm", kind: "primary", onclick: async (e) => {
+        h("div", { style: { marginTop: "var(--s2)" } }, btn("Install gallery-dl", { icon: "download", size: "sm", kind: "primary", onclick: async (e) => {
           e.currentTarget.disabled = true; e.currentTarget.lastChild.textContent = "Installing…";
           const t = await watchTask(await api.gdl_install());
           if (t?.status === "done") { gdl = null; toast("gallery-dl installed", "", "good", "check"); } else toast("Install failed", t?.lines.at(-1) || "", "bad", "alert");
@@ -78,14 +78,14 @@ export function newDataset(ctx, params, root) {
       h("div.grid.c3",
         h("div.field.span2", h("label", "Save the dataset in"), pathInput(o.dest, (v) => { o.dest = v; }, { folder: true, placeholder: "C:/datasets/my_character" })),
         h("div.field", h("label", "Trigger word"), h("input.input", { value: o.trigger, placeholder: "optional", oninput: (e) => { o.trigger = e.target.value; save(); } }))),
-      h("div.row", { style: { gap: "26px", alignItems: "flex-end" } },
+      h("div.row", { style: { gap: "28px", alignItems: "flex-end" } },
         h("div.field", h("label", "Captions"), seg([["metadata", "From the site's tags"], ["none", "None (auto-tag later)"]], o.captions, (v) => { o.captions = v; save(); drawDataset(); })),
         h("div.field", h("label", "Skip images smaller than"), h("div.row.nowrap", h("input.input.nums", { style: { width: "90px" }, value: o.min_side, onchange: (e) => { o.min_side = Number(e.target.value) || 0; save(); } }), h("span.small.faint", "px")))),
-      o.captions === "metadata" ? h("div.row", { style: { gap: "22px" } }, h("span.small.muted", "Include:"),
+      o.captions === "metadata" ? h("div.row", { style: { gap: "var(--s5)" } }, h("span.small.muted", "Include:"),
         checkEl(o.character, (v) => { o.character = v; save(); }, "Character tags"),
         checkEl(o.copyright, (v) => { o.copyright = v; save(); }, "Series tags"),
         checkEl(o.artist, (v) => { o.artist = v; save(); }, "Artist tags")) : null,
-      h("div.row", { style: { gap: "22px" } }, h("span.small.muted", "Then:"),
+      h("div.row", { style: { gap: "var(--s5)" } }, h("span.small.muted", "Then:"),
         checkEl(o.dupes, (v) => { o.dupes = v; save(); }, "Look for duplicates"),
         checkEl(o.useForTrain, (v) => { o.useForTrain = v; save(); }, "Use it on the Train page"))));
   }
@@ -124,7 +124,7 @@ export function newDataset(ctx, params, root) {
           h("div.stat", h("div.k", "With captions"), h("div.v", String(r.captioned))),
           h("div.stat", h("div.k", "Skipped (small)"), h("div.v", String(r.too_small))),
           h("div.stat", h("div.k", "Unreadable"), h("div.v", String(r.unreadable)))),
-        h("div.row", { style: { marginTop: "16px" } },
+        h("div.row", { style: { marginTop: "var(--s4)" } },
           o.useForTrain && ctx.draft ? chip("Set as the Train page's dataset", "accent", "check") : null, h("div.spacer"),
           btn("Health check", { icon: "circleCheck", onclick: () => ctx.go("dataset", { tool: "health" }) }),
           btn("Open in Images & tags", { icon: "tag", kind: "primary", onclick: () => ctx.go("dataset", { tool: "viewer" }) }))));
