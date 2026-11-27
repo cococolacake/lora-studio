@@ -8,7 +8,7 @@ import { metaModal } from "../runextras.js";
 const isWin = (ctx) => ctx.boot.platform === "windows";
 
 export default {
-  id: "swarm", label: "SwarmUI & ComfyUI", short: "SwarmUI", icon: "hive",
+  id: "swarm", label: "SwarmUI & ComfyUI", short: "Generate", icon: "hive",
 
   mount(ctx, params, root) {
     let tab = params.tab || store.get("genTab", "swarm");
