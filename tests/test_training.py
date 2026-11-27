@@ -171,6 +171,7 @@ def test_copies_to_swarm_never_overwrite_another_run(tmp_path, monkeypatch):
         return swarm.copy_run_outputs(own, "final", str(base), "swarm")["folder"]
     a = run_with("first", "shion_v1")
     b = run_with("second", "shion_v1 (2)")
-    c = run_with("third", "old_style")       # noqa: F841, see #39 (an older run whose folder name clashes with nothing)
-    assert Path(a).name == "shion_v1" and Path(b).name == "shion_v1 (2)"
+    c = run_with("third", "old_style")       # an older run whose folder name clashes with nothing
+    assert Path(a).name == "shion_v1" and Path(b).name == "shion_v1 (2)" and Path(c).name == "old_style"
     assert (Path(a) / "shion_v1.safetensors").read_text() == "first"
+    assert (Path(c) / "shion_v1.safetensors").read_text() == "third"
