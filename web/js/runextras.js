@@ -107,7 +107,7 @@ async function makeGif(r, row) {
     toast("Making the animation…", "", "", "play", 2500);
     const path = await api.samples_gif(r.id, row);
     const v = await modal(`Prompt ${row + 1}, epoch by epoch`, h("div.stack.sm",
-      h("img", { src: fileUrl(path, Date.now()), alt: "Animated samples", style: { maxWidth: "100%", maxHeight: "60vh", borderRadius: "14px", display: "block", margin: "0 auto" } }),
+      h("img", { src: fileUrl(path, Date.now()), alt: "Animated samples", style: { maxWidth: "100%", maxHeight: "60vh", borderRadius: "var(--r-md)", display: "block", margin: "0 auto" } }),
       h("p.small.muted", { style: { margin: 0 } }, `Saved as ${path.split("/").pop()} in the samples folder.`)),
       [{ label: "Open folder", value: "open" }, { label: "Close", kind: "primary" }]);
     if (v === "open") api.open_folder(path.replace(/\/[^/]*$/, ""));
