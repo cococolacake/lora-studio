@@ -159,6 +159,17 @@ def test_corners_come_from_the_theme():
     assert not left, left
 
 
+def test_circles_stay_round_whatever_the_corner_shape():
+    """A theme's --corner-shape bevels every corner (#52), which would turn circles into diamonds,
+    so every 50% corner pins its shape to round."""
+    loose = []
+    for name in ("app.css", "glass.css"):
+        css = (ROOT / "web" / "css" / name).read_text(encoding="utf-8")
+        loose += [f"{name}: {rule.strip()[:60]}" for rule in re.findall(r"[^{}]*\{[^}]*border-radius:\s*50%[^}]*\}", css)
+                  if "corner-shape: round" not in rule]
+    assert not loose, loose
+
+
 def test_release_notes_come_from_the_pull_request():
     sys.path.insert(0, str(ROOT / ".github"))
     import release_notes as rn

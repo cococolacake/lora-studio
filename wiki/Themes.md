@@ -15,6 +15,7 @@ Drag a `.css` file anywhere onto **Settings → Appearance** (or click the drop 
 A CSS theme can set these values for the whole app:
 
 - **Corners:** `--r-xs` (tiny bits like checkboxes), `--r-sm`, `--r-md`, `--r-lg`, `--r-xl` and `--pill`. Set them all to `0` for square corners everywhere. Circles, like switch knobs, stay round.
+- **Corner shape:** `--corner-shape` is `round` by default. Set it to `bevel` for cut corners, or `notch`, `scoop`, `squircle` or `superellipse(…)`. Borders, shadows and focus rings follow the shape, and circles stay round. It works in the Windows app and in Chrome or Edge. Firefox, Safari and the Linux app window keep rounded corners for now.
 
 ## Your own styles
 
