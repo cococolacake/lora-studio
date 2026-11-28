@@ -8,16 +8,16 @@ Every change follows these steps. Coco is new to git: explain git and terminal s
 
 1. **Issue.** Every change starts as a GitHub issue.
    - Features: use the `grilling` skill to interview Coco until the plan is settled, write the plan into the issue, and wait for Coco to approve it (label `ready`).
+   - Changes already settled with Coco in chat (follow-ups, agreed fixes): write the agreed plan into the issue and label it `ready` yourself. Several can be built in one batch, one issue and branch each.
    - Tiny fixes (a typo, a colour, a one-line bug): a two- or three-line plan in the issue is enough.
    - Before posting a plan, check each worked example in it (a rounding, a before and after) against the rule it illustrates.
    - Issues opened by other people: label and summarize them. Build nothing until Coco picks one.
 2. **Build** on a branch named after the issue, e.g. `42-caption-search`, starting from the latest `main` on GitHub rather than Coco's local folder. Add a test with every feature or bug fix. Run the lint checks from `CONTRIBUTING.md` before review.
 3. **Review.** A subagent that didn't write the code runs `code-review` on the branch, against the issue and "Keep it lean" below. Fix what it finds, or say why not.
-4. **Coco tests it.** Wait for Coco's OK before opening the PR.
-5. **PR.** Fill in the PR template with `Fixes #<issue>`. Bump `__version__` in `studio/__init__.py` only when Coco asks, once a batch of changes has built up.
+4. **Draft PR.** Open the PR as a draft, with the PR template filled in and `Fixes #<issue>`, and give Coco simple steps to test the branch. Bump `__version__` in `studio/__init__.py` only when Coco asks, once a batch of changes has built up; that release PR is a draft too, and says which PRs to merge first.
    - Commit as `Coco <183875663+cococolacake@users.noreply.github.com>`.
    - Commits and PRs carry no AI attribution lines and no session links.
-   - Coco merges.
+5. **Coco tests it** on the branch, marks the PR Ready for review, and merges.
 6. **Wrap-up.** Comment on the issue with what's done and what's left, plus a short retro: what went wrong and what would prevent it. When something went wrong more than once, suggest a change to this file.
 
 ## Keep it lean
