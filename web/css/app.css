@@ -4,7 +4,7 @@
 * { box-sizing: border-box; }
 /* a theme can change the shape of every corner; borders, shadows and focus rings follow it, unlike a clip-path cut */
 *, *::before, *::after { corner-shape: var(--corner-shape, round); }
-/* "*" doesn't reach scrollbar thumbs; a rule of their own, since Firefox drops any rule that names them */
+/* "*" doesn't reach scrollbar thumbs or slider tracks; the thumbs get a rule of their own, since Firefox drops any rule that names them */
 ::-webkit-scrollbar-thumb { corner-shape: var(--corner-shape, round); }
 html, body { margin: 0; height: 100%; }
 body {
@@ -259,7 +259,7 @@ textarea.input { height: auto; min-height: 76px; padding: var(--s3) var(--s4); r
 
 /* range */
 input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 26px; background: transparent; cursor: pointer; }
-input[type=range]::-webkit-slider-runnable-track { height: 8px; border-radius: var(--r-sm);
+input[type=range]::-webkit-slider-runnable-track { height: 8px; border-radius: var(--r-sm); corner-shape: var(--corner-shape, round);
   background: linear-gradient(90deg, var(--accent) var(--fill, 50%), var(--surface-3) var(--fill, 50%)); }
 input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; corner-shape: round; margin-top: -7px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25), 0 3px 8px rgba(0,0,0,.08); }
 
