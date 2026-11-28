@@ -29,6 +29,7 @@ Every change follows these steps. Coco is new to git: explain git and terminal s
 - Every import and variable is used. Remove debug logging and commented-out code before review.
 - Reuse an existing helper before writing a new one.
 - Fluff you spot outside the issue goes in the PR description, for its own `cleanup` issue.
+- When new CSS has to override existing rules, check its specificity against them, and test the computed value rather than just the attributes.
 
 ## Rules for this repo
 
