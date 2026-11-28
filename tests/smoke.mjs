@@ -30,7 +30,8 @@ const shapes = await page.evaluate(() => {
   return read;
 });
 // Chrome reports bevel as superellipse(0) and round as superellipse(1)
-if (shapes && shapes.join() !== "superellipse(0),superellipse(1)") errors.push(`[corners] The theme's corner shape didn't apply, or a circle lost its shape: ${JSON.stringify(shapes)}`);
+if (!shapes) console.log("[corners] skipped: this browser has no corner-shape");
+else if (shapes.join() !== "superellipse(0),superellipse(1)") errors.push(`[corners] The theme's corner shape didn't apply, or a circle lost its shape: ${JSON.stringify(shapes)}`);
 for (const t of ["new", "viewer", "health", "dupes", "resize", "rename"]) await go(`dataset/${t}`, `ctx.go("dataset", { tool: ${JSON.stringify(t)} })`);
 
 if (dataset) {
