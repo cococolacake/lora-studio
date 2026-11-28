@@ -25,13 +25,13 @@ await go("settings/training", `ctx.go("settings", { section: "training" })`);
 const shapes = await page.evaluate(() => {
   if (!CSS.supports("corner-shape", "bevel")) return null;
   const style = document.head.appendChild(Object.assign(document.createElement("style"), { textContent: "html { --corner-shape: bevel; }" }));
-  const read = [[".input"], [".switch .track", "::after"]].map(([q, ps]) => getComputedStyle(document.querySelector(q), ps).getPropertyValue("corner-top-left-shape"));
+  const read = [[".input"], [".main", "::-webkit-scrollbar-thumb"], [".switch .track", "::after"]].map(([q, ps]) => getComputedStyle(document.querySelector(q), ps).getPropertyValue("corner-top-left-shape"));
   style.remove();
   return read;
 });
 // Chrome reports bevel as superellipse(0) and round as superellipse(1)
 if (!shapes) console.log("[corners] skipped: this browser has no corner-shape");
-else if (shapes.join() !== "superellipse(0),superellipse(1)") errors.push(`[corners] The theme's corner shape didn't apply, or a circle lost its shape: ${JSON.stringify(shapes)}`);
+else if (shapes.join() !== "superellipse(0),superellipse(0),superellipse(1)") errors.push(`[corners] The theme's corner shape didn't apply, or a circle lost its shape: ${JSON.stringify(shapes)}`);
 for (const t of ["new", "viewer", "health", "dupes", "resize", "rename"]) await go(`dataset/${t}`, `ctx.go("dataset", { tool: ${JSON.stringify(t)} })`);
 
 if (dataset) {

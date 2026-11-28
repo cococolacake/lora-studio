@@ -4,6 +4,8 @@
 * { box-sizing: border-box; }
 /* a theme can change the shape of every corner; borders, shadows and focus rings follow it, unlike a clip-path cut */
 *, *::before, *::after { corner-shape: var(--corner-shape, round); }
+/* "*" doesn't reach scrollbar thumbs; a rule of their own, since Firefox drops any rule that names them */
+::-webkit-scrollbar-thumb { corner-shape: var(--corner-shape, round); }
 html, body { margin: 0; height: 100%; }
 body {
   font-family: var(--font);
