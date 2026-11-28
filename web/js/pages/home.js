@@ -23,7 +23,7 @@ export default {
     const sd = ctx.boot.sd;
     const sdCard = card({ title: "sd-scripts", actions: btn("Manage", { size: "sm", kind: "ghost", onclick: () => ctx.go("sdscripts") }) },
       sd.valid ? h("div.stack.sm",
-        h("div.row", h("div.ic", { style: { width: "42px", height: "42px", borderRadius: "13px", background: "var(--accent-soft)", color: "var(--accent-text)", display: "grid", placeItems: "center" } }, icon("branch")),
+        h("div.row", h("div.ic", { style: { width: "42px", height: "42px", borderRadius: "var(--r-md)", background: "var(--accent-soft)", color: "var(--accent-text)", display: "grid", placeItems: "center" } }, icon("branch")),
           h("div", h("b", sd.branch || "—"), h("div.small.faint.mono", sd.commit || ""))),
         h("div.small.muted", sd.commit_subject || ""),
         h("div.row", sd.behind ? chip(`${sd.behind} update${sd.behind === 1 ? "" : "s"} available`, "accent", "download")

@@ -34,7 +34,7 @@ export function dupes(ctx, params, root) {
     const b = await api.ds_bins(f).catch(() => null);
     if (!b?._duplicates) return clear(binSlot);
     clear(binSlot, card(null, h("div.row",
-      h("div.ic", { style: { width: "40px", height: "40px", borderRadius: "12px", display: "grid", placeItems: "center", background: "var(--warn-soft)", color: "var(--warn)" } }, icon("dup")),
+      h("div.ic", { style: { width: "40px", height: "40px", borderRadius: "var(--r-md)", display: "grid", placeItems: "center", background: "var(--warn-soft)", color: "var(--warn)" } }, icon("dup")),
       h("div", { style: { flex: 1 } }, h("b", `${b._duplicates} image${b._duplicates === 1 ? "" : "s"} in _duplicates`),
         h("div.small.muted", "Moved there earlier.")),
       btn("Open folder", { icon: "folder", kind: "ghost", onclick: () => api.open_folder(`${f}/_duplicates`) }),

@@ -143,6 +143,22 @@ def test_titlebar_only_takes_plain_hex_colours():
     assert a.set_titlebar("red; drop", "#EEF2FF") is False and len(seen) == 1
 
 
+def test_corners_come_from_the_theme():
+    """Every corner size is a theme value, so a CSS theme can reshape the whole app (#50). Hairline rounding (1 to 3px)
+    and circles stay as they are, and so do the theme cards' mockups, which show the built-in themes."""
+    def fixed(value):
+        return any(float(px) > 3 for px in re.findall(r"(?<![\w-])(\d+(?:\.\d+)?)px", re.sub(r"var\([^)]*\)", "", value)))
+    left = []
+    for name in ("app.css", "glass.css"):
+        text = re.sub(r"\.theme-card \.tp \.mini[^{]*\{[^}]*\}", "", (ROOT / "web" / "css" / name).read_text(encoding="utf-8"))
+        left += [f"{name}: {v.strip()}" for v in re.findall(r"border(?:-[a-z]+)*-radius:\s*([^;}]+)", text) if fixed(v)]
+    for path in (ROOT / "web" / "js").rglob("*.js"):
+        text = path.read_text(encoding="utf-8")
+        values = re.findall(r"""borderRadius\s*[:=]\s*["'`]([^"'`]+)""", text) + re.findall(r"""border(?:-[a-z]+)*-radius:\s*([^;"'`]+)""", text)
+        left += [f"{path.name}: {v}" for v in values if fixed(v)]
+    assert not left, left
+
+
 def test_release_notes_come_from_the_pull_request():
     sys.path.insert(0, str(ROOT / ".github"))
     import release_notes as rn

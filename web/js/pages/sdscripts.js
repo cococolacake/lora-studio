@@ -56,7 +56,7 @@ export default {
           e.currentTarget.disabled = true; await load(true); } }) },
         st.fetch_error ? h("div.notice.warn", icon("alert"), h("div", "Couldn't reach GitHub: ", h("span.mono", st.fetch_error))) : null,
         behind == null ? h("p.muted", "This branch doesn't track a remote branch, so updates can't be checked.")
-          : behind === 0 ? h("div.row", { style: { gap: "var(--s4)" } }, h("div.sev.ok", { style: { width: "44px", height: "44px", borderRadius: "14px", display: "grid", placeItems: "center" } }, icon("circleCheck")),
+          : behind === 0 ? h("div.row", { style: { gap: "var(--s4)" } }, h("div.sev.ok", { style: { width: "44px", height: "44px", borderRadius: "var(--r-md)", display: "grid", placeItems: "center" } }, icon("circleCheck")),
               h("div", h("b", "You're up to date"), h("div.small.muted", fetch ? "Just checked GitHub." : "Not checked yet.")))
             : h("div.stack.sm",
               h("div.row", h("b", { style: { fontSize: "16px" } }, `${behind} new commit${behind === 1 ? "" : "s"} on ${st.branch}`), h("div.spacer"),

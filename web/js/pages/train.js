@@ -128,7 +128,7 @@ export default {
       catch { clear(estSlot, h("div.small.muted", "Couldn't read the dataset folder yet.")); return; }
       const fmt = (sec) => { const m = Math.round(sec / 60); return m < 60 ? `${Math.max(1, m)} min` : `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, "0")} min`; };
       clear(estSlot, h("div.est",
-        h("div.ic.accent", { style: { width: "44px", height: "44px", borderRadius: "14px", display: "grid", placeItems: "center", background: "var(--accent-soft)", color: "var(--accent-text)" } }, icon("clock")),
+        h("div.ic.accent", { style: { width: "44px", height: "44px", borderRadius: "var(--r-md)", display: "grid", placeItems: "center", background: "var(--accent-soft)", color: "var(--accent-text)" } }, icon("clock")),
         h("div", { style: { flex: 1 } },
           h("div.big", e.seconds ? `about ${fmt(e.seconds)}` : `${e.total_steps.toLocaleString()} steps`),
           h("div.small.muted", `${e.images} images · ${e.steps_per_epoch.toLocaleString()} steps per epoch × ${e.epochs} epochs = ${e.total_steps.toLocaleString()} steps`)),
