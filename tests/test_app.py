@@ -146,16 +146,16 @@ def test_titlebar_only_takes_plain_hex_colours():
 def test_corners_come_from_the_theme():
     """Every corner size is a theme value, so a CSS theme can reshape the whole app (#50). Hairline rounding (1 to 3px)
     and circles stay as they are, and so do the theme cards' mockups, which show the built-in themes."""
+    def fixed(value):
+        return any(float(px) > 3 for px in re.findall(r"(?<![\w-])(\d+(?:\.\d+)?)px", re.sub(r"var\([^)]*\)", "", value)))
     left = []
     for name in ("app.css", "glass.css"):
-        for n, line in enumerate((ROOT / "web" / "css" / name).read_text(encoding="utf-8").splitlines(), 1):
-            if ".theme-card .tp .mini" in line:
-                continue
-            for value in re.findall(r"border-radius:\s*([^;}]+)", line):
-                if any(float(px) > 3 for px in re.findall(r"(?<![\w-])(\d+(?:\.\d+)?)px", re.sub(r"var\([^)]*\)", "", value))):
-                    left.append(f"{name}:{n}: {value.strip()}")
+        text = re.sub(r"\.theme-card \.tp \.mini[^{]*\{[^}]*\}", "", (ROOT / "web" / "css" / name).read_text(encoding="utf-8"))
+        left += [f"{name}: {v.strip()}" for v in re.findall(r"border(?:-[a-z]+)*-radius:\s*([^;}]+)", text) if fixed(v)]
     for path in (ROOT / "web" / "js").rglob("*.js"):
-        left += [f"{path.name}: {m}" for m in re.findall(r'borderRadius: "(\d+px)"', path.read_text(encoding="utf-8"))]
+        text = path.read_text(encoding="utf-8")
+        values = re.findall(r"""borderRadius\s*[:=]\s*["'`]([^"'`]+)""", text) + re.findall(r"""border(?:-[a-z]+)*-radius:\s*([^;"'`]+)""", text)
+        left += [f"{path.name}: {v}" for v in values if fixed(v)]
     assert not left, left
 
 

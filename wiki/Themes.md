@@ -14,7 +14,7 @@ Drag a `.css` file anywhere onto **Settings → Appearance** (or click the drop 
 
 A CSS theme can set these values for the whole app:
 
-- **Corners:** `--r-xs` (tiny bits like checkboxes), `--r-sm`, `--r-md`, `--r-lg`, `--r-xl` and `--pill`. Set them all to `0` for square corners everywhere.
+- **Corners:** `--r-xs` (tiny bits like checkboxes), `--r-sm`, `--r-md`, `--r-lg`, `--r-xl` and `--pill`. Set them all to `0` for square corners everywhere. Circles, like switch knobs, stay round.
 
 ## Your own styles
 
